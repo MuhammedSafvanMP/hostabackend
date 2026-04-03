@@ -10,9 +10,9 @@ const connectRabbitMQ = async (): Promise<void> => {
     const amqpServer = process.env.RABBITMQ_URL || "amqp://rabbitmq:5672";
     const connection = await amqp.connect(amqpServer);
     channel = await connection.createChannel();
-    console.log("🐰 Ambulance Service connected to RabbitMQ");
+    console.log("🐰 Doctor Service connected to RabbitMQ");
   } catch (error) {
-    console.error("❌ RabbitMQ Connection Error in Ambulance Service:", error);
+    console.error("❌ RabbitMQ Connection Error in Doctor Service:", error);
     // Retry connection after 5 seconds
     setTimeout(connectRabbitMQ, 5000);
   }

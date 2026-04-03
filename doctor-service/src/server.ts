@@ -1,6 +1,6 @@
 import app from "./app";
-import connectDB from "./config/db";
 import dotenv from "dotenv";
+import { connectDB } from "./config/db";
 
 dotenv.config();
 
@@ -11,5 +11,5 @@ connectDB();
 
 // Starting ambulance Service
 app.listen(PORT, () => {
-  console.log(`🚀 Ambulance Service is running on port ${PORT}`);
+  console.log(`🚀 Doctor Service is running on port ${PORT}`);
 });

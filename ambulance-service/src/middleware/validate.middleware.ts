@@ -8,7 +8,7 @@ export const validate = (schema: ZodSchema) => {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const errorMessages = error.errors.map(err => ({
+        const errorMessages = error.issues.map(err => ({
           field: err.path.join('.'),
           message: err.message,
         }));
@@ -45,7 +45,7 @@ export const validateParams = (schema: ZodSchema) => {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const errorMessages = error.errors.map(err => ({
+        const errorMessages = error.issues.map(err => ({
           field: err.path.join('.'),
           message: err.message,
         }));

@@ -1,4 +1,7 @@
 import { Sequelize } from "sequelize";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Validate required environment variables
 const requiredEnvVars = ['DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST'];
@@ -8,6 +11,7 @@ if (missingEnvVars.length > 0) {
   throw new Error(`❌ Missing required DB environment variables: ${missingEnvVars.join(', ')}`);
 }
 
+
 const sequelize = new Sequelize(
   process.env.DB_NAME!,
   process.env.DB_USER!,
@@ -16,6 +20,13 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST!,
     dialect: "postgres",
     logging: process.env.NODE_ENV === "development" ? console.log : false,
+
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false, 
+      },
+    },
   }
 );
 

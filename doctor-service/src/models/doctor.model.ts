@@ -41,6 +41,7 @@ interface IDoctor {
   qualification?: string;
   consulting?: IConsulting;
   bookingOpen: boolean;
+  displayName:string;
 }
 
 /* =======================
@@ -49,7 +50,7 @@ interface IDoctor {
 
 type DoctorCreationAttributes = Optional<
   IDoctor,
-  "id" | "email" | "password" | "fees" | "dob" | "gender" | "knowLanguages" | "qualification" | "consulting" | "department" | "specialist"
+  "id" | "email" | "password" | "fees" | "dob" | "gender" | "knowLanguages" | "qualification" | "consulting" | "department" | "specialist" | "displayName"
 >;
 
 /* =======================

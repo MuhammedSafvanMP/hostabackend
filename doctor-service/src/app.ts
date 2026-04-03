@@ -3,7 +3,7 @@ import cors from "cors";
 import logger from "morgan";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import ambulanceRoutes from "./routes/ambulance.routes";
+import doctorRoutes from "./routes/doctor.routes";
 
 const app = express();
 
@@ -28,13 +28,13 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 // ROUTES
-app.use("/", ambulanceRoutes);
+app.use("/", doctorRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response, next: NextFunction) => {
   res.status(404).json({
     status: 404,
-    message: "Requested ambulance-related resource not found",
+    message: "Requested doctor-related resource not found",
     path: req.path,
   });
 });
