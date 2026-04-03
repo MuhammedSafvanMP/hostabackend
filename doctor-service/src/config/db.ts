@@ -1,22 +1,22 @@
 import { Sequelize } from "sequelize";
+import { env } from "./env";
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME || "ambulance_db",
-  process.env.DB_USER || "postgres",
-  process.env.DB_PASSWORD || "password",
-  {
-    host: process.env.DB_HOST || "postgres",
-    dialect: "postgres",
-    logging: false, // disable logs in production
-  }
-);
+const sequelize = new Sequelize(env.DATABASE_URL, {
+  dialect: "postgres",
+  logging: env.NODE_ENV === "development" ? console.log : false,
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false,
+    },
+  },
+});
 
 export const connectDB = async () => {
   try {
     await sequelize.authenticate();
-    console.log("✅ PostgreSQL Connected");
+    console.log("✅ PostgreSQL Connected (Doctor Service)");
 
-    await sequelize.sync(); // use migrations in real production
   } catch (error) {
     console.error("❌ DB Error:", error);
     process.exit(1);
@@ -24,3 +24,7 @@ export const connectDB = async () => {
 };
 
 export default sequelize;
+
+
+
+

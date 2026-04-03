@@ -41,6 +41,9 @@ interface IDoctor {
   qualification?: string;
   consulting?: IConsulting;
   bookingOpen: boolean;
+  displayName:string;
+  isActive?: boolean;
+  isDelete?: boolean;
 }
 
 /* =======================
@@ -49,7 +52,7 @@ interface IDoctor {
 
 type DoctorCreationAttributes = Optional<
   IDoctor,
-  "id" | "email" | "password" | "fees" | "dob" | "gender" | "knowLanguages" | "qualification" | "consulting" | "department" | "specialist"
+  "id" | "email" | "password" | "fees" | "dob" | "gender" | "knowLanguages" | "qualification" | "consulting" | "department" | "specialist" | "displayName"
 >;
 
 /* =======================
@@ -169,6 +172,15 @@ Doctor.init(
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
+    isDelete: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+
   },
   {
     sequelize,

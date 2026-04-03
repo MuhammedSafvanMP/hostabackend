@@ -1,17 +1,15 @@
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
+import { env } from "../config/env";
 
-dotenv.config();
+const JWT_SECRET = env.JWT_SECRET;
 
-const JWT_SECRET = process.env.JWT_SECRET || "myjwtsecretkey";
-
-export const generateToken = (payload: any): string => {
+export const generateToken = (payload: any) => {
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn: "1h",
   });
 };
 
-export const verifyToken = (token: string): any => {
+export const verifyToken = (token: string) => {
   try {
     return jwt.verify(token, JWT_SECRET);
   } catch (error) {

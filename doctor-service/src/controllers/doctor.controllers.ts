@@ -2,34 +2,47 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
-import Ambulance from "../models/doctor.model";
+import Doctor from "../models/doctor.model";
 import { publishEvent } from "../events/publisher";
 
-// REGISTER - POST /ambulance/register
+// REGISTER - POST /doctor/register
 export const Registeration: any = asyncHandler(async (req: Request, res: Response) => {
-  const { serviceName, address, phone, vehicleType } = req.body;
+  const { firstName, lastName, phone, email, password, fees, department, specialist, dob, gender, knowLanguages, consulting, bookingOpen, qualification, address, displayName } = req.body;
 
-  const exist = await Ambulance.findOne({ where: { phone: phone } });
+
+  const exist = await Doctor.findOne({ where: { phone: phone } });
   if (exist) {
     res.status(404).json({
       success: false,
-      message: "Ambulance is already exist",
+      message: "Doctor is already exist",
       data: null,
-      error: { code: "AMBULANCE_ALREADY_EXISTS", details: null },
+      error: { code: "DOCTOR_ALREADY_EXISTS", details: null },
     });
     return;
   }
 
-  const newAmbulance = await Ambulance.create({
-    serviceName: serviceName,
-    address: address,
-    phone: phone,
-    vehicleType: vehicleType,
+  const newDoctor = await Doctor.create({
+   firstName, 
+   lastName, 
+   phone, 
+   email, 
+   password, 
+   fees, 
+   department, 
+   specialist, 
+   dob, 
+   gender, 
+   knowLanguages, 
+   consulting, 
+   bookingOpen, 
+   qualification, 
+   address, 
+   displayName
   });
 
-  await publishEvent("ambulance_events", "AMBULANCE_REGISTERED", {
-    ambulanceId: newAmbulance.id,
-    phone: newAmbulance.phone,
+  await publishEvent("doctor_events", "DOCTOR_REGISTERED", {
+    doctorId: newDoctor.id,
+    phone: newDoctor.phone,
   });
 
   res.status(201).json({
@@ -40,22 +53,22 @@ export const Registeration: any = asyncHandler(async (req: Request, res: Respons
   });
 });
 
-// LOGIN - POST /ambulance/login
+// LOGIN - POST /doctor/login
 export const login: any = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
-  const user = await Ambulance.findOne({ where: { email: email } });
-  if (!user) {
+  const doctor = await Doctor.findOne({ where: { email: email } });
+  if (!doctor) {
     res.status(404).json({
       success: false,
-      message: "Ambulance not found! Please register",
+      message: "Doctor not found! Please register",
       data: null,
-      error: { code: "AMBULANCE_NOT_FOUND", details: null },
+      error: { code: "DOCTOR_NOT_FOUND", details: null },
     });
     return;
   }
 
-  const checkPassword = await bcrypt.compare(password, user.password || "");
+  const checkPassword = await bcrypt.compare(password, doctor.password || "");
   if (!checkPassword) {
     res.status(404).json({
       success: false,
@@ -78,12 +91,12 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Generate JWT tokens
-  const token = jwt.sign({ id: user.id, name: user.serviceName }, jwtKey, {
+  const token = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`}, jwtKey, {
     expiresIn: "15m",
   });
 
   const refreshToken = jwt.sign(
-    { id: user.id, name: user.serviceName },
+    { id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}` },
     jwtKey,
     { expiresIn: "7d" }
   );
@@ -102,20 +115,20 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     success: true,
     message: "Loggedin successfully",
     status: 200,
-    data: user,
+    data: doctor,
     error: null,
   });
 });
 
-// GET ONE - GET /ambulance/:id
-export const getanAmbulace: any = asyncHandler(async (req: Request, res: Response) => {
-  const user = await Ambulance.findByPk(req.params.id);
-  if (!user) {
+// GET ONE - GET /doctor/:id
+export const getanDoctor : any = asyncHandler(async (req: Request, res: Response) => {
+  const doctor = await Doctor.findByPk(req.params.id);
+  if (!doctor) {
     res.status(404).json({
       success: false,
-      message: "Ambulance not found",
+      message: "Doctor not found",
       data: null,
-      error: { code: "AMBULANCE_NOT_FOUND", details: null },
+      error: { code: "DOCTOR_NOT_FOUND", details: null },
     });
     return;
   }
@@ -123,61 +136,64 @@ export const getanAmbulace: any = asyncHandler(async (req: Request, res: Respons
   res.status(200).json({
     success: true,
     status: "Success",
-    data: user,
+    data: doctor,
     error: null,
   });
 });
 
-// UPDATE - PUT /ambulance/:id
+// UPDATE - PUT /doctor/:id
 export const updateData: any = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const updatePayload = req.body;
 
-  const ambulance = await Ambulance.update(updatePayload, {
+  const doctor = await Doctor.update(updatePayload, {
     where: { id: id },
     returning: true,
   });
 
-  if (!ambulance[1] || ambulance[1].length === 0) {
+  if (!doctor[1] || doctor[1].length === 0) {
     res.status(404).json({
       success: false,
-      message: "Ambulance not found",
+      message: "Doctor not found",
       status: 200,
       data: null,
-      error: { code: "AMBULANCE_NOT_FOUND", details: null },
+      error: { code: "DOCTOR_NOT_FOUND", details: null },
     });
     return;
   }
 
-  await publishEvent("ambulance_events", "AMBULANCE_UPDATED", {
-    ambulanceId: ambulance[1][0].id,
+  await publishEvent("doctor_events", "DOCTOR_UPDATED", {
+    doctorId: doctor[1][0].id,
   });
 
   res.status(200).json({
     success: true,
     message: "successfully updated",
-    data: ambulance[1][0],
+    data: doctor[1][0],
     error: null,
   });
 });
 
-// DELETE - DELETE /ambulance/:id
-export const ambulanceDelete: any = asyncHandler(async (req: Request, res: Response) => {
+// DELETE - DELETE /doctor/:id
+export const doctorDelete: any = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
+  const updatePayload = req.body;
 
-  const hospital = await Ambulance.findByPk(id);
-  if (!hospital) {
+  const doctor = await Doctor.findByPk(id);
+  if (!doctor) {
     res.status(404).json({
       success: false,
-      message: "Hospital not found",
+      message: "Doctor not found",
       data: null,
-      error: { code: "AMBULANCE_NOT_FOUND", details: null },
+      error: { code: "DOCTOR_NOT_FOUND", details: null },
     });
     return;
   }
 
-  await Ambulance.destroy({
-    where: { id: id }
+
+    await Doctor.update(updatePayload, {
+    where: { id: id },
+    returning: true,
   });
 
   res.status(200).json({
@@ -189,11 +205,11 @@ export const ambulanceDelete: any = asyncHandler(async (req: Request, res: Respo
   });
 });
 
-// GET ALL - GET /ambulance
-export const getAmbulaces: any = asyncHandler(async (req: Request, res: Response) => {
-  const ambulances = await Ambulance.findAll();
+// GET ALL - GET /doctor
+export const getDoctors: any = asyncHandler(async (req: Request, res: Response) => {
+  const doctor = await Doctor.findAll();
 
-  if (ambulances.length === 0) {
+  if (doctor.length === 0) {
     res.status(404).json({
       success: false,
       message: "No data found",
@@ -206,22 +222,22 @@ export const getAmbulaces: any = asyncHandler(async (req: Request, res: Response
   res.status(200).json({
     success: true,
     status: "Success",
-    data: ambulances,
+    data: doctor,
     error: null,
   });
 });
 
-// FORGET PASSWORD - POST /ambulance/forgot
+// FORGET PASSWORD - POST /doctor/forgot
 export const forgetpassword: any = asyncHandler(async (req: Request, res: Response) => {
   const { email } = req.body;
 
-  const ambulance = await Ambulance.findOne({ where: { email } });
-  if (!ambulance) {
+  const doctor = await Doctor.findOne({ where: { email } });
+  if (!doctor) {
     res.status(404).json({
       success: false,
       message: "No data found",
       data: null,
-      error: { code: "AMBULANCE_NOT_FOUND", details: null },
+      error: { code: "DOCTOR_NOT_FOUND", details: null },
     });
     return;
   }
@@ -229,35 +245,35 @@ export const forgetpassword: any = asyncHandler(async (req: Request, res: Respon
   res.status(200).json({
     success: true,
     status: 200,
-    data: ambulance,
+    data: doctor,
     error: null,
   });
 });
 
-// CHANGE PASSWORD - PUT /ambulance/changepassword
+// CHANGE PASSWORD - PUT /doctor/changepassword
 export const changepassword: any = asyncHandler(async (req: Request, res: Response) => {
   const { password, email } = req.body;
 
-  const ambulances = await Ambulance.findOne({ where: { email } });
-  if (!ambulances) {
+  const doctor = await Doctor.findOne({ where: { email } });
+  if (!doctor) {
     res.status(404).json({
       success: false,
       message: "No data found",
       data: null,
-      error: { code: "AMBULANCE_NOT_FOUND", details: null },
+      error: { code: "DOCTOR_NOT_FOUND", details: null },
     });
     return;
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  ambulances.password = hashedPassword;
+  doctor.password = hashedPassword;
 
-  await ambulances.save();
+  await doctor.save();
 
   res.status(200).json({
     success: true,
     status: 200,
-    data: ambulances,
+    data: doctor,
     error: null,
   });
 });
