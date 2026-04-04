@@ -43,6 +43,7 @@ interface IDoctor {
   bookingOpen: boolean;
   displayName:string;
   joiningDate?: Date;
+  todayBookingAcceptCount: number;
   isActive?: boolean;
   isDelete?: boolean;
 }
@@ -53,7 +54,7 @@ interface IDoctor {
 
 type DoctorCreationAttributes = Optional<
   IDoctor,
-  "id" | "email" |  "joiningDate" | "password" | "fees" | "dob" | "gender" | "knowLanguages" | "qualification" | "consulting" | "department" | "specialist" | "displayName"
+  "id" |  "email" |  "joiningDate" | "password" | "fees" | "dob" | "gender" | "knowLanguages" | "qualification" | "consulting" | "department" | "specialist" | "displayName" 
 >;
 
 /* =======================
@@ -82,6 +83,7 @@ class Doctor
   public address!: IAddress;
   public displayName!: string;
   public joiningDate?: Date;
+  public todayBookingAcceptCount!: number;
 }
 
 /* =======================
@@ -177,7 +179,9 @@ Doctor.init(
      joiningDate: {
       type: DataTypes.DATE,
     },
-
+    todayBookingAcceptCount: {
+      type: DataTypes.DECIMAL(10, 2),
+    },
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
