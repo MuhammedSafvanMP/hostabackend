@@ -1,0 +1,30 @@
+import app from "./app";
+
+import { connectDB } from "./config/db";
+import { connectRabbitMQ } from "./events/publisher";
+import { env } from "./config/env";
+import { logger } from "./utils/logger";
+
+const PORT = env.PORT;
+
+// Database Connection and Server Startup
+const startServer = async () => {
+    try {
+        await connectDB();
+        await connectRabbitMQ();
+        
+        // Ensure table exists safely
+        const { default: Speciality } = await import("./models/speciality.model");
+        await Speciality.sync({ alter: true });
+        
+        // Starting blood Service
+        app.listen(PORT, () => {
+            logger.info(`🚀 Speciality Service is running on port ${PORT}`);
+        });
+    } catch (error) {
+        logger.error("❌ Failed to start server:", { error });
+        process.exit(1);
+    }
+};
+
+startServer();
