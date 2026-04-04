@@ -7,7 +7,6 @@ import { publishEvent } from "../events/publisher";
 
 // REGISTER - POST /staff/register
 export const Registeration: any = asyncHandler(async (req: Request, res: Response) => {
-  console.log(req.body, "iii");
   
   const { name, phone, email, password,  designation, joiningDate, jobType, staffType,  dob, gender, knowLanguages, qualification, address } = req.body;
 
