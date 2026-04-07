@@ -6,6 +6,16 @@ let channel: amqp.Channel;
 export const connectRabbitMQ = async () => {
     try {
         const connection = await amqp.connect(env.RABBITMQ_URL);
+        
+        connection.on('error', (err) => {
+            console.error('❌ RabbitMQ Connection Error:', err);
+        });
+
+        connection.on('close', () => {
+            console.warn('⚠️ RabbitMQ Connection closed');
+            channel = null as any;
+        });
+
         channel = await connection.createChannel();
         console.log('🐰 User Service connected to RabbitMQ');
     } catch (error) {

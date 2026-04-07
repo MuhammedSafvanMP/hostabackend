@@ -11,7 +11,7 @@ const callBloodService = async (options: any) => {
 const breaker = new CircuitBreaker(callBloodService, {
   timeout: 10000, 
   errorThresholdPercentage: 50, 
-  resetTimeout: 10000, 
+  resetTimeout: 10000,
 });
 
 breaker.fallback(() => {

@@ -11,7 +11,7 @@ const callPharmacyService = async (options: any) => {
 const breaker = new CircuitBreaker(callPharmacyService, {
   timeout: 10000, 
   errorThresholdPercentage: 50, 
-  resetTimeout: 10000, 
+  resetTimeout: 10000,
 });
 
 breaker.fallback(() => {
@@ -20,6 +20,7 @@ breaker.fallback(() => {
 
 export const proxyRequest = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    // Pharmacy service is mapped at root / internally
     const url = `${SERVICES.PHARMACY_SERVICE}${req.originalUrl.replace("/api/pharmacy", "")}`;
 
     const options = {

@@ -10,6 +10,9 @@ services:
       - user-service
       - ambulance-service
       - blood-service
+      - blood-bank-service
+      - pharmacy-service
+      - staff-service
     networks:
       - hosta-network
 
@@ -45,6 +48,31 @@ services:
     env_file: ./pharmacy-service/.env
     networks:
       - hosta-network 
+
+  staff-service:
+    build: ./staff-service
+    env_file: ./staff-service/.env
+    networks:
+      - hosta-network
+
+  doctor-service:
+    build: ./doctor-service
+    env_file: ./doctor-service/.env
+    networks:
+      - hosta-network
+
+  speciality-service:
+    build: ./speciality-service
+    env_file: ./speciality-service/.env
+    networks:
+      - hosta-network 
+
+  hospital-service:
+    build: ./hospital-service
+    env_file: ./hospital-service/.env
+    networks: 
+      - hosta-network 
+
   
 networks:
   hosta-network:

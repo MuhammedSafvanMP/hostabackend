@@ -11,7 +11,11 @@ const envSchema = z.object({
   BLOOD_SERVICE_URL: z.string().url(),
   BLOOD_BANK_SERVICE_URL: z.string().url(),
   PHARMACY_SERVICE_URL: z.string().url(),
+  STAFF_SERVICE_URL: z.string().url(),
   JWT_SECRET: z.string().min(10),
+  DOCTOR_SERVICE_URL: z.string().url(),
+  SPECIALITY_SERVICE_URL: z.string().url(),
+  HOSPITAL_SERVICE_URL: z.string().url(),
 });
 
 const parsed = envSchema.safeParse(process.env);
