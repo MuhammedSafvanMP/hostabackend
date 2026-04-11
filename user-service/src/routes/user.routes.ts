@@ -9,6 +9,14 @@ import {
   getPatients,
   getPatient,
 } from "../controllers/user.controller";
+import {
+  createPrescription,
+  getPrescription,
+  getAPrescription,
+  deletePrescription,
+  updateData
+} from "../controllers/prescription.controller";
+
 
 import { validate, validateParams } from "../middleware/validate.middleware";
 import { registerSchema, loginSchema, idParamSchema } from "../validators/user.validator";
@@ -27,5 +35,15 @@ router.delete("/users/:id", authenticate, validateParams(idParamSchema), deleteU
 router.post("/patients", authenticate, createPatient);
 router.get("/patients", authenticate, getPatients);
 router.get("/patients/:id", authenticate, validateParams(idParamSchema), getPatient);
+
+
+// Prescription
+
+router.post("/prescription", authenticate, createPrescription);
+router.get("/prescription", authenticate, getPrescription);
+router.get("/prescription/:id", authenticate, getAPrescription);
+router.put("/prescription/:id", authenticate, updateData);
+router.delete("/prescription/:id", authenticate, deletePrescription);
+
 
 export default router;
