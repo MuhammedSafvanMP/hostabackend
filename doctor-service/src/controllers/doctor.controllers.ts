@@ -59,7 +59,7 @@ export const Registeration: any = asyncHandler(async (req: Request, res: Respons
 export const login: any = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
-  const doctor = await Doctor.findOne({ where: { email: email } });
+  const doctor = await Doctor.findOne({ where: { email: email }, attributes: { include: ["password"] }  });
   if (!doctor) {
     res.status(404).json({
       success: false,
@@ -70,7 +70,10 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     return;
   }
 
+     
+
   const checkPassword = await bcrypt.compare(password, doctor.password || "");
+  
   if (!checkPassword) {
     res.status(404).json({
       success: false,
@@ -93,12 +96,12 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Generate JWT tokens
-  const token = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`}, jwtKey, {
+  const token = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`,  roleId: doctor.roleId,}, jwtKey, {
     expiresIn: "15m",
   });
 
   const refreshToken = jwt.sign(
-    { id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}` },
+    { id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, roleId: doctor.roleId },
     jwtKey,
     { expiresIn: "7d" }
   );
@@ -118,6 +121,7 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     message: "Loggedin successfully",
     status: 200,
     data: doctor,
+    refreshToken,
     error: null,
   });
 });
