@@ -9,20 +9,22 @@ import {
   forgetpassword,
   changepassword,
 } from "../controllers/staff.controllers";
+import { authenticate } from "../middleware/authenticate";
+import { checkPermission } from "../middleware/role.middleware";
 
 const router = Router();
 
 // Auth
-router.post("/staff/register", Registeration);
-router.post("/staff/login", login);
-router.post("/staff/forgot", forgetpassword);
-router.put("/staff/changepassword", changepassword);
+router.post("/staff", authenticate, checkPermission("staff", "create"), Registeration);
+router.post("/staff/login",  login);
+router.post("/staff/forgot", authenticate, checkPermission("staff", "create"), forgetpassword);
+router.put("/staff/changepassword", authenticate, checkPermission("staff", "edit"), changepassword);
 
 // CRUD
 
-router.get("/staff", getStaffs);
-router.get("/staff/:id", getanStaff);
-router.put("/staff/:id", updateData);
-router.delete("/staff/:id", staffDelete);
+router.get("/staff", authenticate, checkPermission("staff", "view"), getStaffs);
+router.get("/staff/:id", authenticate, checkPermission("staff", "view"), getanStaff);
+router.put("/staff/:id", authenticate, checkPermission("staff", "edit"), updateData);
+router.delete("/staff/:id", authenticate, checkPermission("staff", "delete"), staffDelete);
 
 export default router;

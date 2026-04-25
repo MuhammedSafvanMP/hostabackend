@@ -1,7 +1,7 @@
 {
-  "name": "staff-service",
+  "name": "medicinremainder-service",
   "version": "1.0.0",
-  "description": "Staff microservice for Hosta project",
+  "description": "Medicinremainder microservice for Hosta project",
   "main": "dist/server.js",
   "scripts": {
     "start": "node dist/server.js",
@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "amqplib": "^1.0.2",
-    "axios": "^1.15.2",
+    "axios": "^1.15.0",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
