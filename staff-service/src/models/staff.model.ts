@@ -12,10 +12,12 @@ interface IAddress {
   district?: string;
   place: string;
   pincode: number;
-}
+}                          
 
 interface IStaff {
   id: number;
+  hospitalId: number;
+  staffId?: string; // Virtual ID
   name: string;
   designation?: string;
   joiningDate?: Date;
@@ -67,6 +69,8 @@ class Staff
   implements IStaff
 {
   public id!: number;
+  public hospitalId!: number;
+  public readonly staffId!: string;
   public name!: string;
   public designation?: string;
   public joiningDate?: Date;
@@ -109,6 +113,21 @@ Staff.init(
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
+    },
+   
+
+    hospitalId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+
+    staffId: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const id = this.getDataValue("id");
+        if (!id) return null;
+        return `#STF${String(id).padStart(5, "0")}`;
+      },
     },
 
     name: {
@@ -240,3 +259,4 @@ Staff.beforeUpdate(async (staff: Staff) => {
 });
 
 export default Staff;
+

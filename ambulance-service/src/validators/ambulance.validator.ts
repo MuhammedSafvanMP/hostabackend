@@ -14,8 +14,6 @@ export const registerSchema = z.object({
   serviceName: z.string().min(2, "Service name must be at least 2 characters"),
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits"),
   vehicleType: z.string().optional(),
-  email: z.string().email("Invalid email format").optional(),
-  password: z.string().min(6, "Password must be at least 6 characters").optional(),
   address: addressSchema,
 });
 
@@ -24,14 +22,6 @@ export const registerSchema = z.object({
 
 
 // Login validation
-export const loginSchema = z.object({
-  email: z.string().email("Invalid email format").optional(),
-  phone: z.string().regex(/^[0-9]{10}$/, "Invalid phone format").optional(),
-  password: z.string().min(1, "Password is required"),
-}).refine(data => data.email || data.phone, {
-  message: "Either email or phone is required",
-  path: ["email"],
-});
 
 export const loginWithPhoneSchema = z.object({
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits"),
@@ -47,16 +37,10 @@ export const updateSchema = z.object({
   serviceName: z.string().min(2, "Service name must be at least 2 characters").optional(),
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits").optional(),
   vehicleType: z.string().optional(),
-  email: z.string().email("Invalid email format").optional(),
   address: addressSchema.optional(),
 });
 
 // Change password validation
-export const changePasswordSchema = z.object({
-  email: z.string().email("Invalid email format"),
-  currentPassword: z.string().min(1, "Current password is required"),
-  newPassword: z.string().min(6, "New password must be at least 6 characters"),
-});
 
 // ID parameter validation
 export const idParamSchema = z.object({
@@ -64,8 +48,6 @@ export const idParamSchema = z.object({
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
-export type LoginInput = z.infer<typeof loginSchema>;
 export type LoginWithPhoneInput = z.infer<typeof loginWithPhoneSchema>;
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
 export type UpdateInput = z.infer<typeof updateSchema>;
-export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

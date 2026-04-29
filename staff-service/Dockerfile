@@ -17,7 +17,7 @@ FROM node:18-slim
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install --only=production
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/config ./config
@@ -29,7 +29,7 @@ USER node
 
 EXPOSE 3006
 
-HEALTHCHECK --interval=30s --timeout=3s \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3006/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3006/health', (res) => { if (res.statusCode === 200) process.exit(0); else process.exit(1); }).on('error', (e) => process.exit(1))"
 
 CMD ["sh", "-c", "npx sequelize-cli db:migrate && node dist/server.js"]

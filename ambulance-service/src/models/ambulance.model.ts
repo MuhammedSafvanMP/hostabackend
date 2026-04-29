@@ -14,10 +14,9 @@ interface IAmbulance {
   };
   phone: string;
   vehicleType?: string;
-  email?: string;
-  password?: string;
   otp?: string;
   otpExpiry?: Date;
+  userId?: number;
 }
 
 class Ambulance extends Model<IAmbulance> implements IAmbulance {
@@ -26,11 +25,10 @@ class Ambulance extends Model<IAmbulance> implements IAmbulance {
   public serviceName!: string;
   public phone!: string;
   public vehicleType!: string;
-  public email!: string;
-  public password!: string;
   public address!: any;
   public otp!: string;
   public otpExpiry!: Date;
+  public userId!: number;
 }
 
 Ambulance.init(
@@ -59,14 +57,13 @@ Ambulance.init(
     vehicleType: {
       type: DataTypes.STRING,
     },
-    email: {
-      type: DataTypes.STRING,
-    },
-    password: {
-      type: DataTypes.STRING,
-    },
+
     address: {
-      type: DataTypes.JSONB, // 🔥 PostgreSQL powerful feature
+      type: DataTypes.JSONB,
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: true, 
     },
     otp: {
       type: DataTypes.STRING,
@@ -84,13 +81,14 @@ Ambulance.init(
     timestamps: true,
     paranoid: true, // Enables soft deletes for ambulances
     defaultScope: {
-      attributes: { exclude: ["password", "otp", "otpExpiry"] },
+      attributes: { exclude: ["otp", "otpExpiry"] },
     },
     scopes: {
       withPassword: {
-        attributes: { include: ["password", "otp", "otpExpiry"] },
+        attributes: { include: ["otp", "otpExpiry"] },
       },
     },
+
   }
 );
 

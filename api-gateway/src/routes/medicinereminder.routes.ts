@@ -3,7 +3,7 @@ import { proxyRequest } from "../services/medicinereminder.service";
 
 const router = express.Router();
 
-// Forward all /medicine-reminder traffic to the medicine reminder microservice
+// Forward all /medicine-reminder/* traffic to the medicine-reminder microservice
 router.use("/medicine-reminder", proxyRequest);
 
 export default router;  

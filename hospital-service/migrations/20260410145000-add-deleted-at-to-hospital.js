@@ -3,9 +3,9 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    const tableInfo = await queryInterface.describeTable('hospital').catch(() => null);
+    const tableInfo = await queryInterface.describeTable('hospitals').catch(() => null);
     if (tableInfo && !tableInfo.deletedAt) {
-      await queryInterface.addColumn('hospital', 'deletedAt', {
+      await queryInterface.addColumn('hospitals', 'deletedAt', {
         type: Sequelize.DATE,
         allowNull: true,
       });
@@ -13,6 +13,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.removeColumn('hospital', 'deletedAt');
+    await queryInterface.removeColumn('hospitals', 'deletedAt');
   }
 };

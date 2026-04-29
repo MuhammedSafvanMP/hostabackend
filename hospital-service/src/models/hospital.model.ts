@@ -36,6 +36,7 @@ interface IAddress {
 
 export interface IHospital {
   id: number;
+  hospitalId?: string; // Virtual ID
   name: string;
   type: string;
   address: IAddress;
@@ -88,6 +89,7 @@ class Hospital
   implements IHospital
 {
   public id!: number;
+  public readonly hospitalId!: string;
   public name!: string;
   public type!: string;
   public address!: IAddress;
@@ -120,6 +122,15 @@ Hospital.init(
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
+    },
+
+    hospitalId: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const id = this.getDataValue("id");
+        if (!id) return null;
+        return `#HOS${String(id).padStart(5, "0")}`;
+      },
     },
 
     name: {
@@ -227,7 +238,7 @@ Hospital.init(
   {
     sequelize,
     modelName: "Hospital",
-    tableName: "hospital",
+    tableName: "hospitals",
     timestamps: true,
     paranoid: true, // 🔥 Enables Soft Delete
 

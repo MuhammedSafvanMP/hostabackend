@@ -4,9 +4,44 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
 import twilio from "twilio";
+import axios from "axios";
 import Staff from "../models/staff.model";
 import { publishEvent } from "../events/publisher";
+import { sendEmail } from "../services/mail.service";
 import { logger } from "../utils/logger";
+
+const APPLE_TEST_NUMBER = "9999999999";
+const APPLE_TEST_OTP = "123456";
+
+export const sendStaffOtpEmail = async (email: string, otp: string, staffName: string) => {
+  const html = `
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+      <div style="background-color: #28a745; padding: 30px; text-align: center;">
+        <h1 style="color: white; margin: 0; font-size: 28px; letter-spacing: 1px;">Hosta Staff</h1>
+      </div>
+      <div style="padding: 40px; background-color: #ffffff;">
+        <h2 style="color: #333; margin-top: 0;">Verification Code</h2>
+        <p style="color: #666; font-size: 16px; line-height: 1.6;">Hello <strong>${staffName}</strong>,</p>
+        <p style="color: #666; font-size: 16px; line-height: 1.6;">Use the following security code to complete your verification. This code is valid for <strong>10 minutes</strong>.</p>
+        
+        <div style="text-align: center; margin: 40px 0;">
+          <div style="display: inline-block; background-color: #f8f9fa; border: 2px dashed #28a745; border-radius: 8px; padding: 20px 40px; font-size: 32px; font-weight: bold; color: #28a745; letter-spacing: 8px;">
+            ${otp}
+          </div>
+        </div>
+        
+        <p style="color: #999; font-size: 14px; line-height: 1.5; border-top: 1px solid #eee; pt: 20px;">
+          If you didn't request this, please ignore this email or contact support if you have concerns.
+        </p>
+      </div>
+      <div style="background-color: #f8f9fa; padding: 20px; text-align: center; color: #999; font-size: 12px;">
+        &copy; 2026 Hosta Health. All rights reserved.
+      </div>
+    </div>
+  `;
+
+  await sendEmail(email, "Your Verification Code - Hosta Staff", html);
+};
 
 let twilioClient: any = null;
 
@@ -30,11 +65,50 @@ const getTwilioClient = () => {
   }
 };
 
-// REGISTER - POST /staff/register                             
-export const Registeration: any = asyncHandler(async (req: Request, res: Response) => {
-  
-  const { name, phone, email, password,  designation, joiningDate, jobType, staffType,  dob, gender, knowLanguages, qualification, address } = req.body;
+import { httpClient } from "../utils/httpClient";
 
+// REGISTER - POST /staff/register                             
+export const Registeration: any = asyncHandler(async (req: any, res: Response) => {
+  
+  const { hospitalId: bodyHospitalId, name, phone, email, password,  designation, joiningDate, jobType, staffType,  dob, gender, knowLanguages, qualification, address } = req.body;
+
+  const tokenHospitalId = req.user?.id;
+  const authHeader = req.headers.authorization;
+
+  // 1. Security Check: If hospitalId is provided in body, it must match the token ID
+  if (bodyHospitalId && Number(bodyHospitalId) !== Number(tokenHospitalId)) {
+    res.status(403).json({
+      success: false,
+      message: "Security violation: The provided hospitalId does not match your authenticated account.",
+      error: { code: "HOSPITAL_ID_MISMATCH" }
+    });
+    return;
+  }
+
+  const hospitalId = tokenHospitalId; // Source of truth
+
+  if (!hospitalId) {
+    res.status(400).json({ success: false, message: "Hospital ID is required" });
+    return;
+  }
+
+  // 2. Validate hospitalId via hospital-service
+  try {
+    const hospitalResponse = await httpClient.get(`http://hospital-service:3009/hospital/${hospitalId}`, {
+      headers: { Authorization: authHeader }
+    });
+    if (!hospitalResponse.data || !hospitalResponse.data.success) {
+      res.status(400).json({ success: false, message: "Invalid hospital ID" });
+      return;
+    }
+  } catch (error) {
+    res.status(404).json({ 
+      success: false, 
+      message: `Hospital with ID ${hospitalId} does not exist in the hospital service.`,
+      error: { code: "HOSPITAL_NOT_FOUND" }
+    });
+    return;
+  }
 
   const phoneExists = await Staff.findOne({ where: { phone } });
   if (phoneExists) {
@@ -58,7 +132,7 @@ export const Registeration: any = asyncHandler(async (req: Request, res: Respons
 
   try {
     const newStaff = await Staff.create({
-      name, phone, email, password, dob, gender, 
+      hospitalId, name, phone, email, password, dob, gender, 
       knowLanguages, qualification, address, 
       designation, joiningDate, jobType, staffType,
     });
@@ -137,12 +211,12 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Generate JWT tokens
-  const token = jwt.sign({ id: staff.id, name: staff.name }, jwtKey, {
+  const token = jwt.sign({ id: staff.id, name: staff.name, role: "staff" }, jwtKey, {
     expiresIn: "15m",
   });
 
   const refreshToken = jwt.sign(
-    { id: staff.id, name: staff.name },
+    { id: staff.id, name: staff.name, role: "staff" },
     jwtKey,
     { expiresIn: "7d" }
   );
@@ -255,7 +329,7 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
     return;
   }
 
-  const token = jwt.sign({ id: staff.id, name: staff.name }, jwtKey, { expiresIn: "15m" });
+  const token = jwt.sign({ id: staff.id, name: staff.name, role: "staff" }, jwtKey, { expiresIn: "15m" });
 
   res.status(200).json({
     success: true,
@@ -301,6 +375,24 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
       error: { code: "STAFF_NOT_FOUND", details: null },
     });
     return;
+  }
+
+  // Validate hospitalId if it's being updated
+  if (updatePayload.hospitalId) {
+    try {
+      const hospitalResponse = await axios.get(`http://hospital-service:3009/hospital/${updatePayload.hospitalId}`);
+      if (!hospitalResponse.data || !hospitalResponse.data.success) {
+        res.status(400).json({ success: false, message: "Invalid hospital ID" });
+        return;
+      }
+    } catch (error) {
+      res.status(400).json({ 
+        success: false, 
+        message: "Hospital validation failed. Please ensure the hospital exists.",
+        error: { code: "HOSPITAL_VALIDATION_FAILED" }
+      });
+      return;
+    }
   }
 
   try {
@@ -429,3 +521,118 @@ export const changepassword: any = asyncHandler(async (req: Request, res: Respon
     error: null,
   });
 });
+
+// SEND STAFF OTP (EMAIL) - POST /staff/auth/send-otp
+export const sendStaffOtp: any = asyncHandler(async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  if (!email) {
+    res.status(400).json({ success: false, message: "Email is required" });
+    return;
+  }
+
+  const staff = await Staff.findOne({ where: { email } });
+  if (!staff) {
+    res.status(404).json({ success: false, message: "Staff not found with this email" });
+    return;
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+  await staff.update({ otp, otpExpiry });
+
+  try {
+    await sendStaffOtpEmail(email, otp, staff.name);
+    res.json({ success: true, message: "OTP sent to email" });
+    return;
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to send email" });
+    return;
+  }
+});
+
+// VERIFY STAFF OTP - POST /staff/auth/verify-otp
+export const verifyStaffOtp: any = asyncHandler(async (req: Request, res: Response) => {
+  const { phone, email, otp } = req.body;
+
+  if ((!phone && !email) || !otp) {
+    res.status(400).json({ success: false, message: "Identifier (phone/email) and OTP are required" });
+    return;
+  }
+
+  let staff;
+  if (phone) {
+    let numericPhone = phone.replace(/\D/g, "").slice(-10);
+    staff = await Staff.scope("withPassword").findOne({ where: { phone: numericPhone } });
+  } else if (email) {
+    staff = await Staff.scope("withPassword").findOne({ where: { email } });
+  }
+
+  if (!staff || staff.otp !== otp.toString()) {
+    res.status(400).json({ success: false, message: "Invalid OTP" });
+    return;
+  }
+
+  if (staff.otpExpiry && new Date() > staff.otpExpiry) {
+    res.status(400).json({ success: false, message: "OTP has expired" });
+    return;
+  }
+
+  // Clear OTP after successful verification
+  await staff.update({ otp: null, otpExpiry: null });
+
+  const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
+  const token = jwt.sign({ id: staff.id, name: staff.name, role: "staff" }, jwtKey, {
+    expiresIn: "24h",
+  });
+
+  res.status(200).json({ 
+    success: true, 
+    message: "OTP verified",
+    token,
+    data: staff 
+  });
+});
+
+// RESET STAFF PASSWORD - POST /staff/auth/reset-password
+export const resetStaffPassword: any = asyncHandler(async (req: Request, res: Response) => {
+  const { email, otp, newPassword } = req.body;
+
+  const staff = await Staff.scope("withPassword").findOne({ where: { email } });
+
+  if (!staff || staff.otp !== otp.toString() || (staff.otpExpiry && new Date() > staff.otpExpiry)) {
+    res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+    return;
+  }
+
+  staff.password = newPassword;
+  staff.otp = null as any;
+  staff.otpExpiry = null as any;
+
+  await staff.save();
+
+  res.json({ success: true, message: "Password reset successful" });
+});
+
+// CHANGE STAFF PASSWORD (JWT) - PUT /staff/auth/change-password
+export const changeStaffPassword: any = asyncHandler(async (req: any, res: Response) => {
+  const { currentPassword, newPassword } = req.body;
+
+  const staff = await Staff.scope("withPassword").findByPk(req.user.id);
+  if (!staff) {
+    res.status(404).json({ success: false, message: "Staff not found" });
+    return;
+  }
+
+  const isMatch = await bcrypt.compare(currentPassword, staff.password || "");
+  if (!isMatch) {
+    res.status(401).json({ success: false, message: "Incorrect current password" });
+    return;
+  }
+
+  staff.password = newPassword;
+  await staff.save();
+
+  res.json({ success: true, message: "Password changed successfully" });
+});

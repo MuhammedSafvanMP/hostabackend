@@ -13,6 +13,7 @@ import bookingRoutes from "./booking.routes";
 import medicineReminderRoutes from "./medicinereminder.routes";
 import notificationRoutes from "./notification.routes";
 import reviewRatingRoutes from "./review.routes"; 
+import labRoutes from "./lab.routes";
 
 
 const router = express.Router();
@@ -31,5 +32,6 @@ router.use("/", bookingRoutes);
 router.use("/", medicineReminderRoutes);
 router.use("/", notificationRoutes);
 router.use("/", reviewRatingRoutes);  
+router.use("/", labRoutes);
 export default router;
 

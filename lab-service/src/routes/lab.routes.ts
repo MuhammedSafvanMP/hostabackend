@@ -2,27 +2,49 @@ import { Router } from "express";
 import {
   Registeration,
   login,
+  loginWithPhone,
+  verifyOtp,
+  verifyLoginOtp,
+  sendOtp,
+  resetPassword,
+  changePassword,
   getanLab,
   updateData,
   labDelete,
-  getLab,
-  forgetpassword,
-  changepassword,
+  getLabs,
 } from "../controllers/lab.controllers";
+import { validate, validateParams } from "../middleware/validate.middleware";
+import {
+  registerSchema,
+  loginSchema,
+  loginWithPhoneSchema,
+  loginWithEmailSchema,
+  verifyOtpSchema,
+  resetPasswordSchema,
+  changePasswordSchema,
+  updateSchema,
+  idParamSchema,
+} from "../validators/lab.validator";
+import { authenticate } from "../middleware/authenticate";
 
 const router = Router();
 
-// Auth
-router.post("/lab/register", Registeration);
-router.post("/lab/login", login);
-router.post("/lab/forgot", forgetpassword);
-router.put("/lab/changepassword", changepassword);
+// Auth & Password Flow
+router.post("/lab/register", validate(registerSchema), Registeration);
+router.post("/lab/login", validate(loginSchema), login);
+router.post("/lab/login/phone", validate(loginWithPhoneSchema), loginWithPhone);
+router.post("/lab/otp", validate(verifyOtpSchema), verifyLoginOtp);
+
+// Production Auth Routes
+router.post("/lab/auth/send-otp", validate(loginWithEmailSchema), sendOtp);
+router.post("/lab/auth/verify-otp", validate(verifyOtpSchema), verifyOtp);
+router.post("/lab/auth/reset-password", validate(resetPasswordSchema), resetPassword);
+router.put("/lab/auth/change-password", authenticate, validate(changePasswordSchema), changePassword);
 
 // CRUD
-
-router.get("/lab", getLab);
-router.get("/lab/:id", getanLab);
-router.put("/lab/:id", updateData);
-router.delete("/lab/:id", labDelete);
+router.get("/lab", authenticate, getLabs);
+router.get("/lab/:id", validateParams(idParamSchema), getanLab);
+router.put("/lab/:id", validateParams(idParamSchema), validate(updateSchema), updateData);
+router.delete("/lab/:id", authenticate, validateParams(idParamSchema), labDelete);
 
 export default router;

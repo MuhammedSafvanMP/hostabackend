@@ -8,16 +8,15 @@ import {
 
 } from "../controllers/test.controllers";
 
+import { authenticate, restrictTo } from "../middleware/authenticate";
+
 const router = Router();
 
-
-
 // CRUD
-
-router.post("/test/register", create);
-router.get("/test", getTest);
-router.get("/test/:id", getanTest);
-router.put("/test/:id", updateData);
-router.delete("/test/:id", testDelete);
+router.post("/test/register", authenticate, restrictTo("staff"), create);
+router.get("/test", authenticate, restrictTo("staff"), getTest);
+router.get("/test/:id", authenticate, restrictTo("staff"), getanTest);
+router.put("/test/:id", authenticate, restrictTo("staff"), updateData);
+router.delete("/test/:id", authenticate, restrictTo("staff"), testDelete);
 
 export default router;

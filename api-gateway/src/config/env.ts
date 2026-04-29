@@ -20,6 +20,7 @@ const envSchema = z.object({
   BOOKING_SERVICE_URL: z.string().url(),
   NOTIFICATION_SERVICE_URL: z.string().url(),
   REVIEW_SERVICE_URL: z.string().url(),
+  LAB_SERVICE_URL: z.string().url(),
 });
 
 

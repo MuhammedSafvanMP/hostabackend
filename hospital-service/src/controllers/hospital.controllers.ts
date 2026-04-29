@@ -6,6 +6,12 @@ import Hospital from "../models/hospital.model";
 import { publishEvent } from "../events/publisher";
 import { Op } from "sequelize";
 import twilio from "twilio";
+import { logger } from "../utils/logger";
+import { sendEmail } from "../services/mail.service";
+
+
+const APPLE_TEST_NUMBER = "9999999999";
+const APPLE_TEST_OTP = "123456";
 
 // Helper for Twilio Client
 const getTwilioClient = () => {
@@ -15,6 +21,38 @@ const getTwilioClient = () => {
     return null;
   }
   return twilio(sid, token);
+};
+
+                                                                                                                                   
+
+export const sendOtpEmail = async (email: string, otp: string, hospitalName: string) => {
+  const html = `
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+      <div style="background-color: #007bff; padding: 30px; text-align: center;">
+        <h1 style="color: white; margin: 0; font-size: 28px; letter-spacing: 1px;">Hosta Hospital</h1>
+      </div>
+      <div style="padding: 40px; background-color: #ffffff;">
+        <h2 style="color: #333; margin-top: 0;">Verification Code</h2>
+        <p style="color: #666; font-size: 16px; line-height: 1.6;">Hello <strong>${hospitalName}</strong>,</p>
+        <p style="color: #666; font-size: 16px; line-height: 1.6;">Use the following security code to complete your login. This code is valid for <strong>10 minutes</strong>.</p>
+        
+        <div style="text-align: center; margin: 40px 0;">
+          <div style="display: inline-block; background-color: #f8f9fa; border: 2px dashed #007bff; border-radius: 8px; padding: 20px 40px; font-size: 32px; font-weight: bold; color: #007bff; letter-spacing: 8px;">
+            ${otp}
+          </div>
+        </div>
+        
+        <p style="color: #999; font-size: 14px; line-height: 1.5; border-top: 1px solid #eee; pt: 20px;">
+          If you didn't request this, please ignore this email or contact support if you have concerns.
+        </p>
+      </div>
+      <div style="background-color: #f8f9fa; padding: 20px; text-align: center; color: #999; font-size: 12px;">
+        &copy; 2026 Hosta Health. All rights reserved.
+      </div>
+    </div>
+  `;
+
+  await sendEmail(email, "Your Verification Code - Hosta Hospital", html);
 };
 
 // REGISTER - POST /hospital/register
@@ -127,8 +165,15 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
 // LOGIN WITH PHONE (OTP REQUEST) - POST /hospital/login/phone
 export const loginWithPhone: any = asyncHandler(async (req: Request, res: Response) => {
   const { phone } = req.body;
+  
+  if (!phone) {
+    res.status(400).json({ success: false, message: "Phone number is required" });
+    return;
+  }
 
-  const hospital = await Hospital.findOne({ where: { phone } });
+  let numericPhone = phone.replace(/\D/g, "").slice(-10);
+
+  const hospital = await Hospital.findOne({ where: { phone: numericPhone } });
   if (!hospital) {
     res.status(404).json({
       success: false,
@@ -138,49 +183,108 @@ export const loginWithPhone: any = asyncHandler(async (req: Request, res: Respon
   }
 
   // Generate 6-digit OTP
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const otp = numericPhone === APPLE_TEST_NUMBER 
+    ? APPLE_TEST_OTP 
+    : Math.floor(100000 + Math.random() * 900000).toString();
+    
   const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins expiry
 
-  await Hospital.update({ otp, otpExpiry }, { where: { phone } });
+  await hospital.update({ otp, otpExpiry });
 
-  // Send OTP via Twilio
-  const client = getTwilioClient();
-  const twilioNumber = process.env.TWILIO_NUMBER;
+  if (numericPhone !== APPLE_TEST_NUMBER) {
+    // 1. Send OTP via Twilio (SMS)
+    const client = getTwilioClient();
+    const twilioNumber = process.env.TWILIO_NUMBER;
 
-  if (client && twilioNumber) {
-    try {
-      await client.messages.create({
-        body: `Your Hosta Hospital verification code is: ${otp}. Valid for 10 minutes.`,
-        from: twilioNumber,
-        to: phone,
-      });
-    } catch (err: any) {
-      console.error("Twilio Error:", err.message);
+    if (client && twilioNumber) {
+      try {
+        const targetNumber = phone.startsWith("+") ? phone : `+91${numericPhone}`;
+        await client.messages.create({
+          body: `Your Hosta Hospital verification code is: ${otp}. Valid for 10 minutes.`,
+          from: twilioNumber,
+          to: targetNumber,
+        });
+        logger.info("OTP SMS sent successfully", { phone: targetNumber });
+      } catch (err: any) {
+        logger.error("Twilio Error:", { message: err.message, phone: numericPhone });
+      }
+    }
+
+    // 2. Send OTP via Email (if exists)
+    if (hospital.email) {
+      try {
+        await sendOtpEmail(hospital.email, otp, hospital.name);
+      } catch (err: any) {
+        logger.error("Email OTP Error:", { message: err.message, email: hospital.email });
+      }
     }
   }
 
   res.status(200).json({
     success: true,
-    message: "OTP sent successfully",
-    data: process.env.NODE_ENV === "development" ? { otp } : null,
+    message: numericPhone === APPLE_TEST_NUMBER ? "OTP sent (TEST ACCOUNT)" : "OTP sent to your registered phone and email",
+    data: numericPhone === APPLE_TEST_NUMBER ? { otp: APPLE_TEST_OTP } : null,
   });
 });
 
-// VERIFY OTP - POST /hospital/otp
-export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) => {
-  const { phone, otp } = req.body;
+// SEND OTP (EMAIL) - POST /hospital/auth/send-otp
+export const sendOtp: any = asyncHandler(async (req: Request, res: Response) => {
+  const { email } = req.body;
 
-  const hospital = await Hospital.scope("withPassword").findOne({ where: { phone } });
-
-  if (!hospital || hospital.otp !== otp || (hospital.otpExpiry && new Date() > hospital.otpExpiry)) {
-    res.status(400).json({
-      success: false,
-      message: "Invalid or expired OTP",
-    });
+  if (!email) {
+    res.status(400).json({ success: false, message: "Email is required" });
     return;
   }
 
-  // Clear OTP fields after verification
+  const hospital = await Hospital.findOne({ where: { email } });
+  if (!hospital) {
+    res.status(404).json({ success: false, message: "Hospital not found with this email" });
+    return;
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+  await hospital.update({ otp, otpExpiry });
+
+  try {
+    await sendOtpEmail(email, otp, hospital.name);
+    res.json({ success: true, message: "OTP sent to email" });
+    return;
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to send email" });
+    return;
+  }
+});
+
+// VERIFY OTP - POST /hospital/auth/verify-otp & /hospital/otp
+export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) => {
+  const { phone, email, otp } = req.body;
+
+  if ((!phone && !email) || !otp) {
+    res.status(400).json({ success: false, message: "Identifier (phone/email) and OTP are required" });
+    return;
+  }
+
+  let hospital;
+  if (phone) {
+    let numericPhone = phone.replace(/\D/g, "").slice(-10);
+    hospital = await Hospital.scope("withPassword").findOne({ where: { phone: numericPhone } });
+  } else if (email) {
+    hospital = await Hospital.scope("withPassword").findOne({ where: { email } });
+  }
+
+  if (!hospital || hospital.otp !== otp.toString()) {
+    res.status(400).json({ success: false, message: "Invalid OTP" });
+    return;
+  }
+
+  if (hospital.otpExpiry && new Date() > hospital.otpExpiry) {
+    res.status(400).json({ success: false, message: "OTP has expired" });
+    return;
+  }
+
+  // Clear OTP after successful verification
   await hospital.update({ otp: null, otpExpiry: null });
 
   const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
@@ -188,14 +292,76 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
     expiresIn: "24h",
   });
 
+  // Remove password and OTP fields from response
   const { password: _, otp: __, otpExpiry: ___, ...safeHospital } = hospital.get();
 
-  res.status(200).json({
-    success: true,
-    message: "OTP verified successfully",
+  res.status(200).json({ 
+    success: true, 
+    message: "OTP verified",
     token,
-    data: safeHospital,
+    data: safeHospital 
   });
+});
+
+export const verifyLoginOtp = verifyOtp;
+
+// RESET PASSWORD - POST /hospital/auth/reset-password
+export const resetPassword: any = asyncHandler(async (req: Request, res: Response) => {
+  const { email, otp, newPassword } = req.body;
+
+  const hospital = await Hospital.scope("withPassword").findOne({ where: { email } });
+
+  if (!hospital || hospital.otp !== otp.toString() || (hospital.otpExpiry && new Date() > hospital.otpExpiry)) {
+    res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+    return;
+  }
+
+  hospital.password = newPassword;
+  hospital.otp = null as any;
+  hospital.otpExpiry = null as any;
+
+  await hospital.save();
+
+  res.json({ success: true, message: "Password reset successful" });
+});
+
+// CHANGE PASSWORD (JWT) - PUT /hospital/auth/change-password
+export const changePassword: any = asyncHandler(async (req: any, res: Response) => {
+  const { currentPassword, newPassword } = req.body;
+
+  const hospital = await Hospital.scope("withPassword").findByPk(req.user.id);
+  if (!hospital) {
+    res.status(404).json({ success: false, message: "Hospital not found" });
+    return;
+  }
+
+  const isMatch = await bcrypt.compare(currentPassword, hospital.password || "");
+  if (!isMatch) {
+    res.status(401).json({ success: false, message: "Incorrect current password" });
+    return;
+  }
+
+  hospital.password = newPassword;
+  await hospital.save();
+
+  res.json({ success: true, message: "Password changed successfully" });
+});
+
+// SEND NOTIFICATION EMAIL - POST /hospital/notify/email
+export const sendCustomEmail: any = asyncHandler(async (req: Request, res: Response) => {
+  const { to, subject, message } = req.body;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; padding: 20px;">
+      <h2>Hosta Health Notification</h2>
+      <p>${message}</p>
+      <hr />
+      <small>Sent via Hosta Hospital Service</small>
+    </div>
+  `;
+
+  await sendEmail(to, subject, html);
+  res.json({ success: true, message: "Notification email sent" });
 });
 
 // GET ONE - GET /hospital/:id
@@ -283,11 +449,9 @@ export const hospitalDelete: any = asyncHandler(async (req: Request, res: Respon
   });
 });
 
-
 // GET ALL - GET /hospital 
 export const getHospital: any = asyncHandler(async (req: Request, res: Response) => {
   const hospital = await Hospital.findAll();
-  
 
   if (hospital.length === 0) {
     res.status(404).json({
@@ -304,38 +468,5 @@ export const getHospital: any = asyncHandler(async (req: Request, res: Response)
     status: "Success",
     data: hospital,
     error: null,
-  });
-});
-
-// CHANGE PASSWORD - PUT /hospital/password
-export const changepassword: any = asyncHandler(async (req: Request, res: Response) => {
-  const { currentPassword, newPassword, email } = req.body;
-
-  const hospital = await Hospital.scope("withPassword").findOne({ where: { email } });
-  if (!hospital) {
-    res.status(404).json({
-      success: false,
-      message: "Hospital not found",
-    });
-    return;
-  }
-
-  // Verify current password
-  const isMatch = await bcrypt.compare(currentPassword, hospital.password || "");
-  if (!isMatch) {
-    res.status(401).json({
-      success: false,
-      message: "Incorrect current password",
-    });
-    return;
-  }
-
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-  hospital.password = hashedPassword;
-  await hospital.save();
-
-  res.status(200).json({
-    success: true,
-    message: "Password changed successfully",
   });
 });

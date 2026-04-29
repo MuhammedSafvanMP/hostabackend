@@ -6,6 +6,7 @@ import {
   specialityDelete,
   getSpecialitys,
 } from "../controllers/speciality.controllers";
+import { authenticate } from "../middleware/authenticate";
 
 const router = Router();
 
@@ -13,10 +14,10 @@ const router = Router();
 
 // CRUD
 
-router.post("/speciality/register", Registeration);
-router.get("/speciality", getSpecialitys);
-router.get("/speciality/:id", getanSpeciality);
-router.put("/speciality/:id", updateData);
-router.delete("/speciality/:id", specialityDelete);
+router.post("/speciality/register",authenticate,Registeration);
+router.get("/speciality", authenticate, getSpecialitys);
+router.get("/speciality/:id",authenticate, getanSpeciality);
+router.put("/speciality/:id",authenticate, updateData);
+router.delete("/speciality/:id",authenticate, specialityDelete);
 
 export default router;

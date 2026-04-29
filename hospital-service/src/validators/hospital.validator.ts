@@ -58,15 +58,34 @@ export const loginWithPhoneSchema = z.object({
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits"),
 });
 
+export const loginWithEmailSchema = z.object({
+  email: z.string().email("Invalid email format"),
+});
+
 export const verifyOtpSchema = z.object({
-  phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits"),
+  phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits").optional(),
+  email: z.string().email("Invalid email format").optional(),
   otp: z.string().length(6, "OTP must be 6 digits"),
+}).refine(data => data.email || data.phone, {
+  message: "Either email or phone is required",
+  path: ["phone"],
 });
 
 export const changePasswordSchema = z.object({
-  email: z.string().email("Invalid email format"),
   currentPassword: z.string().min(1, "Current password is required"),
   newPassword: z.string().min(6, "New password must be at least 6 characters"),
+});
+
+export const resetPasswordSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  otp: z.string().length(6, "OTP must be 6 digits"),
+  newPassword: z.string().min(6, "New password must be at least 6 characters"),
+});
+
+export const sendCustomEmailSchema = z.object({
+  to: z.string().email("Invalid recipient email"),
+  subject: z.string().min(1, "Subject is required"),
+  message: z.string().min(1, "Message is required"),
 });
 
 // ID parameter validation
@@ -78,5 +97,8 @@ export type RegisterHospitalInput = z.infer<typeof registerHospitalSchema>;
 export type UpdateHospitalInput = z.infer<typeof updateHospitalSchema>;
 export type LoginHospitalInput = z.infer<typeof loginHospitalSchema>;
 export type LoginWithPhoneInput = z.infer<typeof loginWithPhoneSchema>;
+export type LoginWithEmailInput = z.infer<typeof loginWithEmailSchema>;
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type SendCustomEmailInput = z.infer<typeof sendCustomEmailSchema>;

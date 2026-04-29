@@ -20,8 +20,8 @@ breaker.fallback(() => {
 
 export const proxyRequest = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // 🛡️ Safe Path Mapping: Gateway /api/booking -> Microservice /booking
-    // We remove '/api' from the original URL so /api/booking/register becomes /booking/register
+    // 🛡️ Safe Path Mapping: Gateway /api/hospital/:hospitalId/booking -> Microservice /hospital/:hospitalId/booking
+    // We remove '/api' from the original URL so /api/hospital/1/booking/register becomes /hospital/1/booking/register
     const targetPath = req.originalUrl.replace("/api", "");
     const url = `${SERVICES.BOOKING_SERVICE}${targetPath}`;
 
@@ -64,4 +64,3 @@ export const proxyRequest = async (req: Request, res: Response, next: NextFuncti
     }
   }
 };
-

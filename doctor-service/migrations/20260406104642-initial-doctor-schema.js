@@ -31,3 +31,19 @@ module.exports = {
     await queryInterface.dropTable("Doctors");
   },
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

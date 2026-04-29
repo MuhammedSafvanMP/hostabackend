@@ -5,7 +5,7 @@ export const createBookingSchema = z.object({
   patient_phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits"),
   patient_place: z.string().optional(),
   patient_dob: z.string().optional(),
-  patientId: z.number().int().positive(),
+  userId: z.number().int().positive(),
   doctorId: z.number().int().positive(),
   hospitalId: z.number().int().positive(),
   booking_date: z.string().or(z.date()),

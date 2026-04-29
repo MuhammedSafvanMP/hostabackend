@@ -2,7 +2,6 @@
   "name": "medicine-reminder-service",
   "version": "1.0.0",
   "description": "Medicine Reminder microservice for Hosta project",
-
   "main": "dist/server.js",
   "scripts": {
     "start": "node dist/server.js",
@@ -13,6 +12,7 @@
   },
   "dependencies": {
     "amqplib": "^1.0.2",
+    "axios": "^1.7.2",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",

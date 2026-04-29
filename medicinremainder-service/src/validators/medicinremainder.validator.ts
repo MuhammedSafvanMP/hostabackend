@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const medicineScheduleSchema = z.object({
-  patientId: z.number().int().positive(),
   medicineName: z.string().min(1, "Medicine name is required"),
   dosage: z.string().optional(),
   days: z.array(z.string()).min(1, "At least one day is required"),

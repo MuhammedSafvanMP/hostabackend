@@ -1,6 +1,7 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/db";
 import PatientVitals from "./patientVitals.model";
+import User from "./user.model";
 
 
 interface IPatient {
@@ -113,7 +114,7 @@ Patient.init(
       allowNull: true,
 
       references: {
-        model: "user",
+        model: "users",
         key: "id",
       },
       onDelete: "CASCADE",
@@ -209,5 +210,16 @@ Patient.init(
     paranoid: true,
   }
 );
+
+// 🔗 Associations: One User → Many Patients
+User.hasMany(Patient, {
+  foreignKey: "userId",
+  as: "patients",
+});
+
+Patient.belongsTo(User, {
+  foreignKey: "userId",
+  as: "user",
+});
 
 export default Patient;

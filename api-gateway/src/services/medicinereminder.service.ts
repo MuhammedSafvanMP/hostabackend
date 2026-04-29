@@ -20,8 +20,10 @@ breaker.fallback(() => {
 
 export const proxyRequest = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // 🛡️ Safe Path Mapping: Gateway /api/medicine-reminder -> Microservice /medicinremainder
-    const targetPath = req.originalUrl.replace("/api/medicine-reminder", "/medicinremainder");
+    // req.path is the sub-path after "/medicine-reminder" was matched by the router
+    // e.g. gateway: /api/medicine-reminder/register → req.path = /register
+    // microservice: /medicinremainder/register
+    const targetPath = `/medicinremainder${req.path}`;
     const url = `${SERVICES.MEDICINREMINDER_SERVICE}${targetPath}`;
 
     const options = {

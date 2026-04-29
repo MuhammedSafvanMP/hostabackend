@@ -9,6 +9,7 @@ const addressSchema = z.object({
 });
 
 export const registerStaffSchema = z.object({
+  hospitalId: z.number().min(1, "Hospital ID is required"),
   name: z.string().min(1, "Name is required"),
   designation: z.string().optional(),
   joiningDate: z.string().optional(),
@@ -35,9 +36,28 @@ export const loginWithPhoneSchema = z.object({
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits"),
 });
 
+export const loginWithEmailSchema = z.object({
+  email: z.string().email("Invalid email format"),
+});
+
 export const verifyOtpSchema = z.object({
-  phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits"),
+  phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits").optional(),
+  email: z.string().email("Invalid email format").optional(),
   otp: z.string().length(6, "OTP must be 6 digits"),
+}).refine(data => data.email || data.phone, {
+  message: "Either email or phone is required",
+  path: ["phone"],
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(6, "New password must be at least 6 characters"),
+});
+
+export const resetPasswordSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  otp: z.string().length(6, "OTP must be 6 digits"),
+  newPassword: z.string().min(6, "New password must be at least 6 characters"),
 });
 
 // ID parameter validation

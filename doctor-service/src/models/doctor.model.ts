@@ -32,6 +32,7 @@ interface IOutDoorConsulting {
 
 interface IDoctor {
   id: number;
+  
   firstName: string;
   lastName: string;
   department?: string;
@@ -55,6 +56,7 @@ interface IDoctor {
   isDelete?: boolean;
   otp?: string;
   otpExpiry?: Date;
+  hospitalId?: number;
 }
 
 /* =======================
@@ -63,7 +65,7 @@ interface IDoctor {
 
 type DoctorCreationAttributes = Optional<
   IDoctor,
-  "id" |  "email" |  "joiningDate" | "password" | "fees" | "dob" | "gender" | "knowLanguages" | "qualification" | "consulting" | "department" | "specialist" | "displayName" 
+  "id" |  "email" |  "joiningDate" | "password" | "fees" | "dob" | "gender" | "knowLanguages" | "qualification" | "consulting" | "department" | "specialist" | "displayName" | "hospitalId"
 >;
 
 /* =======================
@@ -96,6 +98,7 @@ class Doctor
   public otp!: string;
   public otpExpiry!: Date;
   public outDoorConsulting?: IOutDoorConsulting;
+  public hospitalId?: number;
 
 }
 
@@ -109,6 +112,10 @@ Doctor.init(
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
+    },
+    hospitalId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
 
     firstName: {

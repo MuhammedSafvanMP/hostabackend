@@ -6,8 +6,13 @@ import {
   verifyOtp,
   getUsers,
   getUser,
+  updateUser,
   deleteUser,
   resetPassword,
+  sendOtpEmail,
+  verifyOtpEmail,
+  resetPasswordEmail,
+  changePassword,
   saveExpoToken,
   testPushNotification,
   createPatient,
@@ -27,33 +32,40 @@ import {
 
 
 import { validate, validateParams } from "../middleware/validate.middleware";
-import { registerSchema, loginSchema, idParamSchema, loginWithPhoneSchema, verifyOtpSchema } from "../validators/user.validator";
-import { authenticate } from "../middleware/authenticate";
+import { registerSchema, loginSchema, idParamSchema, loginWithPhoneSchema, verifyOtpSchema, updateUserSchema, sendOtpEmailSchema, verifyOtpEmailSchema, resetPasswordEmailSchema, changePasswordSchema } from "../validators/user.validator";
+import { authenticate, restrictTo } from "../middleware/authenticate";
 
-const router = Router();
+const router = Router();                              
 
 // User Routes
 router.post("/users/register", validate(registerSchema), registerUser);
 router.post("/users/login", validate(loginSchema), loginUser);
 router.post("/users/login/phone", validate(loginWithPhoneSchema), loginWithPhone);
 router.post("/users/otp", validate(verifyOtpSchema), verifyOtp);
-router.post("/users/password", resetPassword);
+// router.post("/users/password", resetPassword);
+
+// Email Password Reset Flow
+router.post("/users/auth/send-otp", validate(sendOtpEmailSchema), sendOtpEmail);
+router.post("/users/auth/verify-otp", validate(verifyOtpEmailSchema), verifyOtpEmail);
+router.post("/users/auth/reset-password", validate(resetPasswordEmailSchema), resetPasswordEmail);
+router.put("/users/auth/change-password", authenticate, validate(changePasswordSchema), changePassword);
+
 router.get("/users", authenticate, getUsers);
 router.get("/users/:id", authenticate, validateParams(idParamSchema), getUser);
+router.put("/users/:id", authenticate, validateParams(idParamSchema), validate(updateUserSchema), updateUser);
 router.delete("/users/:id", authenticate, validateParams(idParamSchema), deleteUser);
 
 
-
-router.post("/users/:id/token", validateParams(idParamSchema), saveExpoToken);
-router.post("/users/test/:id", validateParams(idParamSchema), testPushNotification);
+// router.post("/users/:id/token", validateParams(idParamSchema), saveExpoToken);
+// router.post("/users/test/:id", validateParams(idParamSchema), testPushNotification);
 
 
 // Patient Routes
-router.post("/patients", authenticate, createPatient);
-router.get("/patients", authenticate, getPatients);
-router.get("/patients/:id", authenticate, validateParams(idParamSchema), getPatient);
-router.put("/patients/:id", authenticate, validateParams(idParamSchema), updatePatient);
-router.delete("/patients/:id", authenticate, validateParams(idParamSchema), deletePatient);
+router.post("/patients", authenticate, restrictTo("staff"), createPatient);
+router.get("/patients", authenticate, restrictTo("staff", "user"), getPatients);
+router.get("/patients/:id", authenticate, restrictTo("staff", "user"), validateParams(idParamSchema), getPatient);
+router.put("/patients/:id", authenticate, restrictTo("staff"), validateParams(idParamSchema), updatePatient);
+router.delete("/patients/:id", authenticate, restrictTo("staff"), validateParams(idParamSchema), deletePatient);
 
 
 
@@ -67,6 +79,11 @@ router.delete("/prescription/:id", authenticate, deletePrescription);
 
 
 export default router;
+
+
+
+
+
 
 
 

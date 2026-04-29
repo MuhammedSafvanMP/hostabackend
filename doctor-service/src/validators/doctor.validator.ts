@@ -19,6 +19,7 @@ const consultingSchema = z.object({
 });
 
 export const registerDoctorSchema = z.object({
+  hospitalId: z.number().min(1, "Hospital ID is required"),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   displayName: z.string().min(1, "Display name is required"),
@@ -52,13 +53,26 @@ export const loginWithPhoneSchema = z.object({
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits"),
 });
 
+export const loginWithEmailSchema = z.object({
+  email: z.string().email("Invalid email format"),
+});
+
 export const verifyOtpSchema = z.object({
-  phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits"),
+  phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits").optional(),
+  email: z.string().email("Invalid email format").optional(),
   otp: z.string().length(6, "OTP must be 6 digits"),
+}).refine(data => data.phone || data.email, {
+  message: "Either phone or email is required",
+  path: ["phone"],
+});
+
+export const resetPasswordSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  otp: z.string().length(6, "OTP must be 6 digits"),
+  newPassword: z.string().min(6, "New password must be at least 6 characters"),
 });
 
 export const changePasswordSchema = z.object({
-  email: z.string().email("Invalid email format"),
   currentPassword: z.string().min(1, "Current password is required"),
   newPassword: z.string().min(6, "New password must be at least 6 characters"),
 });

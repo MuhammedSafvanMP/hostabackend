@@ -37,9 +37,6 @@ app.use(cors({
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
-// ROUTES
-app.use("/", pharmacyRoutes);
-
 // Health check endpoint
 app.get("/health", (req: Request, res: Response) => {
   res.status(200).json({
@@ -50,6 +47,9 @@ app.get("/health", (req: Request, res: Response) => {
     environment: env.NODE_ENV
   });
 });
+
+// ROUTES
+app.use("/", pharmacyRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response, next: NextFunction) => {

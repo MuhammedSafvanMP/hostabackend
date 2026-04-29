@@ -3,6 +3,7 @@ import asyncHandler from "express-async-handler";
 import { userService } from "../services/user.service";
 import Patient from "../models/patient.model";
 import PatientVitals from "../models/patientVitals.model";
+import User from "../models/user.model";
 
 // --- USER CONTROLLERS ---
 
@@ -62,6 +63,15 @@ export const getUser: any = asyncHandler(async (req: Request, res: Response) => 
   }
 });
 
+export const updateUser: any = asyncHandler(async (req: Request, res: Response) => {
+    try {
+      const user = await userService.updateUser(req.params.id, req.body);
+      res.status(200).json({ success: true, message: "User updated successfully", data: user });
+    } catch (error: any) {
+      res.status(error.status || 500).json({ success: false, message: error.message });
+    }
+});
+
 export const deleteUser: any = asyncHandler(async (req: Request, res: Response) => {
   try {
     await userService.deleteUser(req.params.id);
@@ -75,6 +85,42 @@ export const resetPassword: any = asyncHandler(async (req: Request, res: Respons
   try {
     await userService.resetPassword(req.body);
     res.status(200).json({ success: true, message: "Password reset successful" });
+  } catch (error: any) {
+    res.status(error.status || 500).json({ success: false, message: error.message });
+  }
+});
+
+export const sendOtpEmail: any = asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const result = await userService.sendOtpByEmail(req.body.email);
+    res.status(200).json(result);
+  } catch (error: any) {
+    res.status(error.status || 500).json({ success: false, message: error.message });
+  }
+});
+
+export const verifyOtpEmail: any = asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const result = await userService.verifyOtpEmail(req.body);
+    res.status(200).json({ success: true, message: "OTP verified", ...result });
+  } catch (error: any) {
+    res.status(error.status || 500).json({ success: false, message: error.message });
+  }
+});
+
+export const resetPasswordEmail: any = asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const result = await userService.resetPasswordWithEmail(req.body);
+    res.status(200).json(result);
+  } catch (error: any) {
+    res.status(error.status || 500).json({ success: false, message: error.message });
+  }
+});
+
+export const changePassword: any = asyncHandler(async (req: any, res: Response) => {
+  try {
+    const result = await userService.changePassword(req.user.id, req.body);
+    res.status(200).json(result);
   } catch (error: any) {
     res.status(error.status || 500).json({ success: false, message: error.message });
   }
@@ -111,7 +157,7 @@ export const createPatient: any = asyncHandler(async (req: Request, res: Respons
       firstName, middleName, lastName, bloodGroup, gender, maritalStatus,
       patientType, age, dob, company, mobileNumber, emergencyNumber,
       guardianName, addressLine1, addressLine2, country, city, state, pinCode,
-      referredBy, department, referredOn, notes, email, profileImage
+      referredBy, department, referredOn, notes, email, profileImage, userId
     } = req.body;
 
     // 2. Extract Vitals Info (if any)
@@ -119,12 +165,21 @@ export const createPatient: any = asyncHandler(async (req: Request, res: Respons
       temperature, pulse, respiratoryRate, spo2, height, weight, waist
     } = req.body;
 
-    // 3. Create Patient
+    // 3. Validate userId (if provided)
+    if (userId) {
+      const userExists = await User.findByPk(userId);
+      if (!userExists) {
+        res.status(400).json({ success: false, message: `User with ID ${userId} does not exist.` });
+        return;
+      }
+    }
+
+    // 4. Create Patient
     const patient = await Patient.create({
       firstName, middleName, lastName, bloodGroup, gender, maritalStatus,
       patientType, age, dob, company, mobileNumber, emergencyNumber,
       guardianName, addressLine1, addressLine2, country, city, state, pinCode,
-      referredBy, department, referredOn, notes, email, profileImage
+      referredBy, department, referredOn, notes, email, profileImage, userId
     }, { transaction: t });
 
     // 4. If any vitals field is provided, create a vitals record
@@ -148,9 +203,12 @@ export const createPatient: any = asyncHandler(async (req: Request, res: Respons
 
     await t.commit();
 
-    // Fetch the stored patient with vitals to return
+    // Fetch the stored patient with vitals + user to return
     const result = await Patient.findByPk(patient.id, {
-      include: [{ model: PatientVitals, as: "vitals" }]
+      include: [
+        { model: PatientVitals, as: "vitals" },
+        { model: User, as: "user", attributes: ["id", "name", "email", "phone"] },
+      ],
     });
 
     res.status(201).json({
@@ -168,7 +226,10 @@ export const createPatient: any = asyncHandler(async (req: Request, res: Respons
 // GET ALL PATIENTS
 export const getPatients: any = asyncHandler(async (req: Request, res: Response) => {
   const patients = await Patient.findAll({
-    include: [{ model: PatientVitals, as: "vitals", limit: 1, order: [["createdAt", "DESC"]] }],
+    include: [
+      { model: PatientVitals, as: "vitals", limit: 1, order: [["createdAt", "DESC"]] },
+      { model: User, as: "user", attributes: ["id", "name", "email", "phone"] },
+    ],
   });
 
   res.status(200).json({
@@ -180,7 +241,10 @@ export const getPatients: any = asyncHandler(async (req: Request, res: Response)
 // GET ONE PATIENT (with all vitals history)
 export const getPatient: any = asyncHandler(async (req: Request, res: Response) => {
   const patient = await Patient.findByPk(req.params.id, {
-    include: [{ model: PatientVitals, as: "vitals", order: [["createdAt", "DESC"]] }],
+    include: [
+      { model: PatientVitals, as: "vitals", order: [["createdAt", "DESC"]] },
+      { model: User, as: "user", attributes: ["id", "name", "email", "phone"] },
+    ],
   });
 
   if (!patient) {
@@ -214,14 +278,23 @@ export const updatePatient: any = asyncHandler(async (req: Request, res: Respons
       firstName, middleName, lastName, bloodGroup, gender, maritalStatus,
       patientType, age, dob, company, mobileNumber, emergencyNumber,
       guardianName, addressLine1, addressLine2, country, city, state, pinCode,
-      referredBy, department, referredOn, notes, email, profileImage
+      referredBy, department, referredOn, notes, email, profileImage, userId
     } = req.body;
+
+    // 1.5 Validate userId (if provided)
+    if (userId) {
+      const userExists = await User.findByPk(userId);
+      if (!userExists) {
+        res.status(400).json({ success: false, message: `User with ID ${userId} does not exist.` });
+        return;
+      }
+    }
 
     await patient.update({
       firstName, middleName, lastName, bloodGroup, gender, maritalStatus,
       patientType, age, dob, company, mobileNumber, emergencyNumber,
       guardianName, addressLine1, addressLine2, country, city, state, pinCode,
-      referredBy, department, referredOn, notes, email, profileImage
+      referredBy, department, referredOn, notes, email, profileImage, userId
     }, { transaction: t });
 
     // 2. Check for NEW Vitals in the same request
@@ -246,9 +319,12 @@ export const updatePatient: any = asyncHandler(async (req: Request, res: Respons
 
     await t.commit();
 
-    // 3. Return updated patient with fresh vitals
+    // 3. Return updated patient with fresh vitals + user
     const result = await Patient.findByPk(patient.id, {
-      include: [{ model: PatientVitals, as: "vitals", limit: 1, order: [["createdAt", "DESC"]] }]
+      include: [
+        { model: PatientVitals, as: "vitals", limit: 1, order: [["createdAt", "DESC"]] },
+        { model: User, as: "user", attributes: ["id", "name", "email", "phone"] },
+      ],
     });
 
     res.status(200).json({

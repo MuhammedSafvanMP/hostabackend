@@ -1,10 +1,12 @@
-
 services:
   api-gateway:
     container_name: api-gateway
     build: ./api-gateway
     ports:
       - "3000:3000"
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     env_file:
       - ./api-gateway/.env
     depends_on:
@@ -18,12 +20,16 @@ services:
       - booking-service
       - notification-service
       - review-service
+      - lab-service
     networks:
       - hosta-network
 
   user-service:
     container_name: user-service
     build: ./user-service
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     env_file:
       - ./user-service/.env
     networks:
@@ -32,6 +38,9 @@ services:
   ambulance-service:
     container_name: ambulance-service
     build: ./ambulance-service
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     env_file:
       - ./ambulance-service/.env
     networks:
@@ -39,15 +48,21 @@ services:
 
   blood-service:
     container_name: blood-service
-    build: ./blood-service
+    build: ./bloodDonor-service
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     env_file:
-      - ./blood-service/.env
+      - ./bloodDonor-service/.env
     networks:
       - hosta-network
 
   blood-bank-service:
     container_name: blood-bank-service
     build: ./blood-bank-service
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     env_file: ./blood-bank-service/.env
     networks:
       - hosta-network
@@ -55,6 +70,9 @@ services:
   pharmacy-service:
     container_name: pharmacy-service
     build: ./pharmacy-service
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     env_file: ./pharmacy-service/.env
     networks:
       - hosta-network 
@@ -62,20 +80,33 @@ services:
   staff-service:
     container_name: staff-service
     build: ./staff-service
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     env_file: ./staff-service/.env
     networks:
       - hosta-network
+    depends_on:
+      - hospital-service
 
   doctor-service:
     container_name: doctor-service
     build: ./doctor-service
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     env_file: ./doctor-service/.env
     networks:
       - hosta-network
+    depends_on:
+      - hospital-service
 
   speciality-service:
     container_name: speciality-service
     build: ./speciality-service
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     env_file: ./speciality-service/.env
     networks:
       - hosta-network 
@@ -83,6 +114,9 @@ services:
   hospital-service:
     container_name: hospital-service
     build: ./hospital-service
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     env_file: ./hospital-service/.env
     networks:
       - hosta-network
@@ -90,6 +124,9 @@ services:
   booking-service:
     container_name: booking-service
     build: ./booking-service
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     env_file: ./booking-service/.env
     networks:
       - hosta-network
@@ -97,6 +134,9 @@ services:
   medicine-reminder-service:
     container_name: medicine-reminder-service
     build: ./medicinremainder-service
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     env_file: ./medicinremainder-service/.env
     networks:
       - hosta-network
@@ -104,6 +144,9 @@ services:
   notification-service:
     container_name: notification-service
     build: ./notification-service
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     env_file: ./notification-service/.env
     networks:
       - hosta-network
@@ -111,13 +154,26 @@ services:
   review-service:
     container_name: review-service
     build: ./review-service
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     env_file: ./review-service/.env
     networks:
       - hosta-network
 
+  lab-service:
+    container_name: lab-service
+    build: ./lab-service
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    env_file: ./lab-service/.env
+    networks:
+      - hosta-network 
+
 networks:
   hosta-network:
     name: hosta-network
-
-    
     driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1400

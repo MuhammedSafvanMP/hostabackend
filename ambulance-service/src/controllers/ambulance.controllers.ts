@@ -1,11 +1,12 @@
 import { Request, Response } from "express";
-import bcrypt from "bcrypt";
 import asyncHandler from "express-async-handler";
 import Ambulance from "../models/ambulance.model";
 import { publishEvent } from "../events/publisher";
 import { generateToken } from "../services/jwt.service";
-import { Op } from "sequelize";
 import twilio from "twilio";
+
+const APPLE_TEST_NUMBER = "9999999999";
+const APPLE_TEST_OTP = "123456";
 
 // Helper for Twilio Client
 const getTwilioClient = () => {
@@ -17,9 +18,41 @@ const getTwilioClient = () => {
   return twilio(sid, token);
 };
 
+import { httpClient } from "../utils/httpClient";
+
 // REGISTER - POST /ambulance/register
-export const Registeration: any = asyncHandler(async (req: Request, res: Response) => {
-  const { serviceName, address, phone, vehicleType, email, password } = req.body;
+export const Registeration: any = asyncHandler(async (req: any, res: Response) => {
+  const { serviceName, address, phone, vehicleType, userId: bodyUserId } = req.body;
+  const tokenUserId = req.user.id;
+  const authHeader = req.headers.authorization;
+
+  // 1. Security Check: If userId is provided in body, it must match the token ID
+  if (bodyUserId && Number(bodyUserId) !== Number(tokenUserId)) {
+    res.status(403).json({
+      success: false,
+      message: "Security violation: The provided userId does not match your authenticated account.",
+      error: { code: "USER_ID_MISMATCH" }
+    });
+    return;
+  }
+
+  const userId = tokenUserId; // Use token ID as the source of truth
+
+  // 2. Validate User Existence (Cross-Service: user-service)
+  try {
+    console.log(`Verifying user at: http://user-service:3002/users/${userId}`);
+    await httpClient.get(`http://user-service:3002/users/${userId}`, {
+      headers: { Authorization: authHeader }
+    });
+  } catch (error: any) {
+    console.error("User validation failed:", error.message);
+    res.status(404).json({
+      success: false,
+      message: `User with ID ${userId} does not exist in the user service.`,
+      error: { code: "USER_NOT_FOUND" }
+    });
+    return;
+  }
 
   const exist = await Ambulance.findOne({ where: { phone: phone } });
   if (exist) {
@@ -32,19 +65,12 @@ export const Registeration: any = asyncHandler(async (req: Request, res: Respons
     return;
   }
 
-  // Hash password if provided
-  let hashedPassword : string;
-  if (password) {
-    hashedPassword = await bcrypt.hash(password, 10);
-  }
-
   const newAmbulance = await Ambulance.create({
     serviceName: serviceName,
     address: address,
     phone: phone,
     vehicleType: vehicleType,
-    email: email,
-    password: hashedPassword,
+    userId: req.user.id, // Linked to User account
   });
 
   await publishEvent("ambulance_events", "AMBULANCE_REGISTERED", {
@@ -52,8 +78,7 @@ export const Registeration: any = asyncHandler(async (req: Request, res: Respons
     phone: newAmbulance.phone,
   });
 
-  // Remove password from response
-  const { password: _, ...ambulanceData } = newAmbulance.toJSON();
+  const ambulanceData = newAmbulance.toJSON();
 
   res.status(201).json({
     success: true,
@@ -63,69 +88,18 @@ export const Registeration: any = asyncHandler(async (req: Request, res: Respons
   });
 });
 
-// LOGIN - POST /ambulance/login
-export const login: any = asyncHandler(async (req: Request, res: Response) => {
-  const { email, phone, password } = req.body;
-
-  if ((!email && !phone) || !password) {
-    res.status(400).json({
-      success: false,
-      message: "Identifier (email/phone) and password are required",
-    });
-    return;
-  }
-
-  // Find user by email OR phone
-  const user = await Ambulance.scope("withPassword").findOne({
-    where: {
-      [Op.or]: [
-        email ? { email } : null,
-        phone ? { phone } : null,
-      ].filter(Boolean) as any,
-    },
-  });
-
-  if (!user) {
-    res.status(401).json({
-      success: false,
-      message: "Ambulance not found! Please register",
-      data: null,
-      error: { code: "AMBULANCE_NOT_FOUND", details: null },
-    });
-    return;
-  }
-
-  const checkPassword = await bcrypt.compare(password, user.password || "");
-  if (!checkPassword) {
-    res.status(401).json({
-      success: false,
-      message: "Wrong password, Please try again",
-      data: null,
-      error: { code: "WRONG_PASSWORD", details: null },
-    });
-    return;
-  }
-
-  const token = generateToken({ id: user.id, name: user.serviceName });
-
-  // Remove password from response
-  const { password: _, otp: __, otpExpiry: ___, ...safeUser } = user.toJSON();
-
-  res.status(200).json({
-    success: true,
-    message: "Logged in successfully",
-    status: 200,
-    token, // Return token for API Gateway forwarding
-    data: safeUser,
-    error: null,
-  });
-});
 
 // LOGIN WITH PHONE (OTP REQUEST) - POST /ambulance/login/phone
 export const loginWithPhone: any = asyncHandler(async (req: Request, res: Response) => {
   const { phone } = req.body;
+  let numericPhone = phone.replace(/\D/g, "").slice(-10);
 
-  const ambulance = await Ambulance.findOne({ where: { phone } });
+  if (!numericPhone) {
+    res.status(400).json({ success: false, message: "Invalid phone number" });
+    return;
+  }
+
+  const ambulance = await Ambulance.scope("withPassword").findOne({ where: { phone: numericPhone } });
   if (!ambulance) {
     res.status(404).json({
       success: false,
@@ -135,40 +109,46 @@ export const loginWithPhone: any = asyncHandler(async (req: Request, res: Respon
   }
 
   // Generate 6-digit OTP
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const otp = numericPhone === APPLE_TEST_NUMBER 
+    ? APPLE_TEST_OTP 
+    : Math.floor(100000 + Math.random() * 900000).toString();
+  
   const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins expiry
 
-  await Ambulance.update({ otp, otpExpiry }, { where: { phone } });
+  await ambulance.update({ otp, otpExpiry });
 
   // Send OTP via Twilio
-  const client = getTwilioClient();
-  const twilioNumber = process.env.TWILIO_NUMBER;
-
-  if (client && twilioNumber) {
+  if (numericPhone !== APPLE_TEST_NUMBER) {
     try {
-      await client.messages.create({
-        body: `Your Hosta Ambulance verification code is: ${otp}. Valid for 10 minutes.`,
-        from: twilioNumber,
-        to: phone,
-      });
+        const client = getTwilioClient();
+        const twilioNumber = process.env.TWILIO_NUMBER;
+
+        if (client && twilioNumber) {
+            const targetNumber = phone.startsWith("+") ? phone : `+91${numericPhone}`;
+            await client.messages.create({
+                body: `Your Hosta Ambulance verification code is: ${otp}. Valid for 10 minutes.`,
+                from: twilioNumber,
+                to: targetNumber,
+            });
+        }
     } catch (err: any) {
-      console.error("Twilio Error:", err.message);
-      // Still return 200 in dev but maybe warning
+        console.error("Twilio Error:", err.message);
     }
   }
 
   res.status(200).json({
     success: true,
-    message: "OTP sent successfully",
-    data: process.env.NODE_ENV === "development" ? { otp } : null, // Show OTP in dev
+    message: numericPhone === APPLE_TEST_NUMBER ? "OTP sent (TEST ACCOUNT)" : "OTP sent successfully",
+    data: (process.env.NODE_ENV === "development" || numericPhone === APPLE_TEST_NUMBER) ? { otp } : null,
   });
 });
 
 // VERIFY OTP - POST /ambulance/otp
 export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) => {
   const { phone, otp } = req.body;
+  let numericPhone = phone.replace(/\D/g, "").slice(-10);
 
-  const ambulance = await Ambulance.scope("withPassword").findOne({ where: { phone } });
+  const ambulance = await Ambulance.scope("withPassword").findOne({ where: { phone: numericPhone } });
 
   if (!ambulance || ambulance.otp !== otp || (ambulance.otpExpiry && new Date() > ambulance.otpExpiry)) {
     res.status(400).json({
@@ -179,16 +159,19 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
   }
 
   // Clear OTP fields after verification
-  await ambulance.update({ otp: null, otpExpiry: null });
+  await ambulance.update({ otp: null as any, otpExpiry: null as any });
 
   const token = generateToken({ id: ambulance.id, name: ambulance.serviceName });
-  const { password: _, otp: __, otpExpiry: ___, ...safeUser } = ambulance.toJSON();
+  const ambulanceJson = ambulance.toJSON();
+  
+  delete (ambulanceJson as any).otp;
+  delete (ambulanceJson as any).otpExpiry;
 
   res.status(200).json({
     success: true,
     message: "OTP verified successfully",
     token,
-    data: safeUser,
+    data: ambulanceJson,
   });
 });
 
@@ -205,8 +188,7 @@ export const getanAmbulace: any = asyncHandler(async (req: Request, res: Respons
     return;
   }
 
-  // Remove password from response
-  const { password: _, ...safeUser } = user.toJSON();
+  const safeUser = user.toJSON();
 
   res.status(200).json({
     success: true,
@@ -221,8 +203,8 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
   const { id } = req.params;
   
   // Whitelist fields to prevent Mass Assignment
-  const { serviceName, address, phone, vehicleType, email } = req.body;
-  const updatePayload = { serviceName, address, phone, vehicleType, email };
+  const { serviceName, address, phone, vehicleType } = req.body;
+  const updatePayload = { serviceName, address, phone, vehicleType };
 
   const [affectedCount, affectedRows] = await Ambulance.update(updatePayload, {
     where: { id: id },
@@ -240,7 +222,6 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
   }
 
   const updatedAmbulance = affectedRows[0].toJSON();
-  delete (updatedAmbulance as any).password;
 
   await publishEvent("ambulance_events", "AMBULANCE_UPDATED", {
     ambulanceId: updatedAmbulance.id,
@@ -300,9 +281,7 @@ export const getAmbulaces: any = asyncHandler(async (req: Request, res: Response
   }
 
   const safeAmbulances = ambulances.map(ambulance => {
-    const json = ambulance.toJSON();
-    delete (json as any).password;
-    return json;
+    return ambulance.toJSON();
   });
 
   res.status(200).json({
@@ -310,38 +289,5 @@ export const getAmbulaces: any = asyncHandler(async (req: Request, res: Response
     status: "Success",
     data: safeAmbulances,
     error: null,
-  });
-});
-
-// CHANGE PASSWORD - PUT /ambulance/password
-export const changepassword: any = asyncHandler(async (req: Request, res: Response) => {
-  const { currentPassword, newPassword, email } = req.body;
-
-  const ambulance = await Ambulance.scope("withPassword").findOne({ where: { email } });
-  if (!ambulance) {
-    res.status(404).json({
-      success: false,
-      message: "Ambulance not found",
-    });
-    return;
-  }
-
-  // Verify current password
-  const isMatch = await bcrypt.compare(currentPassword, ambulance.password || "");
-  if (!isMatch) {
-    res.status(401).json({
-      success: false,
-      message: "Incorrect current password",
-    });
-    return;
-  }
-
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-  ambulance.password = hashedPassword;
-  await ambulance.save();
-
-  res.status(200).json({
-    success: true,
-    message: "Password changed successfully",
   });
 });

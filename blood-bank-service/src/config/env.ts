@@ -8,7 +8,7 @@ const envSchema = z.object({
   PORT: z.string().default("3004"),
   DATABASE_URL: z.string().url(),
   RABBITMQ_URL: z.string().url().optional(),
-  JWT_SECRET: z.string().min(10).optional(),
+  JWT_SECRET: z.string().min(10),
 });
 
 const parsed = envSchema.safeParse(process.env);

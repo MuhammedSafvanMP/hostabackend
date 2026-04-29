@@ -2,28 +2,89 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import Booking from "../models/booking.model";
 import { publishEvent } from "../events/publisher";
+import { httpClient } from "../utils/httpClient";
 
 // REGISTER - POST /boooking/register
-export const Registeration: any = asyncHandler(async (req: Request, res: Response) => {
+export const Registeration: any = asyncHandler(async (req: any, res: Response) => {
+  const { 
+    patient_dob, patient_name, patient_place, patient_phone, 
+    userId: bodyUserId, hospitalId, doctorId, 
+    booking_date, consulting_time, status 
+  } = req.body;
   
-  const { patient_dob, patient_name, patient_place, patient_phone, patientId, hospitalId, doctorId, booking_date, consulting_time, status } = req.body;
+  const tokenUserId = req.user.id;
+  const authHeader = req.headers.authorization;
 
+  // 1. Security Check: userId in body must match token ID
+  if (bodyUserId && Number(bodyUserId) !== Number(tokenUserId)) {
+    res.status(403).json({
+      success: false,
+      message: "Security violation: The provided userId does not match your authenticated account.",
+      error: { code: "USER_ID_MISMATCH" }
+    });
+    return;
+  }
+
+  const userId = tokenUserId; // Source of truth
+  const errors: string[] = [];
+
+  // 2. Cross-Service Validation
+  try {
+    // 👤 Validate User
+    try {
+      await httpClient.get(`http://user-service:3002/users/${userId}`, {
+        headers: { Authorization: authHeader }
+      });
+    } catch (err) {
+      errors.push(`User ${userId} not found.`);
+    }
+
+    // 👨‍⚕️ Validate Doctor
+    try {
+      await httpClient.get(`http://doctor-service:3007/doctor/${doctorId}`, {
+        headers: { Authorization: authHeader }
+      });
+    } catch (err) {
+      errors.push(`Doctor ${doctorId} not found.`);
+    }
+
+    // 🏥 Validate Hospital
+    try {
+      await httpClient.get(`http://hospital-service:3009/hospital/${hospitalId}`, {
+        headers: { Authorization: authHeader }
+      });
+    } catch (err) {
+      errors.push(`Hospital ${hospitalId} not found.`);
+    }
+
+    if (errors.length > 0) {
+      res.status(404).json({
+        success: false,
+        message: "Validation failed for one or more entities.",
+        errors,
+        error: { code: "ENTITY_NOT_FOUND" }
+      });
+      return;
+    }
+
+  } catch (globalErr: any) {
+    console.error("Booking validation error:", globalErr.message);
+  }
 
   const newbooking = await Booking.create({
-   patient_dob, patient_name, patient_place, patient_phone, patientId, hospitalId, doctorId, booking_date, consulting_time, status
+    patient_dob, patient_name, patient_place, patient_phone, 
+    userId, hospitalId, doctorId, 
+    booking_date, consulting_time, status
   });
-
-
 
   await publishEvent("booking_events", "BOOKING_REGISTERED", {
     bookingId: newbooking.id,
-    // phone: newStaff.phone,
   });
 
   res.status(201).json({
     success: true,
     message: "Registeration completed successfully",
-    data: null,
+    data: newbooking,
     error: null,
   });
 });

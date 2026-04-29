@@ -26,19 +26,32 @@ const sequelize = new Sequelize(env.DATABASE_URL, {
 });
 
 export const connectDB = async () => {
-  try {
-    await sequelize.authenticate();
-    console.log("✅ PostgreSQL Connected (Doctor Service)");
+  let connected = false;
+  let attempts = 0;
+  const maxAttempts = 5;
 
-    // ❌ REMOVE THIS IN PRODUCTION
-    if (!isProduction) {
-      await sequelize.sync({ alter: true });
-      console.log("🚀 Database schema synchronized");
+  while (!connected && attempts < maxAttempts) {
+    try {
+      await sequelize.authenticate();
+      console.log("✅ PostgreSQL Connected (Doctor Service)");
+      connected = true;
+
+      // ❌ REMOVE THIS IN PRODUCTION
+      if (!isProduction) {
+        await sequelize.sync({ alter: true });
+        console.log("🚀 Database schema synchronized");
+      }
+    } catch (error) {
+      attempts++;
+      console.error(`❌ DB Connection attempt ${attempts} failed:`, error instanceof Error ? error.message : error);
+      if (attempts < maxAttempts) {
+        console.log("Retrying in 5 seconds...");
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+      } else {
+        console.error("Max connection attempts reached. Exiting...");
+        process.exit(1);
+      }
     }
-
-  } catch (error) {
-    console.error("❌ DB Error:", error);
-    process.exit(1);
   }
 };
 

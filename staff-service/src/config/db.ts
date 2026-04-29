@@ -12,7 +12,7 @@ const sequelize = new Sequelize(env.DATABASE_URL, {
     ? {
         ssl: {
           require: true,
-          rejectUnauthorized: true, // ✅ secure
+          rejectUnauthorized: false, // ✅ Set to false for Neon/Docker compatibility
         },
       }
     : {},

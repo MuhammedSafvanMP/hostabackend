@@ -22,7 +22,7 @@ USER node
 EXPOSE 3005
 
 HEALTHCHECK --interval=30s --timeout=3s \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3005/health || exit 1
+  CMD node -e 'require("http").get("http://localhost:3005/health", (res) => { if (res.statusCode === 200) process.exit(0); else process.exit(1); }).on("error", (e) => process.exit(1))'
 
 CMD ["sh", "-c", "npx sequelize-cli db:migrate && node dist/server.js"]
 
