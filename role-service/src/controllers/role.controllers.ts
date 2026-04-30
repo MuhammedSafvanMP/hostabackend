@@ -11,8 +11,18 @@ export const createRole: any = asyncHandler(async (req: Request, res: Response) 
   
   const { name, description,  hospitalId, labId } = req.body;
 
+  console.log(req.body, "oioiioio");
+  
+
   if(hospitalId){
-     const hospital = await axios.get(`${process.env.HOSPITAL_SERVICE_API}/hospital/${hospitalId}`)
+     const hospital = await axios.get(`${process.env.HOSPITAL_SERVICE_API}/hospital/${hospitalId}`,{
+      headers: { Authorization: req.headers.authorization}
+     })
+
+     console.log(req.headers.authorization, "header");
+     
+     console.log(hospital, "iooioi");
+     
      if(!hospital) {
          res.status(404).json({
       success: false,

@@ -25,7 +25,7 @@ import { authenticate } from "../middleware/authenticate";
 const router = Router();
 
 // User Routes
-router.post("/users/register", validate(registerSchema), registerUser);
+router.post("/users", validate(registerSchema), registerUser);
 router.post("/users/login", validate(loginSchema), loginUser);
 router.get("/users", authenticate, getUsers);
 router.get("/users/:id", authenticate, validateParams(idParamSchema), getUser);

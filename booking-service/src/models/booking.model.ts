@@ -94,7 +94,7 @@ Booking.init(
 
     patientId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
     },
 
     doctorId: {

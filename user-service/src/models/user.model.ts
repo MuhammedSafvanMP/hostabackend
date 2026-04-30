@@ -9,6 +9,7 @@ interface IUser {
   phone?: string;
   picture?: any;
   fcmToken?: string;
+  roleId?: number;
 }
 
 class User extends Model<IUser> implements IUser {
@@ -19,6 +20,7 @@ class User extends Model<IUser> implements IUser {
   public phone!: string;
   public picture!: any;
   public fcmToken!: string;
+  public roleId?: number;
 }
 
 User.init(
@@ -54,6 +56,11 @@ User.init(
 
     picture: {
       type: DataTypes.JSONB, // 🔥 store imageUrl + public_id
+    },
+        roleId: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: true,
     },
 
     fcmToken: {

@@ -61,7 +61,7 @@ export const loginUser: any = asyncHandler(async (req: Request, res: Response) =
     return;
   }
 
-  const token = generateToken({ id: user.id, email: user.email });
+  const token = generateToken({ id: user.id, email: user.email, roleId: user.roleId });
 
   const { password: _, ...safeUser } = user.toJSON();
 

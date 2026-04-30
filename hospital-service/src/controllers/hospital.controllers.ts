@@ -89,12 +89,12 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Generate JWT tokens
-  const token = jwt.sign({ id: hospital.id, name: hospital.name }, jwtKey, {
+  const token = jwt.sign({ id: hospital.id, name: hospital.name, roleId: hospital.roleId, }, jwtKey, {
     expiresIn: "15m",
   });
 
   const refreshToken = jwt.sign(
-    { id: hospital.id, name: hospital.name },
+    { id: hospital.id, name: hospital.name, roleId: hospital.roleId },
     jwtKey,
     { expiresIn: "7d" }
   );
@@ -114,6 +114,8 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     message: "Loggedin successfully",
     status: 200,
     data: hospital,
+    refreshToken,
+    token,
     error: null,
   });
 });

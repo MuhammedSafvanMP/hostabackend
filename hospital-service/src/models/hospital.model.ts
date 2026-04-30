@@ -51,6 +51,7 @@ export interface IHospital {
   working_hours_clinic?: IWorkingHoursClinic[];
   working_hours_clinic_nobreak?: IWorkingHoursGeneral[];
   web: string,
+  roleId: number;
   deleteDate?: Date;
   isActive?: boolean;
   isDelete?: boolean;
@@ -102,6 +103,8 @@ class Hospital
   public deleteDate?: Date;
   public isActive?: boolean;
   public isDelete?: boolean;
+  public roleId: number;
+
 }
 
 /* =======================
@@ -190,6 +193,11 @@ Hospital.init(
       type: DataTypes.JSONB,
       allowNull: true,
     },
+      roleId: {
+      type: DataTypes.INTEGER,
+      defaultValue: 6,
+      allowNull: true,
+    },
 
     deleteRequested: {
       type: DataTypes.BOOLEAN,
@@ -213,7 +221,7 @@ Hospital.init(
   {
     sequelize,
     modelName: "Hospital",
-    tableName: "hospital",
+    tableName: "hospitals",
     timestamps: true,
 
     defaultScope: {
