@@ -4,47 +4,100 @@ import Role from "../models/role.model";
 import { publishEvent } from "../events/publisher";
 import axios from "axios";
 import dotenv from "dotenv";
+import { Op } from "sequelize";
 
 // REGISTER - POST /role
 
 export const createRole: any = asyncHandler(async (req: Request, res: Response) => {
   
-  const { name, description,  hospitalId, labId } = req.body;
+  const { name, description,  hospitalId, labId } = req.body;  
 
-  console.log(req.body, "oioiioio");
-  
+
+   
+
+let isExisting = null;
+
+if (hospitalId) {
+  isExisting = await Role.findOne({
+    where: {
+      name,
+      hospitalId
+    }
+  });
+}
+
+if (labId && !isExisting) {
+  isExisting = await Role.findOne({
+    where: {
+      name,
+      labId
+    }
+  });
+}
+
+if (isExisting) {
+  res.status(400).json({
+    success: false,
+    message: "Role already exists for this scope",
+    data: null,
+             error: { code: "ROLE_EXIST", details: null },
+  });
+  return;
+}
+
 
   if(hospitalId){
-     const hospital = await axios.get(`${process.env.HOSPITAL_SERVICE_API}/hospital/${hospitalId}`,{
-      headers: { Authorization: req.headers.authorization}
-     })
 
-     console.log(req.headers.authorization, "header");
+     try {
      
-     console.log(hospital, "iooioi");
-     
-     if(!hospital) {
-         res.status(404).json({
-      success: false,
-      message: "Hospital not found",
-      data: null,
-      error: { code: "HOSPITAL_NOT_FOUND", details: null },
-    });
-    return;
+        const hospital = await axios.get(`${process.env.HOSPITAL_SERVICE_API}/hospital/${hospitalId}`, {
+         headers: { Authorization: req.headers.authorization }
+       })
+
+              
+       if(!hospital || !hospital.data) {
+           res.status(404).json({
+             success: false,
+             message: "Hospital not found",
+             data: null,
+             error: { code: "HOSPITAL_NOT_FOUND", details: null },
+           });
+           return;
+       }
+     } catch (error: any) {
+         res.status(error.response?.status || 500).json({
+           success: false,
+           message: "Failed to validate hospital",
+           data: null,
+           error: { code: "HOSPITAL_VALIDATION_ERROR", details: error.message },
+         });
+         return;
      }
   }
 
 
     if(labId){
-     const lab = await axios.get(`${process.env.LAB_SERVICE_API}/lab/${labId}`)
-     if(!lab) {
-         res.status(404).json({
-      success: false,
-      message: "Lab not found",
-      data: null,
-      error: { code: "LAB_NOT_FOUND", details: null },
-    });
-    return;
+     try {
+       const lab = await axios.get(`${process.env.LAB_SERVICE_API}/lab/${labId}`, {
+         headers: { Authorization: req.headers.authorization }
+       })
+       if(!lab || !lab.data) {
+           res.status(404).json({
+             success: false,
+             message: "Lab not found",
+             data: null,
+             error: { code: "LAB_NOT_FOUND", details: null },
+           });
+           return;
+       }
+     } catch (error: any) {
+         res.status(error.response?.status || 500).json({
+           success: false,
+           message: "Failed to validate lab",
+           data: null,
+           error: { code: "LAB_VALIDATION_ERROR", details: error.message },
+         });
+         return;
      }
   }
  
