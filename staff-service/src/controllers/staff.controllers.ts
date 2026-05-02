@@ -16,7 +16,7 @@ const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge:  60 * 60 * 1000, // 7 days
     path: "/",
   });
 };
@@ -223,13 +223,13 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
 
   // Generate JWT tokens
   const token = jwt.sign({ id: staff.id, name: staff.name, role: "staff" }, jwtKey, {
-    expiresIn: "15m",
+    expiresIn: "1m",
   });
 
   const refreshToken = jwt.sign(
     { id: staff.id, name: staff.name, role: "staff" },
     jwtKey,
-    { expiresIn: "7d" }
+    { expiresIn: "1h" }
   );
 
   setRefreshTokenCookie(res, refreshToken);
@@ -669,10 +669,10 @@ export const refreshStaffToken: any = asyncHandler(async (req: Request, res: Res
     }
 
     const newToken = jwt.sign({ id: staff.id, name: staff.name, role: "staff" }, jwtKey, {
-      expiresIn: "15m",
+      expiresIn: "1m",
     });
     const newRefreshToken = jwt.sign({ id: staff.id, name: staff.name, role: "staff" }, jwtKey, {
-      expiresIn: "7d",
+      expiresIn: "1h",
     });
 
     setRefreshTokenCookie(res, newRefreshToken);
@@ -695,4 +695,4 @@ export const logout: any = asyncHandler(async (req: Request, res: Response) => {
     path: "/",
   });
   res.status(200).json({ success: true, message: "Logged out successfully" });
-});
+});

@@ -24,9 +24,9 @@ COPY --from=builder /app/dist ./dist
 # SECURITY: run as non-root user
 USER node
 
-EXPOSE 3002
+EXPOSE 3015
 
 HEALTHCHECK --interval=30s --timeout=3s \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3002/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3015/health || exit 1
 
 CMD ["node", "dist/server.js"]
