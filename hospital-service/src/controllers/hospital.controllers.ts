@@ -15,7 +15,7 @@ const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: 14 * 24 * 60 * 60 * 1000, // 2 weeks
     path: "/",
   });
 };
@@ -164,7 +164,7 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
   const { password: _, otp: __, otpExpiry: ___, ...safeHospital } = hospital.get();
 
   const refreshToken = jwt.sign({ id: hospital.id, name: hospital.name, role: "hospital", roleId: hospital.roleId }, jwtKey, {
-    expiresIn: "7d",
+    expiresIn: "2w",
   });
 
   // Save refresh token to Redis (REMOVED)
@@ -209,7 +209,7 @@ export const loginWithPhone: any = asyncHandler(async (req: Request, res: Respon
   const refreshToken = jwt.sign(
     { id: hospital.id, name: hospital.name, role: "hospital", roleId: hospital.roleId },
     process.env.JWT_SECRET || "supersecretjwtkey",
-    { expiresIn: "7d" }
+    { expiresIn: "2w" }
   );
 
   // Generate 6-digit OTP
@@ -333,7 +333,7 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
   const { password: _, otp: __, otpExpiry: ___, ...safeHospital } = hospital.get();
 
   const refreshToken = jwt.sign({ id: hospital.id, name: hospital.name, role: "hospital", roleId: hospital.roleId }, jwtKey, {
-    expiresIn: "7d",
+    expiresIn: "2w",
   });
 
   // Save refresh token to Redis (REMOVED)
@@ -544,12 +544,6 @@ export const refreshHospitalToken: any = asyncHandler(async (req: Request, res: 
     const newToken = jwt.sign({ id: hospital.id, name: hospital.name, role: "hospital", roleId: hospital.roleId }, jwtKey, {
       expiresIn: "15m",
     });
-    const newRefreshToken = jwt.sign({ id: hospital.id, name: hospital.name, role: "hospital", roleId: hospital.roleId }, jwtKey, {
-      expiresIn: "7d",
-    });
-
-    // Redis Rotation (REMOVED)
-    setRefreshTokenCookie(res, newRefreshToken);
 
     res.status(200).json({
       success: true,

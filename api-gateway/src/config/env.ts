@@ -23,6 +23,8 @@ const envSchema = z.object({
   LAB_SERVICE_URL: z.string().min(1),
   ADS_SERVICE_URL: z.string().min(1), 
   ROLE_SERVICE_URL: z.string().min(1), 
+  S3_SERVICE_URL: z.string().min(1),
+  BULMQ_SERVICE_URL: z.string().min(1),
 });
 
 
