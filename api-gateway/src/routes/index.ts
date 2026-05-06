@@ -16,6 +16,9 @@ import reviewRatingRoutes from "./review.routes";
 import labRoutes from "./lab.routes";
 import adsRoutes from "./ads.routes";
 import roleRoutes from "./role.routes"; 
+import s3Routes from "./s3.routes";
+import bulmqRoutes from "./bulmq.routes";
+
 
 
 const router = express.Router();
@@ -23,7 +26,7 @@ const router = express.Router();
 
 router.use("/", bloodRoutes);   
 router.use("/", bloodBankRoutes);
-router.use("/", ambulanceRoutes);
+router.use("/", ambulanceRoutes);   
 router.use("/", userRoutes);
 router.use("/", pharmacyRoutes);
 router.use("/", staffRoutes);
@@ -37,5 +40,7 @@ router.use("/", reviewRatingRoutes);
 router.use("/", labRoutes);
 router.use("/", adsRoutes); 
 router.use("/", roleRoutes);        
+router.use("/", s3Routes);
+router.use("/", bulmqRoutes);
 export default router;
 

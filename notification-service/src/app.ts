@@ -10,6 +10,17 @@ import { env } from "./config/env";
 
 const app = express();
 
+// Health check endpoint - MUST be before any authenticated routes or limiters
+app.get("/health", (req: Request, res: Response) => {
+  res.status(200).json({
+    status: "healthy",
+    service: "notification-service",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: env.NODE_ENV
+  });
+});
+
 // Security middleware
 app.use(helmet());
 
@@ -52,18 +63,6 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 // ROUTES
 app.use("/", notificationRoutes);
-
-
-// Health check endpoint
-app.get("/health", (req: Request, res: Response) => {
-  res.status(200).json({
-    status: "healthy",
-    service: "notification-service",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: env.NODE_ENV
-  });
-});
 
 
 // 404 handler

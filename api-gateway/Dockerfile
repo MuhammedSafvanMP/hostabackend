@@ -29,9 +29,6 @@ RUN npm ci --omit=dev && rm -f .npmrc
 
 # Copy compiled code
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/config ./config
-COPY --from=builder /app/migrations ./migrations
-COPY --from=builder /app/.sequelizerc* ./
 
 # Security: run as non-root user
 USER node
@@ -42,4 +39,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/health', (res) => res.statusCode === 200 ? process.exit(0) : process.exit(1)).on('error', () => process.exit(1))"
 
-CMD ["sh", "-c", "npx sequelize-cli db:migrate && node dist/server.js"]
+CMD ["node", "dist/server.js"]

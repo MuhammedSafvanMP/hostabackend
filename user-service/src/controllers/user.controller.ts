@@ -11,9 +11,11 @@ import { generateToken, generateRefreshToken } from "../services/jwt.service";
 const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    // secure: process.env.NODE_ENV === "production"
+    // ,
+    secure:false,
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 60 * 60 * 1000, // 1 hour
+    maxAge: 14 * 24 * 60 * 60 * 1000, // 2 weeks
     path: "/",
   });
 };
@@ -396,21 +398,6 @@ export const refreshUserToken: any = asyncHandler(async (req: Request, res: Resp
     }
 
     const newToken = generateToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId });
-    const newRefreshToken = generateRefreshToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId }, );
-
-
-
-
-    
-    // const newToken = jwt.sign({ id: staff.id, name: staff.name, role: "staff", roleId: staff.roleId }, jwtKey, {
-    //   expiresIn: "15m",
-    // });
-    // const newRefreshToken = jwt.sign({ id: staff.id, name: staff.name, role: "staff", roleId: staff.roleId }, jwtKey, {
-    //   expiresIn: "7d",
-    // });
-
-
-    setRefreshTokenCookie(res, newRefreshToken);
 
     res.status(200).json({
       success: true,
