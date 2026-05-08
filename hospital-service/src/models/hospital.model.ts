@@ -57,7 +57,8 @@ export interface IHospital {
   isDelete?: boolean;
   otp?: string;
   otpExpiry?: Date;
-  roleId: number; 
+  roleId: number;
+  imageUrl?: string;
 }
 
 /* =======================
@@ -112,6 +113,7 @@ class Hospital
   public roleId: number;
   public otp!: string;
   public otpExpiry!: Date;
+  public imageUrl: string;
 }
 
 /* =======================
@@ -157,6 +159,10 @@ Hospital.init(
       validate: {
         notEmpty: true,
       },
+    },
+      imageUrl: {
+      type: DataTypes.STRING, // 🔥 store imageUrl + public_id
+      allowNull: true
     },
 
     emergencyContact: {

@@ -2,9 +2,11 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import Ambulance from "../models/ambulance.model";
 import { publishEvent } from "../events/publisher";
-import { generateToken } from "../services/jwt.service";
 import twilio from "twilio";
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+import { httpClient } from "../utils/httpClient";
+dotenv.config();
 
 // Helper to set refresh token cookie
 const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
@@ -30,7 +32,6 @@ const getTwilioClient = () => {
   return twilio(sid, token);
 };
 
-import { httpClient } from "../utils/httpClient";
 
 // REGISTER - POST /ambulance/register
 export const Registeration: any = asyncHandler(async (req: any, res: Response) => {
@@ -52,8 +53,7 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
 
   // 2. Validate User Existence (Cross-Service: user-service)
   try {
-    console.log(`Verifying user at: http://user-service:3002/users/${userId}`);
-    await httpClient.get(`http://user-service:3002/users/${userId}`, {
+    await httpClient.get(`${process.env.USER_SERVICE_URL}/users/${userId}`, {
       headers: { Authorization: authHeader }
     });
   } catch (error: any) {
@@ -173,7 +173,9 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
   // Clear OTP fields after verification
   await ambulance.update({ otp: null as any, otpExpiry: null as any });
 
-  const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
+
+  const jwtKey = process.env.JWT_SECRET;
+
   const token = jwt.sign({ id: ambulance.id, name: ambulance.serviceName, role: "ambulance", roleId: ambulance.roleId }, jwtKey, {
     expiresIn: "15m"
   });
@@ -322,7 +324,7 @@ export const refreshAmbulanceToken: any = asyncHandler(async (req: Request, res:
     return;
   }
 
-  const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
+  const jwtKey = process.env.JWT_SECRET;
 
   try {
     const decoded: any = jwt.verify(refreshToken, jwtKey);

@@ -58,6 +58,7 @@ interface IDoctor {
   otp?: string;
   otpExpiry?: Date;
   hospitalId?: number;
+  imageUrl?: string; 
 }
 
 /* =======================
@@ -101,6 +102,7 @@ class Doctor
   public outDoorConsulting?: IOutDoorConsulting;
   public hospitalId?: number;
   public roleId: number;
+  public imageUrl?: string;
 
 }
 
@@ -165,6 +167,10 @@ Doctor.init(
       },
     },
 
+      imageUrl: {
+      type: DataTypes.STRING, // 🔥 store imageUrl + public_id
+      allowNull: true
+    },
     password: {
       type: DataTypes.STRING,
     },

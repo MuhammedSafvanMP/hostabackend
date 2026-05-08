@@ -53,13 +53,10 @@ asyncHandler(
        EXISTENCE CHECKS
     ========================== */
 
-    const userServiceUrl = process.env.USER_SERVICE_URL || "http://user-service:3002";
-    const doctorServiceUrl = process.env.DOCTOR_SERVICE_URL || "http://doctor-service:3007";
-    const hospitalServiceUrl = process.env.HOSPITAL_SERVICE_URL || "http://hospital-service:3009";
 
     try {
       // 1. Check User
-      await axios.get(`${userServiceUrl}/users/${userId}`, {
+      await axios.get(`${process.env.USER_SERVICE_URL}/users/${userId}`, {
         headers: { Authorization: req.headers.authorization }
       });
     } catch (error: any) {
@@ -72,7 +69,7 @@ asyncHandler(
     try {
       // 2. Check Hospital
       if (hospitalId) {
-        await axios.get(`${hospitalServiceUrl}/hospital/${hospitalId}`, {
+        await axios.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
           headers: { Authorization: req.headers.authorization }
         });
       }
@@ -86,7 +83,7 @@ asyncHandler(
     try {
       // 3. Check Doctor
       if (doctorId) {
-        await axios.get(`${doctorServiceUrl}/doctor/${doctorId}`, {
+        await axios.get(`${process.env.DOCTOR_SERVICE_URL}/doctor/${doctorId}`, {
           headers: { Authorization: req.headers.authorization }
         });
       }
@@ -102,8 +99,7 @@ asyncHandler(
        (Temporary method)
     ========================== */
 
-    const bookingServiceUrl = process.env.BOOKING_SERVICE_URL || "http://booking-service:3011";
-    const appointmentResponse = await axios.get(`${bookingServiceUrl}/booking`, {
+    const appointmentResponse = await axios.get(`${process.env.BOOKING_SERVICE_URL}/booking`, {
       headers: {
         Authorization: req.headers.authorization
       }

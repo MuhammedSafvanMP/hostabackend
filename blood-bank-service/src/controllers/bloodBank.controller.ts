@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import BloodBank from "../models/bloodBank.model";
 import { httpClient } from "../utils/httpClient";
+import dotenv from "dotenv";
+dotenv.config();
 
 const VALID_BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
@@ -30,8 +32,7 @@ export const createOrUpdateStock = asyncHandler(async (req: any, res: Response) 
 
   // 🏥 Validate Hospital (Cross-Service: hospital-service)
   try {
-    console.log(`Verifying hospital at: http://hospital-service:3009/hospital/${hospitalId}`);
-    await httpClient.get(`http://hospital-service:3009/hospital/${hospitalId}`, {
+    await httpClient.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
       headers: { Authorization: authHeader }
     });
   } catch (error: any) {

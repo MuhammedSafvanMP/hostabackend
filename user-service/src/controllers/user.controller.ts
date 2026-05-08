@@ -379,7 +379,10 @@ export const deletePatient: any = asyncHandler(async (req: Request, res: Respons
 export const refreshUserToken: any = asyncHandler(async (req: Request, res: Response) => {
   const refreshToken = req.cookies?.refreshToken;
 
+<<<<<<< HEAD
   console.log("refreshToken", refreshToken);
+=======
+>>>>>>> rescue-code
 
   if (!refreshToken) {
     res.status(401).json({ success: false, message: "Refresh token missing" });
@@ -398,6 +401,10 @@ export const refreshUserToken: any = asyncHandler(async (req: Request, res: Resp
     }
 
     const newToken = generateToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId });
+<<<<<<< HEAD
+=======
+
+>>>>>>> rescue-code
 
     res.status(200).json({
       success: true,

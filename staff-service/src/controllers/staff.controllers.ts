@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> rescue-code
 import { Request, Response } from "express";
 import { Op } from "sequelize";
 import bcrypt from "bcrypt";
@@ -10,6 +13,11 @@ import Staff from "../models/staff.model";
 import { publishEvent } from "../events/publisher";
 import { sendEmail } from "../services/mail.service";
 import { logger } from "../utils/logger";
+<<<<<<< HEAD
+=======
+import dotenv from "dotenv";
+dotenv.config();
+>>>>>>> rescue-code
 
 // Helper to set refresh token cookie
 const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
@@ -22,8 +30,12 @@ const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
   });
 };
 
+<<<<<<< HEAD
 const APPLE_TEST_NUMBER = "9999999999";
 const APPLE_TEST_OTP = "123456";
+=======
+
+>>>>>>> rescue-code
 
 export const sendStaffOtpEmail = async (email: string, otp: string, staffName: string) => {
   const html = `
@@ -106,7 +118,11 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
 
   // 2. Validate hospitalId via hospital-service
   try {
+<<<<<<< HEAD
     const hospitalResponse = await httpClient.get(`http://hospital-service:3009/hospital/${hospitalId}`, {
+=======
+    const hospitalResponse = await httpClient.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
+>>>>>>> rescue-code
       headers: { Authorization: authHeader }
     });
     if (!hospitalResponse.data || !hospitalResponse.data.success) {
@@ -391,7 +407,11 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
   // Validate hospitalId if it's being updated
   if (updatePayload.hospitalId) {
     try {
+<<<<<<< HEAD
       const hospitalResponse = await axios.get(`http://hospital-service:3009/hospital/${updatePayload.hospitalId}`);
+=======
+      const hospitalResponse = await axios.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${updatePayload.hospitalId}`);
+>>>>>>> rescue-code
       if (!hospitalResponse.data || !hospitalResponse.data.success) {
         res.status(400).json({ success: false, message: "Invalid hospital ID" });
         return;
@@ -505,7 +525,11 @@ export const changepassword: any = asyncHandler(async (req: Request, res: Respon
 
   // If password is provided, verify it first (like user service)
   if (password) {
+<<<<<<< HEAD
     const isMatch = await bcrypt.compare(password, staff.password || "");
+=======
+    const isMatch = await bcrypt.compare(password, staff.password);
+>>>>>>> rescue-code
     if (!isMatch) {
       res.status(401).json({
         success: false,
@@ -593,7 +617,11 @@ export const verifyStaffOtp: any = asyncHandler(async (req: Request, res: Respon
   // Clear OTP after successful verification
   await staff.update({ otp: null, otpExpiry: null });
 
+<<<<<<< HEAD
   const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
+=======
+  const jwtKey = process.env.JWT_SECRET;
+>>>>>>> rescue-code
   const token = jwt.sign({ id: staff.id, name: staff.name, role: "staff", roleId: staff.roleId }, jwtKey, {
     expiresIn: "15m",
   });
@@ -664,7 +692,11 @@ export const refreshStaffToken: any = asyncHandler(async (req: Request, res: Res
     return;
   }
 
+<<<<<<< HEAD
   const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
+=======
+  const jwtKey = process.env.JWT_SECRET;
+>>>>>>> rescue-code
 
   try {
     const decoded: any = jwt.verify(refreshToken, jwtKey);
@@ -702,6 +734,7 @@ export const logout: any = asyncHandler(async (req: Request, res: Response) => {
   });
   res.status(200).json({ success: true, message: "Logged out successfully" });
 });
+<<<<<<< HEAD
 =======
 import { Request, Response } from "express";
 import { Op } from "sequelize";
@@ -1402,3 +1435,6 @@ export const logout: any = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json({ success: true, message: "Logged out successfully" });
 });
 >>>>>>> a4bf42b (fix)
+=======
+
+>>>>>>> rescue-code
