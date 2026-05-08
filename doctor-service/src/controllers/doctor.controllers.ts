@@ -17,7 +17,7 @@ const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: 14 * 24 * 60 * 60 * 1000, // 2 weeks
     path: "/",
   });
 };
@@ -203,7 +203,7 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
   const { password: _, otp: __, otpExpiry: ___, ...safeDoctor } = doctor.get();
 
   const refreshToken = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId }, jwtKey, {
-    expiresIn: "7d",
+    expiresIn: "2w",
   });
 
   // Save refresh token to Redis (REMOVED)
@@ -289,7 +289,7 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
   const { password: _, otp: __, otpExpiry: ___, ...safeDoctor } = doctor.get();
 
   const refreshToken = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId }, jwtKey, {
-    expiresIn: "7d",
+    expiresIn: "2w",
   });
 
   setRefreshTokenCookie(res, refreshToken);
@@ -510,7 +510,7 @@ export const verifyDoctorOtp: any = asyncHandler(async (req: Request, res: Respo
   });
 
   const refreshToken = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId }, jwtKey, {
-    expiresIn: "7d",
+    expiresIn: "2w",
   });
 
   setRefreshTokenCookie(res, refreshToken);
@@ -591,12 +591,6 @@ export const refreshDoctorToken: any = asyncHandler(async (req: Request, res: Re
     const newToken = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId }, jwtKey, {
       expiresIn: "15m",
     });
-    const newRefreshToken = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId }, jwtKey, {
-      expiresIn: "7d",
-    });
-
-    // Redis Rotation (REMOVED)
-    setRefreshTokenCookie(res, newRefreshToken);
 
     res.status(200).json({
       success: true,

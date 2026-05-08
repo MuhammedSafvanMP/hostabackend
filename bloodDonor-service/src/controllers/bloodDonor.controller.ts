@@ -15,7 +15,7 @@ const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: 14 * 24 * 60 * 60 * 1000, // 2 weeks
     path: "/",
   });
 };
@@ -231,7 +231,7 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
     expiresIn: "15m"
   });
   const refreshToken = jwt.sign({ id: donor.id, donorId: donor.donorId, userId: donor.userId, role: "bloodDonor", roleId: donor.roleId }, jwtKey, {
-    expiresIn: "7d"
+    expiresIn: "2w"
   });
 
   setRefreshTokenCookie(res, refreshToken);
@@ -404,11 +404,6 @@ export const refreshBloodDonorToken: any = asyncHandler(async (req: Request, res
     const newToken = jwt.sign({ id: donor.id, donorId: donor.donorId, userId: donor.userId, role: "bloodDonor", roleId: donor.roleId }, jwtKey, {
       expiresIn: "15m",
     });
-    const newRefreshToken = jwt.sign({ id: donor.id, donorId: donor.donorId, userId: donor.userId, role: "bloodDonor", roleId: donor.roleId }, jwtKey, {
-      expiresIn: "7d",
-    });
-
-    setRefreshTokenCookie(res, newRefreshToken);
 
     res.status(200).json({
       success: true,

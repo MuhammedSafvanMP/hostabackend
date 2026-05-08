@@ -18,7 +18,7 @@ const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: 14 * 24 * 60 * 60 * 1000, // 2 weeks
     path: "/",
   });
 };
@@ -230,7 +230,7 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
   const refreshToken = jwt.sign(
     { id: staff.id, name: staff.name, role: "staff", roleId: staff.roleId },
     jwtKey,
-    { expiresIn: "7d" }
+    { expiresIn: "2w" }
   );
 
   // Save refresh token to Redis (REMOVED)
@@ -336,7 +336,7 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
   }
 
   const token = jwt.sign({ id: staff.id, name: staff.name, role: "staff", roleId: staff.roleId }, jwtKey, { expiresIn: "15m" });
-  const refreshToken = jwt.sign({ id: staff.id, name: staff.name, role: "staff", roleId: staff.roleId }, jwtKey, { expiresIn: "7d" });
+  const refreshToken = jwt.sign({ id: staff.id, name: staff.name, role: "staff", roleId: staff.roleId }, jwtKey, { expiresIn: "2w" });
 
   // Save refresh token to Redis (REMOVED)
 
@@ -598,7 +598,7 @@ export const verifyStaffOtp: any = asyncHandler(async (req: Request, res: Respon
     expiresIn: "15m",
   });
   const refreshToken = jwt.sign({ id: staff.id, name: staff.name, role: "staff", roleId: staff.roleId }, jwtKey, {
-    expiresIn: "7d",
+    expiresIn: "2w",
   });
 
   // Save refresh token to Redis (REMOVED)
@@ -681,12 +681,6 @@ export const refreshStaffToken: any = asyncHandler(async (req: Request, res: Res
     const newToken = jwt.sign({ id: staff.id, name: staff.name, role: "staff", roleId: staff.roleId }, jwtKey, {
       expiresIn: "15m",
     });
-    const newRefreshToken = jwt.sign({ id: staff.id, name: staff.name, role: "staff", roleId: staff.roleId }, jwtKey, {
-      expiresIn: "7d",
-    });
-
-    // Redis Rotation (REMOVED)
-    setRefreshTokenCookie(res, newRefreshToken);
 
     res.status(200).json({
       success: true,

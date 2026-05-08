@@ -17,6 +17,8 @@ export const SERVICES = {
   LAB_SERVICE: env.LAB_SERVICE_URL,
   ADS_SERVICE: env.ADS_SERVICE_URL, 
   ROLE_SERVICE: env.ROLE_SERVICE_URL, 
+  S3_SERVICE: env.S3_SERVICE_URL,
+  BULMQ_SERVICE: env.BULMQ_SERVICE_URL,
 };
 
 
@@ -89,3 +91,10 @@ if (!SERVICES.ROLE_SERVICE) {
   throw new Error("ROLE_SERVICE_URL not defined");
 }
 
+if (!SERVICES.S3_SERVICE) {
+  throw new Error("S3_SERVICE_URL not defined");
+}
+
+if (!SERVICES.BULMQ_SERVICE) {
+  throw new Error("BULMQ_SERVICE_URL not defined");
+}

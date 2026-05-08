@@ -5,7 +5,7 @@ const JWT_SECRET = env.JWT_SECRET;
 
 export const generateToken = (payload: any) => {
   return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: "1h",
+    expiresIn: "15m",
   });
 };
 
