@@ -3,7 +3,6 @@ import Ad from "../models/ad.model";
 import axios from "axios";
 import dotenv from "dotenv";
 import { Op, literal } from "sequelize";
-
 dotenv.config();
 
 // ✅ Create Donor
@@ -12,7 +11,7 @@ export const createAd = async (req: Request, res: Response): Promise<any> => {
     const { imageUrl, startDate, endDate, kilometer, hospitalId } = req.body;
 
 
-      const  hospital = await axios.get(`${process.env.HOSPIT}/hospital/${hospitalId}`)
+      const  hospital = await axios.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`)
 
 
       if(!hospital){

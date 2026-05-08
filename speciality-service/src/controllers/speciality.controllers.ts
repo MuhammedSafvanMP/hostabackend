@@ -2,8 +2,9 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import Speciality from "../models/speciality.model";
 import { publishEvent } from "../events/publisher";
-
 import { httpClient } from "../utils/httpClient";
+import dotenv from "dotenv";
+dotenv.config();
 
 // REGISTER - POST /speciality/register
 export const Registeration: any = asyncHandler(async (req: any, res: Response) => {
@@ -30,7 +31,7 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
 
   // 2. Validate Hospital Existence via Hospital Service
   try {
-    await httpClient.get(`http://hospital-service:3009/hospital/${hospitalId}`, {
+    await httpClient.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
       headers: { Authorization: authHeader }
     });
   } catch (error: any) {

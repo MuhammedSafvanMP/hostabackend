@@ -4,6 +4,8 @@ import Patient from "../models/patient.model";
 import Prescription from "../models/prescription.model";
 import { publishEvent } from "../events/publisher";
 import { httpClient } from "../utils/httpClient";
+import dotenv from "dotenv";
+dotenv.config();
 
 
 // REGISTER
@@ -21,8 +23,7 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
 
   // 2. Validate Doctor (Cross-Service: doctor-service)
   try {
-    console.log(`Verifying doctor at: http://doctor-service:3007/doctor/${doctorId}`);
-    await httpClient.get(`http://doctor-service:3007/doctor/${doctorId}`, {
+    await httpClient.get(`${process.env.DOCTOR_SERVICE_URL}/doctor/${doctorId}`, {
       headers: { Authorization: authHeader }
     });
   } catch (error: any) {
@@ -32,8 +33,7 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
 
   // 3. Validate Hospital (Cross-Service: hospital-service)
   try {
-    console.log(`Verifying hospital at: http://hospital-service:3009/hospital/${hospitalId}`);
-    await httpClient.get(`http://hospital-service:3009/hospital/${hospitalId}`, {
+    await httpClient.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
       headers: { Authorization: authHeader }
     });
   } catch (error: any) {

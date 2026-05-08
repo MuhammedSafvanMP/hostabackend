@@ -4,6 +4,8 @@ import Booking from "../models/booking.model";
 import { publishEvent } from "../events/publisher";
 import { httpClient } from "../utils/httpClient";
 import axios from "axios";
+import dotenv from "dotenv";
+dotenv.config();
 
 // REGISTER - POST /boooking/register
 export const Registeration: any = asyncHandler(async (req: any, res: Response) => {
@@ -33,7 +35,7 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
   try {
     // 👤 Validate User
     try {
-      await httpClient.get(`http://user-service:3002/users/${userId}`, {
+      await httpClient.get(`${process.env.USER_SERVICE_URL}/users/${userId}`, {
         headers: { Authorization: authHeader }
       });
     } catch (err) {
@@ -42,7 +44,7 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
 
     // 👨‍⚕️ Validate Doctor
     try {
-      await httpClient.get(`http://doctor-service:3007/doctor/${doctorId}`, {
+      await httpClient.get(`${process.env.DOCTOR_SERVICE_URL}/doctor/${doctorId}`, {
         headers: { Authorization: authHeader }
       });
     } catch (err) {
@@ -51,7 +53,7 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
 
     // 🏥 Validate Hospital
     try {
-      await httpClient.get(`http://hospital-service:3009/hospital/${hospitalId}`, {
+      await httpClient.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
         headers: { Authorization: authHeader }
       });
     } catch (err) {
@@ -145,7 +147,7 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
   });
 
   // ✅ Use correct values
-  await axios.post('http://localhost:3008/booking-task', {
+  await axios.post(`${process.env.BULMQ_SERVICE_URL}/booking-task`, {
     patient_phone: updatedBooking.patient_phone,
     doctorId: updatedBooking.doctorId,
     status: updatedBooking.status,

@@ -172,14 +172,6 @@ export const checkPermissionService = asyncHandler(
       return;
     }
 
-    // // Check for Super Admin bypass
-    // const role = await Role.findByPk(roleId);
-    // if (role && role.name.toLowerCase() === "super admin") {
-    //   res.status(200).json({
-    //     allowed: true,
-    //   });
-    //   return;
-    // }
 
     const permission = await Permission.findOne({
   where: {
