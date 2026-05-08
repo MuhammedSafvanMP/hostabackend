@@ -8,6 +8,8 @@ import { Op } from "sequelize";
 import twilio from "twilio";
 import axios from "axios";
 import { sendEmail } from "../services/mail.service";
+import dotenv from "dotenv";
+dotenv.config();
 
 // Helper to set refresh token cookie
 const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
@@ -86,7 +88,7 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
 
   // 2. Validate hospitalId via hospital-service
   try {
-    const hospitalResponse = await axios.get(`http://hospital-service:3009/hospital/${hospitalId}`, {
+    const hospitalResponse = await axios.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
       headers: { Authorization: authHeader }
     });
     if (!hospitalResponse.data || !hospitalResponse.data.success) {

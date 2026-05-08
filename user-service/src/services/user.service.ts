@@ -85,7 +85,6 @@ export const userService = {
         { transaction: t }
       );
 
-      console.log("data", data);
 
       if (data?.firstName && data?.lastName) {
         // Extract only valid patient fields — do NOT spread the full user payload
@@ -140,11 +139,8 @@ export const userService = {
     }
 
     const token = generateToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId });
-<<<<<<< HEAD
     const refreshToken = generateRefreshToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId  });
-=======
-    const refreshToken = generateRefreshToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId });
->>>>>>> 078d23e (updated)
+
     const { password: _, ...safeUser } = user.toJSON();
     return { token, refreshToken, user: safeUser };
   },

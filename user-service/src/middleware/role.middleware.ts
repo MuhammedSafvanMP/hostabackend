@@ -9,7 +9,6 @@ export const checkPermission =
     try {
 
       const roleId = req.user.roleId;
-      console.log(roleId,"role");
       
       
 

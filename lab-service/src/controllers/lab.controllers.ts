@@ -5,10 +5,11 @@ import axios from "axios";
 import asyncHandler from "express-async-handler";
 import Lab from "../models/lab.model";
 import { publishEvent } from "../events/publisher";
-import { generateToken } from "../services/jwt.service";
 import { Op } from "sequelize";
 import twilio from "twilio";
 import { sendEmail } from "../services/mail.service";
+import dotenv from "dotenv";
+dotenv.config();
 
 // Helper to set refresh token cookie
 const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
@@ -64,12 +65,12 @@ export const sendOtpEmail = async (email: string, otp: string, labName: string) 
   await sendEmail(email, "Your Verification Code - Hosta Lab", html);
 };
 
-const HOSPITAL_SERVICE_URL = process.env.HOSPITAL_SERVICE_URL || "http://hospital-service:3009";
+
 
 // Helper: validate hospitalId exists in hospital-service
 const validateHospital = async (hospitalId: number, authHeader: string): Promise<boolean> => {
   try {
-    const res = await axios.get(`${HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
+    const res = await axios.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
       timeout: 5000,
       headers: { Authorization: authHeader },
     });
@@ -109,7 +110,7 @@ export const Registeration: any = asyncHandler(async (req: Request, res: Respons
     // Decode token to verify identity
     try {
       const token = authHeader.split(" ")[1];
-      const decoded: any = jwt.verify(token, process.env.JWT_SECRET || "supersecretjwtkey");
+      const decoded: any = jwt.verify(token, process.env.JWT_SECRET);
       
       if (decoded.id !== hospitalId) {
         res.status(403).json({
@@ -213,7 +214,7 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     return;
   }
 
-  const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
+  const jwtKey = process.env.JWT_SECRET;
   const token = jwt.sign({ id: lab.id, name: lab.name, role: "lab", roleId: lab.roleId }, jwtKey, {
     expiresIn: "15m"
   });
@@ -585,7 +586,7 @@ export const refreshLabToken: any = asyncHandler(async (req: Request, res: Respo
     return;
   }
 
-  const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
+  const jwtKey = process.env.JWT_SECRET;
 
   try {
     const decoded: any = jwt.verify(refreshToken, jwtKey);
