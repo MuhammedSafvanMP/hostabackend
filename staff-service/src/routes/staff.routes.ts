@@ -62,18 +62,8 @@ router.put("/staff/auth/change-password",authenticate, validate(changePasswordSc
 
 
 // CRUD
-<<<<<<< HEAD
-<<<<<<< HEAD
+
 router.get("/staff",authenticate,checkPermission("staff", "view"),getStaffs);
-=======
-router.get("/staff",authenticate, getStaffs);
->>>>>>> a4bf42b (fix)
-=======
-router.get("/staff",authenticate, getStaffs);
-=======
-router.get("/staff",authenticate,checkPermission("staff", "view"),getStaffs);
->>>>>>> 078d23e (updated)
->>>>>>> rescue-code
 router.get("/staff/:id",authenticate, validateParams(idParamSchema), checkPermission("staff", "view"),getanStaff);
 router.put("/staff/:id",authenticate, validateParams(idParamSchema), validate(updateStaffSchema), checkPermission("staff", "edit"), updateData);
 router.delete("/staff/:id",authenticate, validateParams(idParamSchema), checkPermission("staff", "delete"), staffDelete);

@@ -59,6 +59,7 @@ export interface IHospital {
   otpExpiry?: Date;
   roleId: number;
   imageUrl?: string;
+  fcmToken?: string
 }
 
 /* =======================
@@ -114,6 +115,7 @@ class Hospital
   public otp!: string;
   public otpExpiry!: Date;
   public imageUrl: string;
+  public fcmToken?: string;
 }
 
 /* =======================
@@ -167,7 +169,7 @@ Hospital.init(
 
     emergencyContact: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
 
     email: {
@@ -198,7 +200,7 @@ Hospital.init(
 
     about: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
 
     working_hours_general: {
@@ -246,6 +248,9 @@ Hospital.init(
     otpExpiry: {
       type: DataTypes.DATE,
       allowNull: true,
+    },
+     fcmToken: {
+      type: DataTypes.STRING,
     },
     
   },

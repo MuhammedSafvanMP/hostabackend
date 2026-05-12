@@ -1,8 +1,7 @@
 import { Router } from "express";
-import {
-  assignTaskMedicin,
-} from "../controllers/medicin-remainder.controllers";
+
 import { authenticate } from "../middleware/authenticate";
+import { assignTaskBooking } from "../controllers/booking-remainder-user.controllers";
 
 const router = Router();
 
@@ -12,9 +11,11 @@ const router = Router();
 // CRUD
 
 router.post(
-  "/medicin-task",
+  "/booking-task/users",
   authenticate,
- assignTaskMedicin
+ assignTaskBooking
 );
+
+
 
 export default router;

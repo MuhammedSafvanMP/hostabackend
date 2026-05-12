@@ -5,14 +5,12 @@ import Patient from "../models/patient.model";
 import PatientVitals from "../models/patientVitals.model";
 import User from "../models/user.model";
 import jwt from "jsonwebtoken";
-import { generateToken, generateRefreshToken } from "../services/jwt.service";
+import { generateToken } from "../services/jwt.service";
 
 // Helper to set refresh token cookie
 const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    // secure: process.env.NODE_ENV === "production"
-    // ,
     secure:false,
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: 14 * 24 * 60 * 60 * 1000, // 2 weeks
@@ -379,17 +377,13 @@ export const deletePatient: any = asyncHandler(async (req: Request, res: Respons
 export const refreshUserToken: any = asyncHandler(async (req: Request, res: Response) => {
   const refreshToken = req.cookies?.refreshToken;
 
-<<<<<<< HEAD
-  console.log("refreshToken", refreshToken);
-=======
->>>>>>> rescue-code
 
   if (!refreshToken) {
     res.status(401).json({ success: false, message: "Refresh token missing" });
     return;
   }
 
-  const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
+  const jwtKey = process.env.JWT_SECRET;
 
   try {
     const decoded: any = jwt.verify(refreshToken, jwtKey);
@@ -400,11 +394,7 @@ export const refreshUserToken: any = asyncHandler(async (req: Request, res: Resp
       return;
     }
 
-    const newToken = generateToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId });
-<<<<<<< HEAD
-=======
-
->>>>>>> rescue-code
+    const newToken = generateToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId, isRefresh: false });
 
     res.status(200).json({
       success: true,

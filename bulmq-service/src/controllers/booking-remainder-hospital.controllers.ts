@@ -1,33 +1,37 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
-import scheduleBooking from "../services/booking.service";
+import  {  scheduleBookingHospital } from "../services/booking-hospital.service";
 
 
 
-export const assignTaskBooking: any = asyncHandler(async (req: Request, res: Response) => {
+
+
+export const assignTaskBookingHospital: any = asyncHandler(async (req: Request, res: Response) => {
   
 
   try {
 
+
     const { 
-    patient_phone,
+   
     doctorId,
-    status,
-    consulting_time,
+    hospitalId,
     message } =  
       req.body;
 
+      console.log(req.body, "hiii");
+      
+      
       
     const results = [];
 
       const job =
-        await scheduleBooking({
-          phone: patient_phone,
+        await scheduleBookingHospital({
           doctorId: doctorId,
-          status: status,
+         
           subject: message,
           body: message,
-          consulting_time: consulting_time,
+          hospitalId,
           sendAt:   new Date() 
         });
 
@@ -49,5 +53,3 @@ export const assignTaskBooking: any = asyncHandler(async (req: Request, res: Res
   }
   
 });
-
-
