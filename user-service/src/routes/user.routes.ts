@@ -57,7 +57,7 @@ router.put("/users/auth/change-password", authenticate, validate(changePasswordS
 router.post("/users/refresh", refreshUserToken);
 router.post("/users/logout", authenticate,logout);
 
-router.get("/users", authenticate,  getUsers);
+router.get("/users",   getUsers);
 router.get("/users/:id", authenticate, validateParams(idParamSchema), checkPermission("users", "view"), getUser);
 router.put("/users/:id", authenticate, validateParams(idParamSchema), validate(updateUserSchema), checkPermission("users", "edit"), updateUser);
 router.delete("/users/:id", authenticate, validateParams(idParamSchema), checkPermission("users", "delete"), deleteUser);

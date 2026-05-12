@@ -6,9 +6,10 @@ import {
   notificationDelete,
   getNotification,
   getAllReadNotifications,
-  getAllUnreadNotifications
+  getAllUnreadNotifications,
+  updateNotificationRolandID,
+  markAllNotificationsAsRead
 } from "../controllers/notification.controllers";
-import { authenticate } from "../middleware/authenticate";
 import { validate, validateParams } from "../middleware/validate.middleware";
 import {
   createNotificationSchema,
@@ -19,11 +20,11 @@ import {
 const router = Router();
 
 // Apply authentication to all routes
-router.use(authenticate);
+// router.use(authenticate);
 
 // CRUD
 router.post(
-  "/notification/register",
+  "/notification",
   validate(createNotificationSchema),
   createNotification
 );
@@ -50,6 +51,16 @@ router.get(
   "/notification/read/:id/:role",
   validateParams(getByRoleParamsSchema),
   getAllReadNotifications
+);
+
+router.put(
+  "/notification/:role/:roleId/:id",
+  updateNotificationRolandID
+);
+
+router.put(
+  "/notifications/read-all/:role/:roleId",
+  markAllNotificationsAsRead
 );
 
 export default router;

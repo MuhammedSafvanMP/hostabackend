@@ -3,7 +3,9 @@ import cors from "cors";
 
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import bookingRoutes from "./routes/booking-remainder.routes";
+import bookinguserRoutes from "./routes/booking-remainder-user.routes";
+import bookingHospitalRoutes from "./routes/booking-remainder-hospital.routes";
+
 import medcinRemainerRoutes from "./routes/medicin-remainder.routes";
 
 import { requestLogger } from "./middleware/logger.middleware";
@@ -45,7 +47,7 @@ app.use("/booking/login", loginLimiter); // can be changed if logic changes
 
 // CORS
 app.use(cors({
-  origin: ["http://localhost:3000", "https://yourfrontend.com"], // Allowing local dev and prospective production
+  origin: ["http://localhost:5173", "https://yourfrontend.com"], // Allowing local dev and prospective production
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
 }));
@@ -57,7 +59,9 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 // ROUTES
 app.use("/", medcinRemainerRoutes);
-app.use("/", bookingRoutes);
+app.use("/", bookinguserRoutes);
+app.use("/", bookingHospitalRoutes);
+
 
 
 

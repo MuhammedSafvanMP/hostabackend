@@ -1,20 +1,19 @@
 import { Router } from "express";
-import {
-  assignTaskMedicin,
-} from "../controllers/medicin-remainder.controllers";
+
 import { authenticate } from "../middleware/authenticate";
+import { assignTaskBookingHospital } from "../controllers/booking-remainder-hospital.controllers";
 
 const router = Router();
 
 
 
 
-// CRUD
+
 
 router.post(
-  "/medicin-task",
+  "/booking-task/hospital",
   authenticate,
- assignTaskMedicin
+ assignTaskBookingHospital
 );
 
 export default router;

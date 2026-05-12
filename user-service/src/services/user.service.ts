@@ -138,17 +138,10 @@ export const userService = {
       throw { status: 401, message: "Wrong password" };
     }
 
-    const token = generateToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId });
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const refreshToken = generateRefreshToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId });
-=======
-    const refreshToken = generateRefreshToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId  });
->>>>>>> a4bf42b (fix)
-=======
-    const refreshToken = generateRefreshToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId  });
+    const token = generateToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId, isRefresh: false });
 
->>>>>>> rescue-code
+    const refreshToken = generateRefreshToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId, isRefresh: true });
+
     const { password: _, ...safeUser } = user.toJSON();
     return { token, refreshToken, user: safeUser };
   },
@@ -237,8 +230,8 @@ export const userService = {
     
     await user.save();
 
-    const token = generateToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId });
-    const refreshToken = generateRefreshToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId });
+    const token = generateToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId, isRefresh: false });
+    const refreshToken = generateRefreshToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId, isRefresh: true });
     const userJson = user.toJSON();
     delete (userJson as any).password;
     delete (userJson as any).otp;
@@ -317,8 +310,8 @@ export const userService = {
     user.otpExpiry = undefined as any;
     await user.save();
 
-    const token = generateToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId });
-    const refreshToken = generateRefreshToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId });
+    const token = generateToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId, isRefresh: false });
+    const refreshToken = generateRefreshToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId, isRefresh: true });
     const userJson = user.toJSON();
     delete (userJson as any).password;
     delete (userJson as any).otp;

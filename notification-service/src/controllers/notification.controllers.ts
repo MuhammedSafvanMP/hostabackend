@@ -221,3 +221,179 @@ export const getNotification: any = asyncHandler(async (req: Request, res: Respo
 });
 
 
+export const updateNotificationRolandID = asyncHandler(
+  async (req: Request, res: Response) : Promise<void> => {
+
+    const { id, role, roleId } = req.params;
+
+    let whereCondition: any = {
+      id: Number(id),
+    };
+
+    let updateData: any = {};
+
+    switch (role) {
+
+      case "user":
+        whereCondition.userId = Number(roleId);
+        updateData.userIsRead = true;
+        break;
+
+      case "doctor":
+        whereCondition.doctorId = Number(roleId);
+        updateData.doctorIsRead = true;
+        break;
+
+      case "staff":
+        whereCondition.staffId = Number(roleId);
+        updateData.staffIsRead = true;
+        break;
+
+      case "lab":
+        whereCondition.labId = Number(roleId);
+        updateData.labIsRead = true;
+        break;
+
+      case "pharmacy":
+        whereCondition.pharmacyId = Number(roleId);
+        updateData.pharmacyIsRead = true;
+        break;
+
+      case "hospital":
+        whereCondition.hospitalId = Number(roleId);
+        updateData.hospitalIsRead = true;
+        break;
+
+      default:
+         res.status(400).json({
+          success: false,
+          message: "Invalid role",
+        });
+        return;
+    }
+
+    const notification = await Notification.findOne({
+      where: whereCondition,
+    });
+
+    if (!notification) {
+       res.status(404).json({
+        success: false,
+        message: "Notification not found",
+      });
+      return;
+    }
+
+    await notification.update(updateData);
+
+   res.status(200).json({
+      success: true,
+      message: "Notification updated successfully",
+      data: notification,
+    });
+    return;
+  }
+);
+
+
+
+export const markAllNotificationsAsRead = asyncHandler(
+  async (req: Request, res: Response) : Promise<void> => {
+
+    const { role, roleId } = req.params;
+    
+
+    let whereCondition: any = {};
+    let updateData: any = {};
+
+    switch (role) {
+
+      case "user":
+        whereCondition = {
+          userId: Number(roleId),
+          userIsRead: false,
+        };
+
+        updateData = {
+          userIsRead: true,
+        };
+        break;
+
+      case "doctor":
+        whereCondition = {
+          doctorId: Number(roleId),
+          doctorIsRead: false,
+        };
+
+        updateData = {
+          doctorIsRead: true,
+        };
+        break;
+
+      case "staff":
+        whereCondition = {
+          staffId: Number(roleId),
+          staffIsRead: false,
+        };
+
+        updateData = {
+          staffIsRead: true,
+        };
+        break;
+
+      case "lab":
+        whereCondition = {
+          labId: Number(roleId),
+          labIsRead: false,
+        };
+
+        updateData = {
+          labIsRead: true,
+        };
+        break;
+
+      case "pharmacy":
+        whereCondition = {
+          pharmacyId: Number(roleId),
+          pharmacyIsRead: false,
+        };
+
+        updateData = {
+          pharmacyIsRead: true,
+        };
+        break;
+
+      case "hospital":
+        whereCondition = {
+          hospitalId: Number(roleId),
+          hospitalIsRead: false,
+        };
+
+        updateData = {
+          hospitalIsRead: true,
+        };
+        break;
+
+      default:
+         res.status(400).json({
+          success: false,
+          message: "Invalid role",
+        });
+        return;
+    }
+
+    const [updatedCount] = await Notification.update(
+      updateData,
+      {
+        where: whereCondition,
+      }
+    );
+
+     res.status(200).json({
+      success: true,
+      message: "All notifications marked as read",
+      updatedCount,
+    });
+    return;
+  }
+);

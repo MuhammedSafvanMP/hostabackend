@@ -1,4 +1,4 @@
-import connection from "../config/redis";
+import {connection }from "../config/redis";
 import dotenv from "dotenv";
 import twilio from "twilio";
 import { Worker } from "bullmq";
@@ -24,15 +24,21 @@ function formatTimeToSpeech(time: string) {
   return `${spokenHour} ${m} ${period}`;
 }
 
-const bookingWorker: any = new Worker(
-  "booking-queue",
+export const bookingWorker: any = new Worker(
+  "booking-queue-user",
 
   async (job) => {
     const { phone, doctorId, status, consulting_time } = job.data;
 
+        console.log(phone, "phone");
+
+
     const doctor = await axios.get(
       `${process.env.DOCTOR_SERVICE_API}/doctor/${doctorId}`,
     );
+
+    console.log(phone, "phone");
+    
 
     if (status == "accepted" || status == "declined") {
       const consulting_time_spoken = formatTimeToSpeech(consulting_time);
@@ -71,6 +77,8 @@ const bookingWorker: any = new Worker(
   { connection },
 );
 
+
+
 bookingWorker.on("completed", (job) => {
   console.log("Job completed:", job.id);
 });
@@ -79,4 +87,6 @@ bookingWorker.on("failed", (job, err) => {
   console.error("Job failed:", err);
 });
 
-export default bookingWorker;
+
+
+

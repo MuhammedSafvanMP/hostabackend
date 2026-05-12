@@ -214,15 +214,13 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     return;
   }
 
-<<<<<<< HEAD
-  const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
-=======
+
   const jwtKey = process.env.JWT_SECRET;
->>>>>>> rescue-code
-  const token = jwt.sign({ id: lab.id, name: lab.name, role: "lab", roleId: lab.roleId }, jwtKey, {
+
+  const token = jwt.sign({ id: lab.id, name: lab.name, role: "lab", roleId: lab.roleId, isRefresh: false }, jwtKey, {
     expiresIn: "15m"
   });
-  const refreshToken = jwt.sign({ id: lab.id, name: lab.name, role: "lab", roleId: lab.roleId }, jwtKey, {
+  const refreshToken = jwt.sign({ id: lab.id, name: lab.name, role: "lab", roleId: lab.roleId, isRefresh: true }, jwtKey, {
     expiresIn: "2w"
   });
 
@@ -372,10 +370,10 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
   await lab.update({ otp: null, otpExpiry: null });
 
   const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
-  const token = jwt.sign({ id: lab.id, name: lab.name, role: "lab", roleId: lab.roleId }, jwtKey, {
+  const token = jwt.sign({ id: lab.id, name: lab.name, role: "lab", roleId: lab.roleId, isRefresh: false }, jwtKey, {
     expiresIn: "15m"
   });
-  const refreshToken = jwt.sign({ id: lab.id, name: lab.name, role: "lab", roleId: lab.roleId }, jwtKey, {
+  const refreshToken = jwt.sign({ id: lab.id, name: lab.name, role: "lab", roleId: lab.roleId, isRefresh: true }, jwtKey, {
     expiresIn: "2w"
   });
 
@@ -602,7 +600,7 @@ export const refreshLabToken: any = asyncHandler(async (req: Request, res: Respo
       return;
     }
 
-    const newToken = jwt.sign({ id: lab.id, name: lab.name, role: "lab", roleId: lab.roleId }, jwtKey, {
+    const newToken = jwt.sign({ id: lab.id, name: lab.name, role: "lab", roleId: lab.roleId, isRefresh: false }, jwtKey, {
       expiresIn: "15m",
     });
 
