@@ -2,22 +2,11 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import Ambulance from "../models/ambulance.model";
 import { publishEvent } from "../events/publisher";
+import { generateToken } from "../services/jwt.service";
 import twilio from "twilio";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { httpClient } from "../utils/httpClient";
 dotenv.config();
-
-// Helper to set refresh token cookie
-const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 14 * 24 * 60 * 60 * 1000, // 2 weeks
-    path: "/",
-  });
-};
 
 const APPLE_TEST_NUMBER = "9999999999";
 const APPLE_TEST_OTP = "123456";
@@ -32,6 +21,7 @@ const getTwilioClient = () => {
   return twilio(sid, token);
 };
 
+import { httpClient } from "../utils/httpClient";
 
 // REGISTER - POST /ambulance/register
 export const Registeration: any = asyncHandler(async (req: any, res: Response) => {
@@ -173,17 +163,10 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
   // Clear OTP fields after verification
   await ambulance.update({ otp: null as any, otpExpiry: null as any });
 
-
-  const jwtKey = process.env.JWT_SECRET;
-
-  const token = jwt.sign({ id: ambulance.id, name: ambulance.serviceName, role: "ambulance", roleId: ambulance.roleId }, jwtKey, {
+  const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
+  const token = jwt.sign({ id: ambulance.id, name: ambulance.serviceName, role: "ambulance" }, jwtKey, {
     expiresIn: "15m"
   });
-  const refreshToken = jwt.sign({ id: ambulance.id, name: ambulance.serviceName, role: "ambulance", roleId: ambulance.roleId }, jwtKey, {
-    expiresIn: "2w"
-  });
-
-  setRefreshTokenCookie(res, refreshToken);
 
   const ambulanceJson = ambulance.toJSON();
   
@@ -313,49 +296,4 @@ export const getAmbulaces: any = asyncHandler(async (req: Request, res: Response
     data: safeAmbulances,
     error: null,
   });
-});
-
-// REFRESH TOKEN - POST /ambulance/refresh
-export const refreshAmbulanceToken: any = asyncHandler(async (req: Request, res: Response) => {
-  const refreshToken = req.cookies?.refreshToken;
-
-  if (!refreshToken) {
-    res.status(401).json({ success: false, message: "Refresh token missing" });
-    return;
-  }
-
-  const jwtKey = process.env.JWT_SECRET;
-
-  try {
-    const decoded: any = jwt.verify(refreshToken, jwtKey);
-    
-    const ambulance = await Ambulance.findByPk(decoded.id);
-
-    if (!ambulance) {
-      res.status(401).json({ success: false, message: "Invalid refresh token" });
-      return;
-    }
-
-    const newToken = jwt.sign({ id: ambulance.id, name: ambulance.serviceName, role: "ambulance", roleId: ambulance.roleId }, jwtKey, {
-      expiresIn: "15m",
-    });
-
-    res.status(200).json({
-      success: true,
-      token: newToken,
-    });
-  } catch (error) {
-    res.status(401).json({ success: false, message: "Invalid or expired refresh token" });
-  }
-});
-
-// LOGOUT - POST /ambulance/logout
-export const logout: any = asyncHandler(async (req: Request, res: Response) => {
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    path: "/",
-  });
-  res.status(200).json({ success: true, message: "Logged out successfully" });
 });

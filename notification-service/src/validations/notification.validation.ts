@@ -24,3 +24,6 @@ export const getByRoleParamsSchema = z.object({
   id: z.string().regex(/^\d+$/, "ID must be a numeric string"),
   role: z.enum(["user", "doctor", "staff", "lab", "pharmacy", "hospital"]),
 });
+
+
+

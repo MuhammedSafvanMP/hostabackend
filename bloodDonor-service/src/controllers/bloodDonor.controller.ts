@@ -9,16 +9,16 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
 
-// Helper to set refresh token cookie
-const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 14 * 24 * 60 * 60 * 1000, // 2 weeks
-    path: "/",
-  });
-};
+// // Helper to set refresh token cookie
+// const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
+//   res.cookie("refreshToken", refreshToken, {
+//     httpOnly: true,
+//     secure: process.env.NODE_ENV === "production",
+//     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+//     maxAge: 14 * 24 * 60 * 60 * 1000, // 2 weeks
+//     path: "/",
+//   });
+// };
 
 const APPLE_TEST_NUMBER = "9999999999";
 const APPLE_TEST_OTP = "123456";
@@ -227,14 +227,14 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
   await donor.update({ otp: null as any, otpExpiry: null as any });
 
   const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
-  const token = jwt.sign({ id: donor.id, donorId: donor.donorId, userId: donor.userId, role: "bloodDonor", roleId: donor.roleId }, jwtKey, {
+  const token = jwt.sign({ id: donor.id, donorId: donor.donorId, userId: donor.userId, role: "bloodDonor" }, jwtKey, {
     expiresIn: "15m"
   });
-  const refreshToken = jwt.sign({ id: donor.id, donorId: donor.donorId, userId: donor.userId, role: "bloodDonor", roleId: donor.roleId }, jwtKey, {
-    expiresIn: "2w"
-  });
+  // const refreshToken = jwt.sign({ id: donor.id, donorId: donor.donorId, userId: donor.userId, role: "bloodDonor", roleId: donor.roleId }, jwtKey, {
+  //   expiresIn: "2w"
+  // });
 
-  setRefreshTokenCookie(res, refreshToken);
+  // setRefreshTokenCookie(res, refreshToken);
 
   const donorJson = donor.toJSON();
 
@@ -380,47 +380,47 @@ export const deleteDonor: any = asyncHandler(async (req: Request, res: Response)
   });
 });
 
-// REFRESH TOKEN - POST /donors/refresh
-export const refreshBloodDonorToken: any = asyncHandler(async (req: Request, res: Response) => {
-  const refreshToken = req.cookies?.refreshToken;
+// // REFRESH TOKEN - POST /donors/refresh
+// export const refreshBloodDonorToken: any = asyncHandler(async (req: Request, res: Response) => {
+//   const refreshToken = req.cookies?.refreshToken;
 
-  if (!refreshToken) {
-    res.status(401).json({ success: false, message: "Refresh token missing" });
-    return;
-  }
+//   if (!refreshToken) {
+//     res.status(401).json({ success: false, message: "Refresh token missing" });
+//     return;
+//   }
 
-  const jwtKey = process.env.JWT_SECRET;
+//   const jwtKey = process.env.JWT_SECRET;
 
-  try {
-    const decoded: any = jwt.verify(refreshToken, jwtKey);
+//   try {
+//     const decoded: any = jwt.verify(refreshToken, jwtKey);
     
-    const donor = await BloodDonor.findByPk(decoded.id);
+//     const donor = await BloodDonor.findByPk(decoded.id);
 
-    if (!donor) {
-      res.status(401).json({ success: false, message: "Invalid refresh token" });
-      return;
-    }
+//     if (!donor) {
+//       res.status(401).json({ success: false, message: "Invalid refresh token" });
+//       return;
+//     }
 
-    const newToken = jwt.sign({ id: donor.id, donorId: donor.donorId, userId: donor.userId, role: "bloodDonor", roleId: donor.roleId }, jwtKey, {
-      expiresIn: "15m",
-    });
+//     const newToken = jwt.sign({ id: donor.id, donorId: donor.donorId, userId: donor.userId, role: "bloodDonor", roleId: donor.roleId }, jwtKey, {
+//       expiresIn: "15m",
+//     });
 
-    res.status(200).json({
-      success: true,
-      token: newToken,
-    });
-  } catch (error) {
-    res.status(401).json({ success: false, message: "Invalid or expired refresh token" });
-  }
-});
+//     res.status(200).json({
+//       success: true,
+//       token: newToken,
+//     });
+//   } catch (error) {
+//     res.status(401).json({ success: false, message: "Invalid or expired refresh token" });
+//   }
+// });
 
-// LOGOUT - POST /donors/logout
-export const logout: any = asyncHandler(async (req: Request, res: Response) => {
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    path: "/",
-  });
-  res.status(200).json({ success: true, message: "Logged out successfully" });
-});
+// // LOGOUT - POST /donors/logout
+// export const logout: any = asyncHandler(async (req: Request, res: Response) => {
+//   res.clearCookie("refreshToken", {
+//     httpOnly: true,
+//     secure: process.env.NODE_ENV === "production",
+//     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+//     path: "/",
+//   });
+//   res.status(200).json({ success: true, message: "Logged out successfully" });
+// });
