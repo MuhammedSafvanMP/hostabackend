@@ -11,10 +11,21 @@ interface IConsultingSession {
   close: string;
 }
 
-interface IConsulting {
+interface IConsultingTwoTime {
+  day: string;
   morning_session?: IConsultingSession;
   evening_session?: IConsultingSession;
+  is_holiday?: boolean;
+  has_break?: boolean;
 }
+
+interface IConsultingOneTime  {
+  day: string;
+  start_time?: string;
+  end_time?: string;
+  is_holiday?: boolean;
+}
+
 
 interface IAddress {
   country?: string;
@@ -46,7 +57,8 @@ interface IDoctor {
   gender?: string;
   knowLanguages?: string[];
   qualification?: string;
-  consulting?: IConsulting;
+  consultingTwo?: IConsultingTwoTime;
+  consultingOne?: IConsultingTwoTime;
   outDoorConsulting?: IOutDoorConsulting;
   bookingOpen: boolean;
   displayName:string;
@@ -58,6 +70,11 @@ interface IDoctor {
   otp?: string;
   otpExpiry?: Date;
   hospitalId?: number;
+  imageUrl?: string; 
+  experience?: string;
+  regNo?: string;
+  autoDecline?: number;
+  appoimentCount?: number;
 }
 
 /* =======================
@@ -66,7 +83,7 @@ interface IDoctor {
 
 type DoctorCreationAttributes = Optional<
   IDoctor,
-  "id" |  "email" |  "joiningDate" | "password" | "fees" | "dob" | "gender" | "knowLanguages" | "qualification" | "consulting" | "department" | "specialist" | "displayName" | "hospitalId"
+  "id" |  "email" |  "joiningDate" | "password" | "fees" | "dob" | "gender" | "knowLanguages" | "qualification" | "consultingTwo" | "consultingOne" | "department" | "specialist" | "displayName" | "hospitalId"
 >;
 
 /* =======================
@@ -90,7 +107,8 @@ class Doctor
   public gender?: string;
   public knowLanguages?: string[];
   public qualification?: string;
-  public consulting?: IConsulting;
+  public consultingTwo?: IConsultingTwoTime;
+  public consultingOne?: IConsultingOneTime;
   public bookingOpen!: boolean;
   public address!: IAddress;
   public displayName!: string;
@@ -101,6 +119,11 @@ class Doctor
   public outDoorConsulting?: IOutDoorConsulting;
   public hospitalId?: number;
   public roleId: number;
+  public imageUrl?: string;
+  public experience?: string;
+  public regNo?: string;
+  public autoDecline?: number;
+  public appoimentCount?: number;
 
 }
 
@@ -146,6 +169,18 @@ Doctor.init(
     qualification: {
       type: DataTypes.STRING,
     },
+    regNo: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+     autoDecline: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+     appoimentCount: {
+      type: DataTypes.INTEGER ,
+      allowNull: true
+    },
 
     phone: {
       type: DataTypes.STRING,
@@ -165,9 +200,18 @@ Doctor.init(
       },
     },
 
+      imageUrl: {
+      type: DataTypes.STRING, // 🔥 store imageUrl + public_id
+      allowNull: true
+    },
     password: {
       type: DataTypes.STRING,
     },
+
+    experience: {
+       type: DataTypes.STRING,
+       allowNull: true
+    }, 
 
     fees: {
       type: DataTypes.DECIMAL(10, 2), 
@@ -190,8 +234,13 @@ Doctor.init(
       allowNull: false,
     },
 
-    consulting: {
+    consultingTwo: {
       type: DataTypes.JSONB,
+      allowNull: true
+    },
+     consultingOne: {
+      type: DataTypes.JSONB,
+      allowNull: true
     },
       outDoorConsulting: {
       type: DataTypes.JSON,

@@ -1,3 +1,68 @@
+# # # -------- BUILD STAGE --------
+# # FROM node:20 AS builder
+# # WORKDIR /app
+# # COPY package*.json ./
+# # RUN npm install
+# # COPY . .
+# # RUN npm run build
+
+# # # -------- PRODUCTION STAGE --------
+# # FROM node:20-slim
+# # WORKDIR /app
+# # COPY package*.json ./
+# # RUN npm ci --omit=dev
+# # COPY --from=builder /app/dist ./dist
+# # COPY --from=builder /app/config ./config
+# # COPY --from=builder /app/migrations ./migrations
+
+# # # SECURITY: run as non-root user
+# # USER node
+
+# # EXPOSE 3012
+
+# # HEALTHCHECK --interval=30s --timeout=3s \
+# #   CMD node -e 'require("http").get("http://localhost:3012/health", (res) => res.statusCode === 200 ? process.exit(0) : process.exit(1))'
+
+# # CMD ["sh", "-c", "npx sequelize-cli db:migrate && node dist/server.js"]
+
+
+
+
+
+# # -------- BUILD STAGE --------
+# FROM node:20 AS builder
+# WORKDIR /app
+# COPY package*.json ./
+# RUN npm install
+# COPY . .
+# RUN npm run build
+
+# # -------- PRODUCTION STAGE --------
+# FROM node:20-slim
+# WORKDIR /app
+# COPY package*.json ./
+# RUN npm install --omit=dev
+# COPY --from=builder /app/dist ./dist
+# COPY --from=builder /app/config ./config
+# COPY --from=builder /app/migrations ./migrations
+
+# # SECURITY: run as non-root user
+# USER node
+
+# EXPOSE 3012
+
+# HEALTHCHECK --interval=30s --timeout=3s \
+#   CMD node -e 'require("http").get("http://localhost:3012/health", (res) => res.statusCode === 200 ? process.exit(0) : process.exit(1))'
+
+# CMD ["sh", "-c", "npx sequelize-cli db:migrate && node dist/server.js"]
+
+
+
+
+
+
+
+
 # -------- BUILD STAGE --------
 FROM node:20-alpine AS builder
 
@@ -25,7 +90,7 @@ ENV NODE_ENV=production
 COPY package*.json .npmrc* ./
 
 # Install only production dependencies
-RUN npm ci --omit=dev && rm -f .npmrc
+RUN npm install --omit=dev && rm -f .npmrc
 
 # Copy compiled code
 COPY --from=builder /app/dist ./dist
@@ -36,10 +101,10 @@ COPY --from=builder /app/.sequelizerc* ./
 # Security: run as non-root user
 USER node
 
-EXPOSE 3012
+EXPOSE 3005
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3012/health', (res) => res.statusCode === 200 ? process.exit(0) : process.exit(1)).on('error', () => process.exit(1))"
+  CMD node -e "require('http').get('http://localhost:3005/health', (res) => res.statusCode === 200 ? process.exit(0) : process.exit(1)).on('error', () => process.exit(1))"
 
 CMD ["sh", "-c", "npx sequelize-cli db:migrate && node dist/server.js"]

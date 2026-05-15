@@ -1,3 +1,7 @@
+
+
+
+
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -8,6 +12,8 @@ import { Op } from "sequelize";
 import twilio from "twilio";
 import axios from "axios";
 import { sendEmail } from "../services/mail.service";
+import dotenv from "dotenv";
+dotenv.config();
 
 // Helper to set refresh token cookie
 const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
@@ -62,7 +68,8 @@ export const sendDoctorOtpEmail = async (email: string, otp: string, doctorName:
 
 // REGISTER - POST /doctor/register
 export const Registeration: any = asyncHandler(async (req: any, res: Response) => {
-  const { hospitalId: bodyHospitalId, firstName, lastName, phone, joiningDate, email, password, fees, department, specialist, dob, gender, knowLanguages, consulting, bookingOpen, qualification, address, displayName, outDoorConsulting } = req.body;
+  const { hospitalId: bodyHospitalId, firstName, lastName, phone, joiningDate, email, password, fees, department, specialist, dob, gender, knowLanguages,   consultingTwo,
+  consultingOne, bookingOpen, qualification, address, displayName, outDoorConsulting ,experience, appoimentCount, regNo} = req.body;
 
   const tokenHospitalId = req.user?.id;
   const authHeader = req.headers.authorization;
@@ -86,7 +93,7 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
 
   // 2. Validate hospitalId via hospital-service
   try {
-    const hospitalResponse = await axios.get(`http://hospital-service:3009/hospital/${hospitalId}`, {
+    const hospitalResponse = await axios.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
       headers: { Authorization: authHeader }
     });
     if (!hospitalResponse.data || !hospitalResponse.data.success) {
@@ -94,8 +101,8 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
       return;
     }
   } catch (error) {
-    res.status(404).json({ 
-      success: false, 
+    res.status(404).json({
+      success: false,
       message: `Hospital with ID ${hospitalId} does not exist in the hospital service.`,
       error: { code: "HOSPITAL_NOT_FOUND" }
     });
@@ -126,19 +133,24 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
    dob, 
    gender, 
    knowLanguages, 
-   consulting, 
+  consultingTwo,
+  consultingOne,
    bookingOpen, 
    qualification, 
    address, 
    displayName,
    joiningDate,
    outDoorConsulting,
-   hospitalId
+   hospitalId,
+   experience,
+    appoimentCount,
+     regNo
   });
 
   await publishEvent("doctor_events", "DOCTOR_REGISTERED", {
     doctorId: newDoctor.id,
     phone: newDoctor.phone,
+    hospitalId: newDoctor.hospitalId
   });
 
   res.status(201).json({
@@ -193,14 +205,14 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
-  const token = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId }, jwtKey, {
+  const token = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId, isRefresh: false }, jwtKey, {
     expiresIn: "15m",
   });
 
   // Remove password and OTP fields from response
   const { password: _, otp: __, otpExpiry: ___, ...safeDoctor } = doctor.get();
 
-  const refreshToken = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId }, jwtKey, {
+  const refreshToken = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId, isRefresh: true }, jwtKey, {
     expiresIn: "2w",
   });
 
@@ -280,13 +292,13 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
   await doctor.update({ otp: null, otpExpiry: null });
 
   const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
-  const token = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId }, jwtKey, {
+  const token = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId, isRefresh: false }, jwtKey, {
     expiresIn: "15m",
   });
 
   const { password: _, otp: __, otpExpiry: ___, ...safeDoctor } = doctor.get();
 
-  const refreshToken = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId }, jwtKey, {
+  const refreshToken = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId, isRefresh: true }, jwtKey, {
     expiresIn: "2w",
   });
 
@@ -301,7 +313,7 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
 });
 
 // GET ONE - GET /doctor/:id
-export const getanDoctor : any = asyncHandler(async (req: Request, res: Response) => {
+export const getanDoctor: any = asyncHandler(async (req: Request, res: Response) => {
   const doctor = await Doctor.findByPk(req.params.id);
   if (!doctor) {
     res.status(404).json({
@@ -503,21 +515,21 @@ export const verifyDoctorOtp: any = asyncHandler(async (req: Request, res: Respo
   await doctor.update({ otp: null, otpExpiry: null });
 
   const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
-  const token = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId }, jwtKey, {
+  const token = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId, isRefresh: false }, jwtKey, {
     expiresIn: "15m",
   });
 
-  const refreshToken = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId }, jwtKey, {
+  const refreshToken = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId, isRefresh: true }, jwtKey, {
     expiresIn: "2w",
   });
 
   setRefreshTokenCookie(res, refreshToken);
 
-  res.status(200).json({ 
-    success: true, 
+  res.status(200).json({
+    success: true,
     message: "OTP verified",
     token,
-    data: doctor 
+    data: doctor
   });
 });
 
@@ -576,7 +588,7 @@ export const refreshDoctorToken: any = asyncHandler(async (req: Request, res: Re
 
   try {
     const decoded: any = jwt.verify(refreshToken, jwtKey);
-    
+
     // Check Redis Blacklist / Rotation (REMOVED)
 
     const doctor = await Doctor.findByPk(decoded.id);
@@ -586,7 +598,7 @@ export const refreshDoctorToken: any = asyncHandler(async (req: Request, res: Re
       return;
     }
 
-    const newToken = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId }, jwtKey, {
+    const newToken = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId, isRefresh: false }, jwtKey, {
       expiresIn: "15m",
     });
 

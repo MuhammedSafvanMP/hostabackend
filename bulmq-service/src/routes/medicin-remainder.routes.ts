@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   assignTaskMedicin,
 } from "../controllers/medicin-remainder.controllers";
+import { authenticate } from "../middleware/authenticate";
 
 const router = Router();
 
@@ -12,6 +13,7 @@ const router = Router();
 
 router.post(
   "/medicin-task",
+  authenticate,
  assignTaskMedicin
 );
 

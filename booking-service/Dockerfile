@@ -1,9 +1,202 @@
+# # # # # -------- BUILD STAGE --------
+# # # # FROM node:20-alpine AS builder
+
+# # # # WORKDIR /app
+
+# # # # # Install build dependencies for native modules
+# # # # RUN apk add --no-cache python3 make g++
+
+# # # # COPY package*.json .npmrc* ./
+
+# # # # RUN npm install --include=dev
+
+# # # # COPY . .
+
+# # # # RUN npm run build
+
+# # # # # -------- PRODUCTION STAGE --------
+# # # # FROM node:20-alpine
+
+# # # # WORKDIR /app
+
+# # # # # Set production environment
+# # # # ENV NODE_ENV=production
+
+# # # # COPY package*.json .npmrc* ./
+
+# # # # # Install only production dependencies
+# # # # RUN npm ci --omit=dev && rm -f .npmrc
+
+# # # # # Copy compiled code
+# # # # COPY --from=builder /app/dist ./dist
+# # # # COPY --from=builder /app/config ./config
+# # # # COPY --from=builder /app/migrations ./migrations
+# # # # COPY --from=builder /app/.sequelizerc* ./
+
+# # # # # Security: run as non-root user
+# # # # USER node
+
+# # # # EXPOSE 3011
+
+# # # # # Healthcheck
+# # # # HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+# # # #   CMD node -e "require('http').get('http://localhost:3011/health', (res) => res.statusCode === 200 ? process.exit(0) : process.exit(1)).on('error', () => process.exit(1))"
+
+# # # # CMD ["sh", "-c", "npx sequelize-cli db:migrate && node dist/server.js"]
+
+
+
+# # # # -------- BUILD STAGE --------
+# # # FROM node:20-alpine AS builder
+
+# # # WORKDIR /app
+
+# # # RUN apk add --no-cache python3 make g++
+
+# # # COPY package*.json ./
+
+# # # RUN npm install --include=dev --legacy-peer-deps
+
+# # # COPY . .
+
+# # # RUN npm run build
+
+
+# # # # -------- PRODUCTION STAGE --------
+# # # FROM node:20-alpine
+
+# # # WORKDIR /app
+
+# # # ENV NODE_ENV=production
+
+# # # COPY package*.json ./
+
+# # # # ✅ SAFE INSTALL (fixes your error)
+# # # RUN npm install --omit=dev --legacy-peer-deps
+
+# # # COPY --from=builder /app/dist ./dist
+# # # COPY --from=builder /app/config ./config
+# # # COPY --from=builder /app/migrations ./migrations
+# # # COPY --from=builder /app/.sequelizerc* ./
+
+# # # USER node
+
+# # # EXPOSE 3011
+
+# # # HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+# # # CMD node -e "require('http').get('http://localhost:3011/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+
+# # # CMD ["sh", "-c", "npx sequelize-cli db:migrate && node dist/server.js"]
+
+
+
+
+# # # -------- BUILD STAGE --------
+# # FROM node:20-alpine AS builder
+
+# # WORKDIR /app
+
+# # # Install build dependencies for native modules
+# # RUN apk add --no-cache python3 make g++
+
+# # COPY package*.json .npmrc* ./
+
+# # RUN npm install --include=dev
+
+# # COPY . .
+
+# # RUN npm run build
+
+# # # -------- PRODUCTION STAGE --------
+# # FROM node:20-alpine
+
+# # WORKDIR /app
+
+# # # Set production environment
+# # ENV NODE_ENV=production
+
+# # COPY package*.json .npmrc* ./
+
+# # # Install only production dependencies
+# # RUN npm install --omit=dev && rm -f .npmrc
+
+# # # Copy compiled code
+# # COPY --from=builder /app/dist ./dist
+# # COPY --from=builder /app/config ./config
+# # COPY --from=builder /app/migrations ./migrations
+# # COPY --from=builder /app/.sequelizerc* ./
+
+# # # Security: run as non-root user
+# # USER node
+
+# # EXPOSE 3011
+
+# # # Healthcheck
+# # HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+# #   CMD node -e "require('http').get('http://localhost:3011/health', (res) => res.statusCode === 200 ? process.exit(0) : process.exit(1)).on('error', () => process.exit(1))"
+
+# # CMD ["sh", "-c", "npx sequelize-cli db:migrate && node dist/server.js"]
+
+
+
+
+
+# # -------- BUILD STAGE --------
+# FROM node:20-alpine AS builder
+
+# WORKDIR /app
+
+# # Install build dependencies for native modules
+# RUN apk add --no-cache python3 make g++
+
+# COPY package*.json .npmrc* ./
+
+# RUN npm install --include=dev
+
+# COPY . .
+
+# RUN npm run build
+
+# # -------- PRODUCTION STAGE --------
+# FROM node:20-alpine
+
+# WORKDIR /app
+
+# # Set production environment
+# ENV NODE_ENV=production
+
+# COPY package*.json .npmrc* ./
+
+# # Install only production dependencies
+# RUN npm install --omit=dev && rm -f .npmrc
+
+# # Copy compiled code
+# COPY --from=builder /app/dist ./dist
+# COPY --from=builder /app/config ./config
+# COPY --from=builder /app/migrations ./migrations
+# COPY --from=builder /app/.sequelizerc* ./
+
+# # Security: run as non-root user
+# USER node
+
+# EXPOSE 3011
+
+# # Healthcheck
+# HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+#   CMD node -e "require('http').get('http://localhost:3011/health', (res) => res.statusCode === 200 ? process.exit(0) : process.exit(1)).on('error', () => process.exit(1))"
+
+# CMD ["sh", "-c", "npx sequelize-cli db:migrate && node dist/server.js"]
+
+
+
+
+
 # -------- BUILD STAGE --------
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install build dependencies for native modules
+# Install build dependencies
 RUN apk add --no-cache python3 make g++
 
 COPY package*.json .npmrc* ./
@@ -19,21 +212,17 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Set production environment
 ENV NODE_ENV=production
 
 COPY package*.json .npmrc* ./
 
 # Install only production dependencies
-RUN npm ci --omit=dev && rm -f .npmrc
+RUN npm install --omit=dev && rm -f .npmrc
 
-# Copy compiled code
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/config ./config
-COPY --from=builder /app/migrations ./migrations
-COPY --from=builder /app/.sequelizerc* ./
+# Copy everything from builder
+COPY --from=builder /app ./
 
-# Security: run as non-root user
+# Security
 USER node
 
 EXPOSE 3011

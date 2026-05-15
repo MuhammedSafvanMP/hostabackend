@@ -38,7 +38,7 @@ const router = Router();
 
 // Auth
 
-router.post("/staff", validate(registerStaffSchema),checkPermission("staff", "create"), Registeration);
+router.post("/staff", authenticate, validate(registerStaffSchema),checkPermission("staff", "create"), Registeration);
 router.post("/staff/login", validate(loginStaffSchema), login);
 router.post("/staff/login/phone", validate(loginWithPhoneSchema), loginWithPhone);
 router.post("/staff/otp", validate(verifyOtpSchema), verifyOtp);
@@ -62,6 +62,7 @@ router.put("/staff/auth/change-password",authenticate, validate(changePasswordSc
 
 
 // CRUD
+
 router.get("/staff",authenticate,checkPermission("staff", "view"),getStaffs);
 router.get("/staff/:id",authenticate, validateParams(idParamSchema), checkPermission("staff", "view"),getanStaff);
 router.put("/staff/:id",authenticate, validateParams(idParamSchema), validate(updateStaffSchema), checkPermission("staff", "edit"), updateData);

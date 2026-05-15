@@ -36,6 +36,7 @@ interface IStaff {
   otp?: string;
   otpExpiry?: Date;
   roleId: number; 
+  imageUrl: string;
 }
 
 /* =======================
@@ -91,6 +92,7 @@ class Staff
   public otp?: string;
   public otpExpiry?: Date;
   public roleId!: number;   
+  public imageUrl: string;
 
   // timestamps
   public readonly createdAt!: Date;
@@ -147,6 +149,10 @@ Staff.init(
 
     staffType: {
       type: DataTypes.STRING,
+    },
+      imageUrl: {
+      type: DataTypes.STRING, // 🔥 store imageUrl + public_id
+      allowNull: true
     },
 
     jobType: {
