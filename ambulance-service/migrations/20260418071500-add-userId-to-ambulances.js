@@ -1,15 +1,26 @@
-'use strict';
+"use strict";
 
-/** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.addColumn('ambulances', 'userId', {
-      type: Sequelize.INTEGER,
-      allowNull: true,
-    });
+
+    const table = await queryInterface.describeTable("ambulances");
+
+    if (!table.userId) {
+      await queryInterface.addColumn("ambulances", "userId", {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      });
+    }
+
   },
 
-  async down(queryInterface, Sequelize) {
-    await queryInterface.removeColumn('ambulances', 'userId');
-  }
+  async down(queryInterface) {
+
+    const table = await queryInterface.describeTable("ambulances");
+
+    if (table.userId) {
+      await queryInterface.removeColumn("ambulances", "userId");
+    }
+
+  },
 };

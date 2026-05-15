@@ -20,6 +20,7 @@ export const Registeration: any = asyncHandler(
       hospitalId,
       doctorId,
       booking_date,
+      consulting_time,
     } = req.body;
 
     const tokenUserId = req.user.id;
@@ -67,19 +68,27 @@ export const Registeration: any = asyncHandler(
     // 4. VALIDATE DOCTOR (FIXED)
     // ==============================
     let doctor: any;
+    let hospital: any;
 
     try {
-      const doctorRes = await httpClient.get(
-        `${process.env.DOCTOR_SERVICE_URL}/doctor/${doctorId}`,
-        { headers: { Authorization: authHeader } }
-      );
+      const [doctorRes, hospitalRes] = await Promise.all([
+        httpClient.get(
+          `${process.env.DOCTOR_SERVICE_URL}/doctor/${doctorId}`,
+          { headers: { Authorization: authHeader } }
+        ),
+        httpClient.get(
+          `${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`,
+          { headers: { Authorization: authHeader } }
+        )
+      ]);
 
       // IMPORTANT FIX: correct axios structure
       doctor = doctorRes.data;
+      hospital = hospitalRes.data;
     } catch {
       res.status(404).json({
         success: false,
-        message: "Doctor not found",
+        message: "Doctor or Hospital not found",
       });
       return;
     }
@@ -108,35 +117,25 @@ export const Registeration: any = asyncHandler(
       hospitalId,
       doctorId,
       booking_date,
+      consulting_time,
     });
 
     // ==============================
     // 7. SAFE EXTERNAL CALLS
     // ==============================
 
-    const doctorName =
-      doctor?.data?.displayName; 
+    const doctorName = doctor?.data?.displayName || "Unknown Doctor"; 
+    const hospitalName = hospital?.data?.name || `Hospital (ID: ${hospitalId})`;
       
 
     await Promise.allSettled([
-      // Notification Service
-      httpClient.post(
-        `${process.env.NOTIFICATION_SERVICE_URL}/notification`,
-        {
-          hospitalId,
-          doctorId,
-          message: `New booking for Dr. ${doctorName} on ${booking_date}`,
-        },
-        { headers: { Authorization: authHeader } }
-      ),
-
       // BullMQ Service
       axios.post(
         `${process.env.BULMQ_SERVICE_URL}/booking-task/hospital`,
         {
           doctorId,
           hospitalId,
-          message: `New booking for Dr. ${doctorName} on ${booking_date}`,
+          message: `New booking for Dr. ${doctorName} at ${hospitalName} on ${booking_date}`,
         },
         { headers: { Authorization: authHeader } }
       ),
@@ -145,9 +144,20 @@ export const Registeration: any = asyncHandler(
     // ==============================
     // 8. EVENT PUBLISH
     // ==============================
-    await publishEvent("booking_events", "BOOKING_REGISTERED", {
+    const payload = {
       bookingId: newbooking.id,
-    });
+      userId: userId,
+      hospitalId: hospitalId,
+      doctorId: doctorId,
+      patient_name: patient_name,
+      doctorName: doctorName,
+      hospitalName: hospitalName,
+      booking_date: booking_date,
+    };
+
+    console.log("📤 Publishing BOOKING_REGISTERED event with payload:", JSON.stringify(payload, null, 2));
+
+    await publishEvent("booking_events", "BOOKING_REGISTERED", payload);
 
     // ==============================
     // 9. RESPONSE
@@ -211,9 +221,20 @@ export const updateData: any = asyncHandler(
     // ✅ Get updated booking object
     const updatedBooking = booking[1][0];
 
-    await publishEvent("booking_events", "BOOKING_UPDATED", {
+    const eventName = updatedBooking.status === "cancel" ? "BOOKING_CANCELLED" : "BOOKING_UPDATED";
+    
+    const eventPayload = {
       bookingId: updatedBooking.id,
-    });
+      userId: updatedBooking.userId,
+      hospitalId: updatedBooking.hospitalId,
+      doctorId: updatedBooking.doctorId,
+      patient_name: updatedBooking.patient_name,
+      status: updatedBooking.status
+    };
+
+    console.log(`📤 Publishing ${eventName} event with payload:`, JSON.stringify(eventPayload, null, 2));
+    
+    await publishEvent("booking_events", eventName, eventPayload);
 
     if (updatedBooking.status !== "cancel") {
       // ✅ Use correct values
@@ -230,26 +251,6 @@ export const updateData: any = asyncHandler(
           headers: { Authorization: authHeader },
         },
       );
-
-      const doctor: any = await httpClient.get(
-        `${process.env.DOCTOR_SERVICE_URL}/doctor/${updatedBooking.doctorId}`,
-        {
-          headers: { Authorization: authHeader },
-        },
-      );
-
-      // send notification userId
-
-   await axios.post(`${process.env.NOTIFICATION_SERVICE_URL}/notification`, {
-        userId: updatedBooking.userId,
-        message: `Your booking with Dr. ${doctor.data.displayName} has been ${updatedBooking.status}.`,
-      },
-      {
-        headers: { Authorization: authHeader }
-      }
-    );
-
-
     }
 
     

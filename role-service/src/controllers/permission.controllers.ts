@@ -166,29 +166,31 @@ export const checkPermissionService = asyncHandler(
     const { roleId, module, action } = req.body;
 
     if (!roleId) {
-      res.status(200).json({
-        allowed: false,
-      });
+      res.status(200).json({ allowed: false });
       return;
     }
 
-
+    // Step 1: Find the permission row matching module + action
     const permission = await Permission.findOne({
-  where: {
-    module,
-    action,
-  },
-  include: [
-    {
-      model: Role,
-      where: { id: roleId },
-      required: true,
-    },
-  ],
-});
+      where: { module, action },
+    });
+
+    if (!permission) {
+      // This module+action permission doesn't exist at all in the DB
+      res.status(200).json({ allowed: false });
+      return;
+    }
+
+    // Step 2: Check the junction table — does this role have that permission?
+    const rolePermission = await RolePermission.findOne({
+      where: {
+        roleId: Number(roleId),
+        permissionId: permission.id,
+      },
+    });
 
     res.status(200).json({
-      allowed: !!permission,
+      allowed: !!rolePermission,
     });
   }
 );

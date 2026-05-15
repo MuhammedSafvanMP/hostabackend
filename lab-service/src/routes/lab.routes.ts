@@ -51,8 +51,8 @@ router.post("/lab/logout", logout);
 
 // CRUD
 router.get("/lab", authenticate, checkPermission("lab", "view"), getLabs);
-router.get("/lab/:id", validateParams(idParamSchema), checkPermission("lab", "view"), getanLab);
-router.put("/lab/:id", validateParams(idParamSchema), validate(updateSchema), checkPermission("lab", "edit"), updateData);
+router.get("/lab/:id", authenticate, validateParams(idParamSchema), checkPermission("lab", "view"), getanLab);
+router.put("/lab/:id", authenticate, validateParams(idParamSchema), validate(updateSchema), checkPermission("lab", "edit"), updateData);
 router.delete("/lab/:id", authenticate, validateParams(idParamSchema), checkPermission("lab", "delete"), labDelete);
 
 

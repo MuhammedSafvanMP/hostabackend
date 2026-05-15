@@ -38,7 +38,7 @@ const router = Router();
 
 // Auth
 
-router.post("/staff", validate(registerStaffSchema),checkPermission("staff", "create"), Registeration);
+router.post("/staff", authenticate, validate(registerStaffSchema),checkPermission("staff", "create"), Registeration);
 router.post("/staff/login", validate(loginStaffSchema), login);
 router.post("/staff/login/phone", validate(loginWithPhoneSchema), loginWithPhone);
 router.post("/staff/otp", validate(verifyOtpSchema), verifyOtp);
