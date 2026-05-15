@@ -69,7 +69,7 @@ export const sendDoctorOtpEmail = async (email: string, otp: string, doctorName:
 // REGISTER - POST /doctor/register
 export const Registeration: any = asyncHandler(async (req: any, res: Response) => {
   const { hospitalId: bodyHospitalId, firstName, lastName, phone, joiningDate, email, password, fees, department, specialist, dob, gender, knowLanguages,   consultingTwo,
-  consultingOne, bookingOpen, qualification, address, displayName, outDoorConsulting ,experience, appoimentCount, regNo} = req.body;
+  consultingOne, bookingOpen, qualification, address, displayName, outDoorConsulting ,experience, appointmentCount, regNo} = req.body;
 
   const tokenHospitalId = req.user?.id;
   const authHeader = req.headers.authorization;
@@ -143,7 +143,7 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
    outDoorConsulting,
    hospitalId,
    experience,
-    appoimentCount,
+    appointmentCount,
      regNo
   });
 
