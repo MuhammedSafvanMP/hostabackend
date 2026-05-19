@@ -44,7 +44,7 @@ router.post("/lab/otp", validate(verifyOtpSchema), verifyLoginOtp);
 // Production Auth Routes
 router.post("/lab/auth/send-otp", validate(loginWithEmailSchema), sendOtp);
 router.post("/lab/auth/verify-otp", validate(verifyOtpSchema), verifyOtp);
-router.post("/lab/auth/reset-password", validate(resetPasswordSchema), resetPassword);
+router.post("/lab/auth/reset-password", authenticate, validate(resetPasswordSchema), resetPassword);
 router.put("/lab/auth/change-password", authenticate, validate(changePasswordSchema), changePassword);
 router.post("/lab/refresh", refreshLabToken);
 router.post("/lab/logout", logout);

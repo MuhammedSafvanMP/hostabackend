@@ -228,14 +228,12 @@ app.use(
 
         res.status(err.status || 500).json({
             success: false,
-
-            message:
-                "Internal Server Error in Doctor Service",
-
-            error:
-                env.NODE_ENV === "development"
-                    ? err
-                    : {},
+            message: err.message || "Internal Server Error in Doctor Service",
+            error: {
+                message: err.message,
+                code: err.code || "INTERNAL_SERVER_ERROR",
+                details: err.errors || err.details || null,
+            },
         });
     }
 );

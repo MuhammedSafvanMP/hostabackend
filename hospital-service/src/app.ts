@@ -228,16 +228,36 @@ app.use(
             stack: err.stack,
         });
 
+        // Sequelize validation error → 400
+        if (err.name === "SequelizeValidationError") {
+            const messages = err.errors?.map((e: any) => e.message) ?? [err.message];
+            res.status(400).json({
+                success: false,
+                message: messages.join(", "),
+                error: { code: "VALIDATION_ERROR", details: messages },
+            });
+            return;
+        }
+
+        // Sequelize unique constraint violation → 409
+        if (err.name === "SequelizeUniqueConstraintError") {
+            const field = err.errors?.[0]?.path ?? "field";
+            res.status(409).json({
+                success: false,
+                message: `${field} already exists`,
+                error: { code: "DUPLICATE_ENTRY", details: field },
+            });
+            return;
+        }
+
         res.status(err.status || 500).json({
             success: false,
-
-            message:
-                "Internal Server Error in Hospital Service",
-
-            error:
-                env.NODE_ENV === "development"
-                    ? err
-                    : {},
+            message: err.message || "Internal Server Error in Hospital Service",
+            error: {
+                message: err.message,
+                code: err.code || "INTERNAL_SERVER_ERROR",
+                details: err.errors || err.details || null,
+            },
         });
     }
 );

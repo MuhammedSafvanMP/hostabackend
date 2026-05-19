@@ -10,6 +10,8 @@ export const checkPermission =
 
       const roleId = req.user?.roleId;
       
+
+      console.log("Checking Permission:", { roleId, module, action }); 
       
 
       const response = await axios.post(
@@ -25,6 +27,7 @@ export const checkPermission =
           },
         }
       );
+      
 
       if (!response.data.allowed) {
 

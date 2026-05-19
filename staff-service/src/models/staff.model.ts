@@ -33,6 +33,7 @@ interface IStaff {
   qualification?: string;
   isActive?: boolean;
   isDelete?: boolean;
+  deleteDate?: Date;
   otp?: string;
   otpExpiry?: Date;
   roleId: number; 
@@ -58,6 +59,7 @@ type StaffCreationAttributes = Optional<
   | "jobType"
   | "isActive"
   | "isDelete"
+  | "deleteDate"
   | "otp"
   | "otpExpiry"
 >;
@@ -89,6 +91,7 @@ class Staff
   public bookingOpen!: boolean;
   public isActive?: boolean;
   public isDelete?: boolean;
+  public deleteDate?: Date;
   public otp?: string;
   public otpExpiry?: Date;
   public roleId!: number;   
@@ -216,6 +219,9 @@ Staff.init(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    deleteDate: {
+      type: DataTypes.DATE,
+    },
     otp: {
       type: DataTypes.STRING,
     },
@@ -229,7 +235,6 @@ Staff.init(
     modelName: "Staff",
     tableName: "staff",
     timestamps: true,
-    paranoid: true, // 🔥 Enables Soft Delete
 
     defaultScope: {
       attributes: { exclude: ["password"] },

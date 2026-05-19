@@ -1,17 +1,23 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/db";
-import PatientVitals from "./patientVitals.model";
 import User from "./user.model";
 
+interface ILocation {
+  country?: string;
+  state?: string;
+  district?: string;
+  place: string;
+  pincode: number;
+}
 
 interface IPatient {
   id: number;
-  patientId?: string; // Virtual ID
-  profileImage?: any;
+  patientId?: string;
+
   userId?: number;
+  hospitalId: number;
 
   firstName: string;
-  middleName?: string;
   lastName: string;
 
   bloodGroup: string;
@@ -22,41 +28,33 @@ interface IPatient {
   age?: number;
   dob?: Date;
 
-  company?: string;
-
   mobileNumber: string;
   emergencyNumber?: string;
   guardianName?: string;
 
-  addressLine1?: string;
-  addressLine2?: string;
+  addressLine: string;
 
-  country?: string;
-  city?: string;
-  state?: string;
-  pinCode?: string;
-
-  referredBy?: number;
-  department?: number;
-  referredOn?: Date;
-
-  notes?: string;
+  location: ILocation;
 
   email?: string;
   password?: string;
 
-  vitals?: any[]; // Array of PatientVitals
-}
+  vitals?: any[];
 
+  // ✅ Added Soft Delete Fields
+  deleteDate?: Date;
+  isActive?: boolean;
+  isDelete?: boolean;
+}
 
 class Patient extends Model<IPatient> implements IPatient {
   public id!: number;
   public readonly patientId!: string;
-  public profileImage!: any;
+
   public userId!: number;
+  public hospitalId!: number;
 
   public firstName!: string;
-  public middleName!: string;
   public lastName!: string;
 
   public bloodGroup!: string;
@@ -67,32 +65,24 @@ class Patient extends Model<IPatient> implements IPatient {
   public age!: number;
   public dob!: Date;
 
-  public company!: string;
-
   public mobileNumber!: string;
   public emergencyNumber!: string;
   public guardianName!: string;
 
-  public addressLine1!: string;
-  public addressLine2!: string;
-
-  public country!: string;
-  public city!: string;
-  public state!: string;
-  public pinCode!: string;
-
-  public referredBy!: number;
-  public department!: number;
-  public referredOn!: Date;
-
-  public notes!: string;
+  public addressLine!: string;
 
   public email!: string;
   public password!: string;
 
-  public readonly vitals?: any[];
-}
+  public location!: ILocation;
 
+  public readonly vitals?: any[];
+
+  // ✅ Added Soft Delete Fields
+  public deleteDate?: Date;
+  public isActive?: boolean;
+  public isDelete?: boolean;
+}
 
 Patient.init(
   {
@@ -101,6 +91,7 @@ Patient.init(
       autoIncrement: true,
       primaryKey: true,
     },
+
     patientId: {
       type: DataTypes.VIRTUAL,
       get() {
@@ -111,18 +102,19 @@ Patient.init(
 
     userId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
 
       references: {
         model: "users",
         key: "id",
       },
+
       onDelete: "CASCADE",
     },
 
-    // 🔥 Image (JSONB)
-    profileImage: {
-      type: DataTypes.JSONB,
+    hospitalId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
 
     // Basic Info
@@ -130,7 +122,7 @@ Patient.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    middleName: DataTypes.STRING,
+
     lastName: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -138,7 +130,16 @@ Patient.init(
 
     // ENUMS
     bloodGroup: {
-      type: DataTypes.ENUM("A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"),
+      type: DataTypes.ENUM(
+        "A+",
+        "A-",
+        "B+",
+        "B-",
+        "O+",
+        "O-",
+        "AB+",
+        "AB-"
+      ),
       allowNull: false,
     },
 
@@ -148,7 +149,13 @@ Patient.init(
     },
 
     maritalStatus: {
-      type: DataTypes.ENUM("Single", "Married", "Divorced", "Widowed"),
+      type: DataTypes.ENUM(
+        "Single",
+        "Married",
+        "Divorced",
+        "Widowed"
+      ),
+      allowNull: true,
     },
 
     patientType: {
@@ -156,10 +163,15 @@ Patient.init(
       allowNull: false,
     },
 
-    age: DataTypes.INTEGER,
-    dob: DataTypes.DATE,
+    age: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
 
-    company: DataTypes.STRING,
+    dob: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
 
     // Contact
     mobileNumber: {
@@ -167,51 +179,66 @@ Patient.init(
       allowNull: false,
     },
 
-    emergencyNumber: DataTypes.STRING,
-    guardianName: DataTypes.STRING,
-
-    addressLine1: DataTypes.STRING,
-    addressLine2: DataTypes.STRING,
-
-    country: DataTypes.STRING,
-    city: DataTypes.STRING,
-    state: DataTypes.STRING,
-    pinCode: DataTypes.STRING,
-
-    // 🔥 Foreign Keys
-    referredBy: {
-      type: DataTypes.INTEGER, // Doctor ID
+    emergencyNumber: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
 
-    department: {
-      type: DataTypes.INTEGER, // Department ID
+    guardianName: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
 
-    referredOn: DataTypes.DATE,
+    addressLine: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
 
-    notes: DataTypes.TEXT,
+    // Location JSON
+    location: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+    },
 
     email: {
       type: DataTypes.STRING,
+      allowNull: true,
+
       validate: {
         isEmail: true,
       },
     },
 
+    password: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
 
+    // ✅ Soft Delete Fields
+    deleteDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
 
-    password: DataTypes.STRING,
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
+
+    isDelete: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   },
   {
     sequelize,
     modelName: "Patient",
     tableName: "patients",
     timestamps: true,
-    paranoid: true,
   }
 );
 
-// 🔗 Associations: One User → Many Patients
+// 🔗 Associations
 User.hasMany(Patient, {
   foreignKey: "userId",
   as: "patients",

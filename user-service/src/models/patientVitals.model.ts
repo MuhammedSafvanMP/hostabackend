@@ -63,7 +63,6 @@ PatientVitals.init(
     modelName: "PatientVitals",
     tableName: "patient_vitals",
     timestamps: true,
-    paranoid: true,
   }
 );
 

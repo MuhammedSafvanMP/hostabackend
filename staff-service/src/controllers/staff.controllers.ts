@@ -156,7 +156,9 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
 
     await publishEvent("staff_events", "STAFF_REGISTERED", {
       staffId: newStaff.id,
+      staffName: newStaff.name,
       phone: newStaff.phone,
+      hospitalId: newStaff.hospitalId
     });
 
     res.status(201).json({
@@ -191,6 +193,7 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
 
   const staff = await Staff.scope("withPassword").findOne({
     where: {
+      isDelete: false,
       [Op.or]: [{ email: email || null }, { phone: phone || null }],
     },
   });
@@ -261,7 +264,7 @@ export const loginWithPhone: any = asyncHandler(async (req: Request, res: Respon
   }
 
   let numericPhone = phone.replace(/\D/g, "").slice(-10);
-  const staff = await Staff.findOne({ where: { phone: numericPhone } });
+  const staff = await Staff.findOne({ where: { phone: numericPhone, isDelete: false } });
 
   if (!staff) {
     res.status(404).json({ success: false, message: "Phone number not registered!" });
@@ -358,7 +361,7 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
 
 // GET ONE - GET /staff/:id
 export const getanStaff : any = asyncHandler(async (req: Request, res: Response) => {
-  const staff = await Staff.findByPk(req.params.id);
+  const staff = await Staff.findOne({ where: { id: req.params.id, isDelete: false } });
   if (!staff) {
     res.status(404).json({
       success: false,
@@ -382,7 +385,7 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
   const { id } = req.params;
   const { id: _, ...updatePayload } = req.body; // Remove id from payload if present
 
-  const staff = await Staff.findByPk(id);
+  const staff = await Staff.findOne({ where: { id, isDelete: false } });
 
   if (!staff) {
     res.status(404).json({
@@ -450,7 +453,7 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
 export const staffDelete: any = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const staff = await Staff.findByPk(id);
+  const staff = await Staff.findOne({ where: { id, isDelete: false } });
   if (!staff) {
     res.status(404).json({
       success: false,
@@ -461,12 +464,16 @@ export const staffDelete: any = asyncHandler(async (req: Request, res: Response)
     return;
   }
 
-  // 🔥 Perform Soft Delete (requires paranoid: true in model)
-  await staff.destroy();
+  // 🔥 Move to blacklist (soft delete)
+  await staff.update({
+    isActive: false,
+    isDelete: true,
+    deleteDate: new Date(),
+  });
 
   res.status(200).json({
     success: true,
-    message: "Staff soft-deleted successfully",
+    message: "Staff account moved to blacklist.",
     status: 200,
     data: null,
     error: null,
@@ -475,7 +482,9 @@ export const staffDelete: any = asyncHandler(async (req: Request, res: Response)
 
 // GET ALL - GET /staff
 export const getStaffs: any = asyncHandler(async (req: Request, res: Response) => {
-  const staff = await Staff.findAll();
+  const staff = await Staff.findAll({
+    where: { isDelete: false }
+  });
 
   if (staff.length === 0) {
     res.status(404).json({
@@ -495,11 +504,35 @@ export const getStaffs: any = asyncHandler(async (req: Request, res: Response) =
   });
 });
 
+// GET BLACKLISTED - GET /staff/blacklist
+export const getBlacklistedStaffs: any = asyncHandler(async (req: Request, res: Response) => {
+  const staff = await Staff.findAll({
+    where: { isDelete: true }
+  });
+
+  if (staff.length === 0) {
+    res.status(404).json({
+      success: false,
+      message: "No blacklisted staff found",
+      data: null,
+      error: { code: "NO_DATA_FOUND", details: null },
+    });
+    return;
+  }
+
+  res.status(200).json({
+    success: true,
+    status: "Success",
+    data: staff,
+    error: null,
+  });
+});
+
 // CHANGE PASSWORD - PUT /staff/changepassword
 export const changepassword: any = asyncHandler(async (req: Request, res: Response) => {
   const { email, password, newPassword } = req.body;
 
-  const staff = await Staff.scope("withPassword").findOne({ where: { email } });
+  const staff = await Staff.scope("withPassword").findOne({ where: { email, isDelete: false } });
   if (!staff) {
     res.status(404).json({
       success: false,
@@ -551,7 +584,7 @@ export const sendStaffOtp: any = asyncHandler(async (req: Request, res: Response
     return;
   }
 
-  const staff = await Staff.findOne({ where: { email } });
+  const staff = await Staff.findOne({ where: { email, isDelete: false } });
   if (!staff) {
     res.status(404).json({ success: false, message: "Staff not found with this email" });
     return;
@@ -584,9 +617,9 @@ export const verifyStaffOtp: any = asyncHandler(async (req: Request, res: Respon
   let staff;
   if (phone) {
     let numericPhone = phone.replace(/\D/g, "").slice(-10);
-    staff = await Staff.scope("withPassword").findOne({ where: { phone: numericPhone } });
+    staff = await Staff.scope("withPassword").findOne({ where: { phone: numericPhone, isDelete: false } });
   } else if (email) {
-    staff = await Staff.scope("withPassword").findOne({ where: { email } });
+    staff = await Staff.scope("withPassword").findOne({ where: { email, isDelete: false } });
   }
 
   if (!staff || staff.otp !== otp.toString()) {
@@ -624,13 +657,13 @@ export const verifyStaffOtp: any = asyncHandler(async (req: Request, res: Respon
 });
 
 // RESET STAFF PASSWORD - POST /staff/auth/reset-password
-export const resetStaffPassword: any = asyncHandler(async (req: Request, res: Response) => {
-  const { email, otp, newPassword } = req.body;
+export const resetStaffPassword: any = asyncHandler(async (req: any, res: Response) => {
+  const { newPassword } = req.body;
 
-  const staff = await Staff.scope("withPassword").findOne({ where: { email } });
+  const staff = await Staff.scope("withPassword").findOne({ where: { id: req.user.id, isDelete: false } });
 
-  if (!staff || staff.otp !== otp.toString() || (staff.otpExpiry && new Date() > staff.otpExpiry)) {
-    res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+  if (!staff) {
+    res.status(404).json({ success: false, message: "Staff not found" });
     return;
   }
 
@@ -640,6 +673,13 @@ export const resetStaffPassword: any = asyncHandler(async (req: Request, res: Re
 
   await staff.save();
 
+  // Notify hospital about password reset
+  await publishEvent("staff_events", "STAFF_PASSWORD_RESET", {
+    staffId: staff.id,
+    staffName: staff.name,
+    hospitalId: staff.hospitalId
+  });
+
   res.json({ success: true, message: "Password reset successful" });
 });
 
@@ -647,7 +687,7 @@ export const resetStaffPassword: any = asyncHandler(async (req: Request, res: Re
 export const changeStaffPassword: any = asyncHandler(async (req: any, res: Response) => {
   const { currentPassword, newPassword } = req.body;
 
-  const staff = await Staff.scope("withPassword").findByPk(req.user.id);
+  const staff = await Staff.scope("withPassword").findOne({ where: { id: req.user.id, isDelete: false } });
   if (!staff) {
     res.status(404).json({ success: false, message: "Staff not found" });
     return;
@@ -658,9 +698,17 @@ export const changeStaffPassword: any = asyncHandler(async (req: any, res: Respo
     res.status(401).json({ success: false, message: "Incorrect current password" });
     return;
   }
+  
 
   staff.password = newPassword;
   await staff.save();
+
+  // Notify hospital about password change
+  await publishEvent("staff_events", "STAFF_PASSWORD_CHANGED", {
+    staffId: staff.id,
+    staffName: staff.name,
+    hospitalId: staff.hospitalId
+  });
 
   res.json({ success: true, message: "Password changed successfully" });
 });

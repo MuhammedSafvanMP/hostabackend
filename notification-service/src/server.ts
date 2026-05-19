@@ -31,3 +31,23 @@ const startServer = async () => {
 };
 
 startServer();
+
+const handleShutdown = async (signal: string) => {
+    logger.info(`Received ${signal}. Starting graceful shutdown...`);
+    try {
+        const { closeRabbitMQ } = await import("./events/consumer.js");
+        const { default: sequelize } = await import("./config/db.js");
+
+        await closeRabbitMQ();
+        await sequelize.close();
+        logger.info("✅ Database and RabbitMQ connections cleanly closed. Goodbye!");
+        process.exit(0);
+    } catch (err) {
+        logger.error("❌ Error during graceful shutdown:", { error: err });
+        process.exit(1);
+    }
+};
+
+process.on("SIGTERM", () => handleShutdown("SIGTERM"));
+process.on("SIGINT", () => handleShutdown("SIGINT"));
+

@@ -24,6 +24,7 @@ import {
   getHospital,
   updateData,
   hospitalDelete,
+  getBlacklistedHospitals,
   refreshHospitalToken,
   logout
 } from "../controllers/hospital.controllers";
@@ -41,13 +42,15 @@ router.post("/hospital/login/phone", validate(loginWithPhoneSchema), loginWithPh
 router.post("/hospital/otp",validate(verifyOtpSchema),verifyLoginOtp)
 
 
+
 // Production Auth Routes
 router.post("/hospital/auth/send-otp", validate(loginWithEmailSchema), sendOtp);
 router.post("/hospital/auth/verify-otp", validate(verifyOtpSchema), verifyOtp);
-router.post("/hospital/auth/reset-password", validate(resetPasswordSchema), resetPassword);
+router.post("/hospital/auth/reset-password", authenticate, validate(resetPasswordSchema), resetPassword);
 router.put("/hospital/auth/change-password", authenticate, validate(changePasswordSchema), changePassword);
 router.post("/hospital/refresh", refreshHospitalToken);
 router.post("/hospital/logout", logout);
+
 
 // Notifications
 router.post("/hospital/notify/email", authenticate, validate(sendCustomEmailSchema), sendCustomEmail);
@@ -56,9 +59,11 @@ router.post("/hospital/notify/email", authenticate, validate(sendCustomEmailSche
 
 
 router.get("/hospital",  getHospital);
-router.get("/hospital/:id", authenticate, checkPermission("hospital", "view"), getanHospital);
-router.put("/hospital/:id", updateData);
-router.delete("/hospital/:id",authenticate, checkPermission("hospital", "delete"), hospitalDelete);
+router.get("/hospital/blacklist", getBlacklistedHospitals);
+router.get("/hospital/:id",  getanHospital);
+router.put("/hospital/:id",authenticate,checkPermission("hospital","edit"),updateData);
+router.delete("/hospital/:id",authenticate,checkPermission("hospital","delete"),hospitalDelete);
 
 export default router;
+
 
