@@ -127,6 +127,8 @@ import bookinguserRoutes from "./routes/booking-remainder-user.routes";
 import bookingHospitalRoutes from "./routes/booking-remainder-hospital.routes";
 import medcinRemainerRoutes from "./routes/medicin-remainder.routes";
 
+import blacklistReminderHospitalRoutes from "./routes/blacklist-reminder-hospital.routes";
+
 import { requestLogger } from "./middleware/logger.middleware";
 import { logger } from "./utils/logger";
 import { env } from "./config/env";
@@ -191,6 +193,8 @@ app.use("/", medcinRemainerRoutes);
 app.use("/", bookinguserRoutes);
 
 app.use("/", bookingHospitalRoutes);
+
+app.use("/", blacklistReminderHospitalRoutes);
 
 /**
  * HEALTH CHECK

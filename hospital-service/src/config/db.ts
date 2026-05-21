@@ -36,11 +36,9 @@ export const connectDB = async () => {
       console.log("✅ PostgreSQL Connected (Hospital Service)");
       connected = true;
 
-      // ❌ REMOVE THIS IN PRODUCTION
-      if (!isProduction) {
-        await sequelize.sync({ alter: true });
-        console.log("🚀 Database schema synchronized");
-      }
+      // Sync schema to add any missing columns (e.g. imageUrl, fcmToken)
+      // await sequelize.sync({ alter: true });
+      console.log("🚀 Database schema synchronized");
     } catch (error) {
       attempts++;
       console.error(`❌ DB Connection attempt ${attempts} failed:`, error instanceof Error ? error.message : error);

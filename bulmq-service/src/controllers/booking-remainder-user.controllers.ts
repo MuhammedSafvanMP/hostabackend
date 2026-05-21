@@ -16,9 +16,8 @@ export const assignTaskBooking: any = asyncHandler(async (req: Request, res: Res
     consulting_time,
     message } =  
       req.body;
-      
+    
 
-      
     const results = [];
 
       const job =
@@ -51,5 +50,10 @@ export const assignTaskBooking: any = asyncHandler(async (req: Request, res: Res
   }
   
 });
+
+
+
+
+
 
 

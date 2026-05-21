@@ -162,13 +162,17 @@ import { httpClient } from "../utils/httpClient";
 
 // REGISTER
 export const createPrescription: any = asyncHandler(async (req: Request, res: Response) => {
+  console.log("REQ.USER =>", (req as any).user);
+  console.log("REQ.BODY =>", req.body);
+  console.log(typeof (req as any).user);
+
   const { bookingId, hospitalId, doctorId,  patientId, complaint, medications, investigations, advice, next_consultation, empty_stomach  } = req.body;
   const authHeader = req.headers.authorization;
 
   const errors: string[] = [];
 
   // 1. Validate Patient (Local)
-  const patientExists = await Patient.findByPk(patientId);
+  const patientExists = await Patient.findOne({ where: { id: patientId, isDelete: false } });
   if (!patientExists) {
     errors.push(`Patient with ID ${patientId} does not exist.`);
   }
@@ -211,15 +215,17 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
   });
 
   await publishEvent(
-  "prescription_events",
-  "PRESCRIPTION_CREATED",
-  {
-    prescriptionId: prescription.id,
-    bookingId,
-    doctorId,
-    patientId,
-  }
-);
+    "prescription_events",
+    "PRESCRIPTION_CREATED",
+    {
+      prescriptionId: prescription.id,
+      bookingId,
+      doctorId,
+      patientId,
+      userId: patientExists ? patientExists.userId : null,
+      hospitalId: prescription.hospitalId,
+    }
+  );
 
 
 
@@ -234,7 +240,9 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
 
 // GET ALL USERS Prescription
 export const getPrescription: any = asyncHandler(async (req: Request, res: Response) => {
-  const prescription = await Prescription.findAll();
+  const prescription = await Prescription.findAll({
+    where: { isDelete: false }
+  });
 
   res.status(200).json({
     success: true,
@@ -244,7 +252,7 @@ export const getPrescription: any = asyncHandler(async (req: Request, res: Respo
 
 // GET ONE USER prescription
 export const getAPrescription: any = asyncHandler(async (req: Request, res: Response) => {
-  const prescription = await Prescription.findByPk(req.params.id);
+  const prescription = await Prescription.findOne({ where: { id: req.params.id, isDelete: false } });
 
   if (!prescription) {
     res.status(404).json({
@@ -266,7 +274,7 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
   const updatePayload = req.body;
 
   const prescription = await Prescription.update(updatePayload, {
-    where: { id: id },
+    where: { id: id, isDelete: false },
     returning: true,
   });
 
@@ -281,8 +289,11 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
     return;
   }
 
+  const patient = await Patient.findOne({ where: { id: prescription[1][0].patientId, isDelete: false } });
   await publishEvent("prescription_events", "PRESCRIPTION_UPDATED", {
     prescriptionId: prescription[1][0].id,
+    userId: patient ? patient.userId : null,
+    hospitalId: prescription[1][0].hospitalId,
   });
 
   res.status(200).json({
@@ -295,7 +306,7 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
 
 // DELETE USER prescription
 export const deletePrescription: any = asyncHandler(async (req: Request, res: Response) => {
-  const user = await Prescription.findByPk(req.params.id);
+  const user = await Prescription.findOne({ where: { id: req.params.id, isDelete: false } });
 
   if (!user) {
     res.status(404).json({
@@ -305,24 +316,34 @@ export const deletePrescription: any = asyncHandler(async (req: Request, res: Re
     return;
   }
 
-  await Prescription.destroy({ where: { id: req.params.id } });
+  // 🔥 Move to blacklist (soft delete)
+  await user.update({
+    isActive: false,
+    isDelete: true,
+    deleteDate: new Date(),
+  });
 
   
 
+  const patient = await Patient.findOne({ where: { id: user.patientId, isDelete: false } });
   await publishEvent(
-  "prescription_events",
-  "PRESCRIPTION_DELETED",
-  {
-    prescriptionId: Number(req.params.id),
-  }
-);
+    "prescription_events",
+    "PRESCRIPTION_DELETED",
+    {
+      prescriptionId: Number(req.params.id),
+      userId: patient ? patient.userId : null,
+      hospitalId: user.hospitalId,
+    }
+  );
 
 
   res.status(200).json({
     success: true,
-    message: "Prescription deleted",
+    message: "Prescription deleted successfully",
   });
 });
+
+
 
 
 

@@ -3,6 +3,7 @@ import { connectDB } from "./config/db";
 import { connectRabbitMQ } from "./events/publisher";
 import { env } from "./config/env";
 import { logger } from "./utils/logger";
+import { startCleanupJob } from "./utils/cleanup";
 
 const PORT = env.PORT;
 
@@ -11,6 +12,9 @@ const startServer = async () => {
     try {
         await connectDB();
         await connectRabbitMQ();
+        
+        // Start background blacklist cleanup job
+        startCleanupJob();
         
         // Starting user Service
         const server = app.listen(PORT, () => {

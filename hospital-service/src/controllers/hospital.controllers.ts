@@ -8,7 +8,6 @@ import { Op } from "sequelize";
 import twilio from "twilio";
 import { logger } from "../utils/logger";
 import { sendEmail } from "../services/mail.service";
-import { sendPushNotification } from "../events/pushnotification";
 import axios from "axios";
 import dotenv from "dotenv";
 dotenv.config();
@@ -107,26 +106,10 @@ export const Registeration: any = asyncHandler(async (req: Request, res: Respons
 
   await publishEvent("hospital_events", "HOSPITAL_REGISTERED", {
     hospitalId: newHospital.id,
+    hospitalName: newHospital.name,
     phone: newHospital.phone,
+    email: newHospital.email,
   });
-
-
-const response = await axios.get(
-  `${process.env.ROLE_SERVICE_URL}/users`,
-  {
-    params: {
-      roleId: 1,
-    },
-  }
-);
-
-
-
-   await sendPushNotification({ token : response.data ,
-  title: "Hospital updated",
-  body: "Hospital profile updated",
-})
-
 
   res.status(201).json({
     success: true,
@@ -151,6 +134,7 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
   // Find hospital by email OR phone
   const hospital = await Hospital.scope("withPassword").findOne({
     where: {
+      isDelete: false,
       [Op.or]: [
         email ? { email } : null,
         phone ? { phone } : null,
@@ -216,7 +200,12 @@ export const loginWithPhone: any = asyncHandler(async (req: Request, res: Respon
 
   let numericPhone = phone.replace(/\D/g, "").slice(-10);
 
-  const hospital = await Hospital.findOne({ where: { phone: numericPhone } });
+  const hospital = await Hospital.findOne({
+    where: {
+      phone: numericPhone,
+      isDelete: false
+    }
+  });
   if (!hospital) {
     res.status(404).json({
       success: false,
@@ -281,7 +270,8 @@ export const loginWithPhone: any = asyncHandler(async (req: Request, res: Respon
   res.status(200).json({
     success: true,
     status: 200,
-    token,
+    // token,
+    otp,
     error: null,
     message: numericPhone === APPLE_TEST_NUMBER ? "OTP sent (TEST ACCOUNT)" : "OTP sent to your registered phone and email",
     data: numericPhone === APPLE_TEST_NUMBER ? { otp: APPLE_TEST_OTP } : null,
@@ -326,6 +316,7 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
     res.status(400).json({ success: false, message: "Identifier (phone/email) and OTP are required" });
     return;
   }
+  
 
   let hospital;
   if (phone) {
@@ -375,11 +366,15 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
 export const verifyLoginOtp = verifyOtp;
 
 // RESET PASSWORD - POST /hospital/auth/reset-password
-export const resetPassword: any = asyncHandler(async (req: Request, res: Response) => {
-  const { email,  newPassword } = req.body;
+export const resetPassword: any = asyncHandler(async (req: any, res: Response) => {
+  const { newPassword } = req.body;
 
-  const hospital = await Hospital.scope("withPassword").findOne({ where: { email } });
+  const hospital = await Hospital.scope("withPassword").findByPk(req.user.id);
 
+  if (!hospital) {
+    res.status(404).json({ success: false, message: "Hospital not found" });
+    return;
+  }
 
   hospital.password = newPassword;
   hospital.otp = null as any;
@@ -431,7 +426,12 @@ export const sendCustomEmail: any = asyncHandler(async (req: Request, res: Respo
 
 // GET ONE - GET /hospital/:id
 export const getanHospital : any = asyncHandler(async (req: Request, res: Response) => {
-  const hospital = await  Hospital.findByPk(req.params.id);
+  const hospital = await Hospital.findOne({
+    where: {
+      id: req.params.id,
+      isDelete: false
+    }
+  });
   
   
   if (!hospital) {
@@ -456,38 +456,71 @@ export const getanHospital : any = asyncHandler(async (req: Request, res: Respon
 export const updateData: any = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const updatePayload = req.body;
-  
-  const hospital = await Hospital.update(updatePayload, {
-    where: { id: id },
-    returning: true,
-  });
+
+  let hospital: any;
+  try {
+    hospital = await Hospital.update(updatePayload, {
+      where: { id, isDelete: false },
+      returning: true,
+      validate: false,   // validators run at request level; skip Sequelize re-validation on partial update
+    });
+  } catch (err: any) {
+    if (err.name === "SequelizeValidationError" || err.name === "SequelizeUniqueConstraintError") {
+      const msgs = err.errors?.map((e: any) => e.message) ?? [err.message];
+      res.status(400).json({ success: false, message: msgs.join(", "), error: { code: "VALIDATION_ERROR", details: msgs } });
+      return;
+    }
+    throw err; // re-throw unknown errors to global handler
+  }
 
   if (!hospital[1] || hospital[1].length === 0) {
     res.status(404).json({
       success: false,
       message: "Hospital not found",
-      status: 200,
       data: null,
       error: { code: "HOSPITAL_NOT_FOUND", details: null },
     });
     return;
   }
 
+  const updatedHospital = hospital[1][0];
+
+  // Fetch staff and doctor IDs for notification fan-out (failures are non-fatal)
+  let staffIds: number[] = [];
+  let doctorIds: number[] = [];
+
+  try {
+    const staffRes = await axios.get(`${process.env.STAFF_SERVICE_URL}/staff`, {
+      params: { hospitalId: updatedHospital.id },
+    });
+    const raw = staffRes.data?.data ?? [];
+    staffIds = raw.map((s: any) => s.id).filter(Boolean);
+  } catch (err) {
+    logger.warn("Could not fetch staffIds for hospital update notification", { hospitalId: updatedHospital.id });
+  }
+
+  try {
+    const doctorRes = await axios.get(`${process.env.DOCTOR_SERVICE_URL}/doctor`, {
+      params: { hospitalId: updatedHospital.id },
+    });
+    const raw = doctorRes.data?.data ?? [];
+    doctorIds = raw.map((d: any) => d.id).filter(Boolean);
+  } catch (err) {
+    logger.warn("Could not fetch doctorIds for hospital update notification", { hospitalId: updatedHospital.id });
+  }
+
+  // Publish event → notification-service fans out to superadmin, staff, doctors
   await publishEvent("hospital_events", "HOSPITAL_UPDATED", {
-    hospitalId: hospital[1][0].id,
+    hospitalId: updatedHospital.id,
+    hospitalName: updatedHospital.name,
+    staffIds,
+    doctorIds,
   });
-
- await sendPushNotification({ token : hospital[1][0].fcmToken,
-  title: "Hospital updated",
-  body: "Hospital profile updated",
-})
-
-
 
   res.status(200).json({
     success: true,
     message: "successfully updated",
-    data: hospital[1][0],
+    data: updatedHospital,
     error: null,
   });
 });
@@ -496,7 +529,9 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
 export const hospitalDelete: any = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const hospital = await Hospital.findByPk(id);
+  const hospital = await Hospital.findOne({
+    where: { id, isDelete: false }
+  });
   if (!hospital) {
     res.status(404).json({
       success: false,
@@ -507,16 +542,34 @@ export const hospitalDelete: any = asyncHandler(async (req: Request, res: Respon
     return;
   }
 
-  // 🔥 Perform Soft Delete (requires paranoid: true in model)
-  await hospital.destroy();
+  // 🔥 Move to blacklist (soft delete)
+  await hospital.update({
+    isActive: false,
+    isDelete: true,
+    deleteDate: new Date(),
+  });
 
-  await publishEvent("hospital_events", "HOSPITAL_DELETED", {
+  await publishEvent("hospital_events", "HOSPITAL_BLACKLISTED", {
     hospitalId: id,
   });
 
+  try {
+    const bulmqUrl = process.env.BULMQ_SERVICE_API || "http://bulmq-service:3018";
+    await axios.post(`${bulmqUrl}/api/blacklist-reminder/hospital`, {
+      hospitalId: id,
+      hospitalName: hospital.name,
+      phone: hospital.phone,
+      blacklistDate: new Date()
+    }, {
+      headers: { Authorization: req.headers.authorization }
+    });
+  } catch (error) {
+    console.error("Failed to schedule hospital blacklist reminder:", error);
+  }
+
   res.status(200).json({
     success: true,
-    message: "Hospital account soft-deleted successfully",
+    message: "Hospital account moved to blacklist. It will be permanently deleted after 30 days.",
     status: 200,
     data: null,
     error: null,
@@ -525,7 +578,9 @@ export const hospitalDelete: any = asyncHandler(async (req: Request, res: Respon
 
 // GET ALL - GET /hospital 
 export const getHospital: any = asyncHandler(async (req: Request, res: Response) => {
-  const hospital = await Hospital.findAll();
+  const hospital = await Hospital.findAll({
+    where: { isDelete: false }
+  });
 
   if (hospital.length === 0) {
     res.status(404).json({
@@ -544,6 +599,32 @@ export const getHospital: any = asyncHandler(async (req: Request, res: Response)
     error: null,
   });
 });
+
+// GET BLACKLISTED - GET /hospital/blacklist
+export const getBlacklistedHospitals: any = asyncHandler(async (req: Request, res: Response) => {
+  const hospital = await Hospital.findAll({
+    where: { isDelete: true }
+  });
+
+  if (hospital.length === 0) {
+    res.status(404).json({
+      success: false,
+      message: "No blacklisted hospitals found",
+      data: null,
+      error: { code: "NO_DATA_FOUND", details: null },
+    });
+    return;
+  }
+
+  res.status(200).json({
+    success: true,
+    status: "Success",
+    data: hospital,
+    error: null,
+  });
+});
+
+
 
 // REFRESH TOKEN - POST /hospital/refresh
 export const refreshHospitalToken: any = asyncHandler(async (req: Request, res: Response) => {

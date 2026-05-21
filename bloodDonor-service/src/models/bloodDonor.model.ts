@@ -124,6 +124,7 @@ interface IBloodDonor {
     place: string;
     pincode: number;
   };
+  name: string;
   otp?: string;
   otpExpiry?: Date;
   deletedAt?: Date;
@@ -137,9 +138,11 @@ class BloodDonor extends Model<IBloodDonor> implements IBloodDonor {
   public dateOfBirth!: Date;
   public bloodGroup!: string;
   public address!: any;
+  public name!: string;
   public otp?: string;
   public otpExpiry?: Date;
   public readonly deletedAt!: Date;
+
 }
 
 BloodDonor.init(
@@ -185,6 +188,10 @@ BloodDonor.init(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     
   },
   {
@@ -192,7 +199,7 @@ BloodDonor.init(
     modelName: "BloodDonor",
     tableName: "blood_donors",
     timestamps: true,
-    paranoid: true, // Enables soft deletes
+    paranoid: false, // Enables soft deletes
     defaultScope: {
       attributes: { exclude: ["otp", "otpExpiry"] },
     },

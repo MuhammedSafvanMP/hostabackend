@@ -46,6 +46,8 @@ services:
       - ./ambulance-service/.env
     networks:
       - hosta-network
+    depends_on:
+      - role-service
 
   blood-service:
     container_name: blood-service
@@ -85,6 +87,7 @@ services:
       - hosta-network
     depends_on:
       - hospital-service
+      - role-service
 
   doctor-service:
     container_name: doctor-service
@@ -96,6 +99,7 @@ services:
       - hosta-network
     depends_on:
       - hospital-service
+      - role-service
 
   speciality-service:
     container_name: speciality-service
@@ -114,6 +118,8 @@ services:
     env_file: ./hospital-service/.env
     networks:
       - hosta-network
+    depends_on:
+      - role-service
 
   booking-service:
     container_name: booking-service
@@ -123,6 +129,8 @@ services:
     env_file: ./booking-service/.env
     networks:
       - hosta-network
+    depends_on:
+      - role-service
 
   medicine-reminder-service:
     container_name: medicine-reminder-service
@@ -158,7 +166,9 @@ services:
       - NODE_OPTIONS=--dns-result-order=ipv4first
     env_file: ./lab-service/.env
     networks:
-      - hosta-network 
+      - hosta-network
+    depends_on:
+      - role-service
 
   ads-service:
     container_name: ads-service
@@ -167,8 +177,9 @@ services:
       - NODE_OPTIONS=--dns-result-order=ipv4first
     env_file: ./ads-service/.env
     networks:
-      - hosta-network 
-
+      - hosta-network
+    depends_on:
+      - role-service
   role-service:
     container_name: role-service
     build: ./role-service

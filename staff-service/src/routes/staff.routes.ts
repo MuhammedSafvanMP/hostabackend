@@ -8,6 +8,7 @@ import {
   updateData,
   staffDelete,
   getStaffs,
+  getBlacklistedStaffs,
   changepassword,
   sendStaffOtp,
   verifyStaffOtp,
@@ -43,7 +44,7 @@ router.post("/staff/login", validate(loginStaffSchema), login);
 router.post("/staff/login/phone", validate(loginWithPhoneSchema), loginWithPhone);
 router.post("/staff/otp", validate(verifyOtpSchema), verifyOtp);
 router.post("/staff/refresh", refreshStaffToken);
-router.post("/staff/logout", logout);
+router.post("/staff/logout",authenticate, logout);
 // router.post("/staff/password", changepassword);
 
 
@@ -53,7 +54,7 @@ router.post("/staff/auth/send-otp", validate(loginWithEmailSchema), sendStaffOtp
 
 router.post("/staff/auth/verify-otp", validate(verifyOtpSchema), verifyStaffOtp);
 
-router.post("/staff/auth/reset-password", validate(resetPasswordSchema), resetStaffPassword);
+router.post("/staff/auth/reset-password", authenticate, validate(resetPasswordSchema), resetStaffPassword);
 
 router.put("/staff/auth/change-password",authenticate, validate(changePasswordSchema),checkPermission("staff", "edit"),changeStaffPassword);
 
@@ -64,6 +65,7 @@ router.put("/staff/auth/change-password",authenticate, validate(changePasswordSc
 // CRUD
 
 router.get("/staff",authenticate,checkPermission("staff", "view"),getStaffs);
+router.get("/staff/blacklist", authenticate, checkPermission("staff", "view"), getBlacklistedStaffs);
 router.get("/staff/:id",authenticate, validateParams(idParamSchema), checkPermission("staff", "view"),getanStaff);
 router.put("/staff/:id",authenticate, validateParams(idParamSchema), validate(updateStaffSchema), checkPermission("staff", "edit"), updateData);
 router.delete("/staff/:id",authenticate, validateParams(idParamSchema), checkPermission("staff", "delete"), staffDelete);

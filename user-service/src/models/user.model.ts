@@ -5,7 +5,7 @@ interface IUser {
   id: number;
   userId?: string; // Virtual ID
   name: string;
-  email: string;
+  email?: string;
   password?: string;
   phone?: string;
   imageUrl?: string;
@@ -15,6 +15,9 @@ interface IUser {
   otp?: string;
   otpExpiry?: Date;
   roleId?: number;
+  deleteDate?: Date;
+  isActive?: boolean;
+  isDelete?: boolean;
 }
 
 class User extends Model<IUser> implements IUser {
@@ -22,7 +25,7 @@ class User extends Model<IUser> implements IUser {
   public readonly userId!: string;
   public joinAccountId!:number;
   public name!: string;
-  public email!: string;
+  public email?: string;
   public password!: string;
   public phone!: string;
   public imageUrl!: string;
@@ -31,6 +34,9 @@ class User extends Model<IUser> implements IUser {
   public otp?: string;
   public otpExpiry?: Date;
   public roleId: number;
+  public deleteDate?: Date;
+  public isActive?: boolean;
+  public isDelete?: boolean;
 }
 
 User.init(
@@ -74,7 +80,7 @@ User.init(
 
     email: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       unique: true,
       validate: {
         isEmail: true,
@@ -83,6 +89,7 @@ User.init(
 
     password: {
       type: DataTypes.STRING,
+      allowNull: true,
     },
 
     phone: {
@@ -111,6 +118,20 @@ User.init(
 
     otpExpiry: {
       type: DataTypes.DATE,
+    },
+
+    deleteDate: {
+      type: DataTypes.DATE,
+    },
+
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
+
+    isDelete: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     }
   },
   {
@@ -118,7 +139,6 @@ User.init(
     modelName: "User",
     tableName: "users",
     timestamps: true,
-    paranoid: true, // Enables soft deletes (sets deletedAt instead of row deletion)
   }
 );
 

@@ -7,7 +7,6 @@ import axios from "axios";
 import dotenv from "dotenv";
 dotenv.config();
 
-// REGISTER - POST /boooking/register
 // REGISTER - POST /booking/register
 export const Registeration: any = asyncHandler(
   async (req: any, res: Response): Promise<void> => {
@@ -16,28 +15,17 @@ export const Registeration: any = asyncHandler(
       patient_name,
       patient_place,
       patient_phone,
-      userId: bodyUserId,
+      userId,
       hospitalId,
       doctorId,
+      department,
+      displayName,
       booking_date,
-      consulting_time,
+      consulting_time
     } = req.body;
 
-    const tokenUserId = req.user.id;
-    const authHeader = req.headers.authorization;
-
-    // ==============================
-    // 1. SECURITY CHECK
-    // ==============================
-    if (bodyUserId && Number(bodyUserId) !== Number(tokenUserId)) {
-      res.status(403).json({
-        success: false,
-        message: "User ID mismatch",
-      });
-      return;
-    }
-
-    const userId = tokenUserId;
+    
+    
     const errors: string[] = [];
 
     // ==============================
@@ -46,7 +34,7 @@ export const Registeration: any = asyncHandler(
     try {
       await httpClient.get(
         `${process.env.USER_SERVICE_URL}/users/${userId}`,
-        { headers: { Authorization: authHeader } }
+        { headers: { Authorization: req.headers.authorization } }
       );
     } catch {
       errors.push("User not found");
@@ -55,10 +43,11 @@ export const Registeration: any = asyncHandler(
     // ==============================
     // 3. VALIDATE HOSPITAL
     // ==============================
+    let hospitalRes: any;
     try {
-      await httpClient.get(
+      hospitalRes = await httpClient.get(
         `${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`,
-        { headers: { Authorization: authHeader } }
+        { headers: { Authorization: req.headers.authorization } }
       );
     } catch {
       errors.push("Hospital not found");
@@ -68,27 +57,19 @@ export const Registeration: any = asyncHandler(
     // 4. VALIDATE DOCTOR (FIXED)
     // ==============================
     let doctor: any;
-    let hospital: any;
 
     try {
-      const [doctorRes, hospitalRes] = await Promise.all([
-        httpClient.get(
-          `${process.env.DOCTOR_SERVICE_URL}/doctor/${doctorId}`,
-          { headers: { Authorization: authHeader } }
-        ),
-        httpClient.get(
-          `${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`,
-          { headers: { Authorization: authHeader } }
-        )
-      ]);
+      const doctorRes = await httpClient.get(
+        `${process.env.DOCTOR_SERVICE_URL}/doctor/${doctorId}`,
+        { headers: { Authorization: req.headers.authorization } }
+      );
 
       // IMPORTANT FIX: correct axios structure
       doctor = doctorRes.data;
-      hospital = hospitalRes.data;
     } catch {
       res.status(404).json({
         success: false,
-        message: "Doctor or Hospital not found",
+        message: "Doctor not found",
       });
       return;
     }
@@ -117,47 +98,57 @@ export const Registeration: any = asyncHandler(
       hospitalId,
       doctorId,
       booking_date,
-      consulting_time,
+      doctor_name: displayName,
+    doctor_department: department,
+    consulting_time,
     });
 
     // ==============================
     // 7. SAFE EXTERNAL CALLS
     // ==============================
 
-    const doctorName = doctor?.data?.displayName || "Unknown Doctor"; 
-    const hospitalName = hospital?.data?.name || `Hospital (ID: ${hospitalId})`;
-      
+    const doctorName =
+      doctor?.data?.displayName || "Unknown Doctor"; 
+    const hospitalName =
+      hospitalRes?.data?.data?.name || `Hospital (ID: ${hospitalId})`;
 
     await Promise.allSettled([
+      // Notification Service
+      httpClient.post(
+        `${process.env.NOTIFICATION_SERVICE_URL}/notification`,
+        {
+          hospitalIds: hospitalId ? [Number(hospitalId)] : [],
+          doctorIds: doctorId ? [Number(doctorId)] : [],
+          message: `New booking for Dr. ${doctorName} on ${booking_date}`,
+        },
+        { headers: { Authorization: req.headers.authorization} }
+      ),
+
       // BullMQ Service
       axios.post(
         `${process.env.BULMQ_SERVICE_URL}/booking-task/hospital`,
         {
           doctorId,
           hospitalId,
-          message: `New booking for Dr. ${doctorName} at ${hospitalName} on ${booking_date}`,
+          message: `New booking for Dr. ${doctorName} on ${booking_date}`,
         },
-        { headers: { Authorization: authHeader } }
+        { headers: { Authorization: req.headers.authorization }}
       ),
     ]);
 
     // ==============================
     // 8. EVENT PUBLISH
     // ==============================
-    const payload = {
+    await publishEvent("booking_events", "BOOKING_REGISTERED", {
       bookingId: newbooking.id,
-      userId: userId,
-      hospitalId: hospitalId,
-      doctorId: doctorId,
-      patient_name: patient_name,
-      doctorName: doctorName,
-      hospitalName: hospitalName,
-      booking_date: booking_date,
-    };
-
-    console.log("📤 Publishing BOOKING_REGISTERED event with payload:", JSON.stringify(payload, null, 2));
-
-    await publishEvent("booking_events", "BOOKING_REGISTERED", payload);
+      userId,
+      hospitalId,
+      doctorId,
+      patient_name,
+      doctorName,
+      hospitalName,
+      booking_date,
+    });
 
     // ==============================
     // 9. RESPONSE
@@ -198,69 +189,116 @@ export const getanBooking: any = asyncHandler(
 // UPDATE - PUT /booking/:id
 export const updateData: any = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const updatePayload = req.body;
-    const authHeader = req.headers.authorization;
+    try {
+      const { id } = req.params;
+      const updatePayload = req.body;
+      
 
-    const booking = await Booking.update(updatePayload, {
-      where: { id: id },
-      returning: true,
-    });
-
-    if (!booking[1] || booking[1].length === 0) {
-      res.status(404).json({
-        success: false,
-        message: "booking not found",
-        status: 200,
-        data: null,
-        error: { code: "BOOKING_NOT_FOUND", details: null },
+      const booking = await Booking.update(updatePayload, {
+        where: { id: id },
+        returning: true,
       });
-      return;
-    }
 
-    // ✅ Get updated booking object
-    const updatedBooking = booking[1][0];
+      if (!booking[1] || booking[1].length === 0) {
+        res.status(404).json({
+          success: false,
+          message: "booking not found",
+          status: 404,
+          data: null,
+          error: { code: "BOOKING_NOT_FOUND", details: `No booking exists with ID ${id}` },
+        });
+        return;
+      }
 
-    const eventName = updatedBooking.status === "cancel" ? "BOOKING_CANCELLED" : "BOOKING_UPDATED";
-    
-    const eventPayload = {
-      bookingId: updatedBooking.id,
-      userId: updatedBooking.userId,
-      hospitalId: updatedBooking.hospitalId,
-      doctorId: updatedBooking.doctorId,
-      patient_name: updatedBooking.patient_name,
-      status: updatedBooking.status
-    };
+      // ✅ Get updated booking object
+      const updatedBooking = booking[1][0];
 
-    console.log(`📤 Publishing ${eventName} event with payload:`, JSON.stringify(eventPayload, null, 2));
-    
-    await publishEvent("booking_events", eventName, eventPayload);
+      const eventName = updatedBooking.status === "cancel" ? "BOOKING_CANCELLED" : "BOOKING_UPDATED";
+      
+      const eventPayload = {
+        bookingId: updatedBooking.id,
+        userId: updatedBooking.userId,
+        hospitalId: updatedBooking.hospitalId,
+        doctorId: updatedBooking.doctorId,
+        patient_name: updatedBooking.patient_name,
+        status: updatedBooking.status
+      };
 
-    if (updatedBooking.status !== "cancel") {
-      // ✅ Use correct values
-      await axios.post(
-        `${process.env.BULMQ_SERVICE_URL}/booking-task/users`,
-        {
-          patient_phone: updatedBooking?.patient_phone,
-          doctorId: updatedBooking?.doctorId,
-          status: updatedBooking?.status,
-          consulting_time: updatedBooking?.consulting_time,
-          message: `Booking ${updatedBooking?.status}`,
+      console.log(`📤 Publishing ${eventName} event with payload:`, JSON.stringify(eventPayload, null, 2));
+      
+      await publishEvent("booking_events", eventName, eventPayload);
+
+      if (updatedBooking.status !== "cancel") {
+        try {
+          // ✅ Use correct values
+          await axios.post(
+            `${process.env.BULMQ_SERVICE_URL}/booking-task/users`,
+            {
+              patient_phone: updatedBooking?.patient_phone,
+              doctorId: updatedBooking?.doctorId,
+              status: updatedBooking?.status,
+              consulting_time: updatedBooking?.consulting_time,
+              message: `Booking ${updatedBooking?.status}`,
+            },
+             {
+              headers: { Authorization: req.headers.authorization },
+            },
+          );
+        } catch (bulmqError: any) {
+          console.error("⚠️ Failed to trigger BullMQ reminder service:", bulmqError.message);
+        }
+
+        let doctor: any;
+        try {
+          const doctorRes = await httpClient.get(
+            `${process.env.DOCTOR_SERVICE_URL}/doctor/${updatedBooking.doctorId}`,
+            {
+              headers: { Authorization: req.headers.authorization },
+            },
+          );
+          doctor = doctorRes.data;
+        } catch (doctorError: any) {
+          console.error("⚠️ Failed to fetch doctor details for notification:", doctorError.message);
+        }
+
+        if (doctor) {
+          try {
+            // send notification userId
+            await axios.post(`${process.env.NOTIFICATION_SERVICE_URL}/notification`, {
+                userIds: updatedBooking.userId ? [Number(updatedBooking.userId)] : [],
+                message: `Your booking with Dr. ${doctor.data.displayName} has been ${updatedBooking.status}.`,
+              },
+              {
+                headers: { Authorization: req.headers.authorization }
+              }
+            );
+          } catch (notifError: any) {
+            console.error("⚠️ Failed to send user status update notification:", notifError.message);
+          }
+        }
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "successfully updated",
+        status: 200,
+        data: updatedBooking,
+        error: null,
+      });
+
+    } catch (error: any) {
+      console.error("🔥 Error in booking update controller:", error);
+      res.status(error.response?.status || 500).json({
+        success: false,
+        message: error.message || "An unexpected error occurred during update",
+        status: error.response?.status || 500,
+        data: null,
+        error: {
+          code: "UPDATE_ERROR",
+          details: error.response?.data || error.stack || null,
         },
-         {
-          headers: { Authorization: authHeader },
-        },
-      );
+      });
     }
-
-    
-
-    res.status(200).json({
-      success: true,
-      message: "successfully updated",
-      data: updatedBooking,
-      error: null,
-    });
   },
 );
 
@@ -295,25 +333,45 @@ export const bookingDelete: any = asyncHandler(
 );
 
 // GET ALL - GET /booking
-export const getBooking: any = asyncHandler(
-  async (req: Request, res: Response) => {
-    const booking = await Booking.findAll();
 
-    if (booking.length === 0) {
-      res.status(404).json({
-        success: false,
-        message: "No data found",
-        data: null,
-        error: { code: "NO_DATA_FOUND", details: null },
-      });
-      return;
-    }
+export const getBookings = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  let { userId, hospitalId, doctorId }: any = req.query;
 
-    res.status(200).json({
-      success: true,
-      status: "Success",
-      data: booking,
-      error: null,
+  if (Array.isArray(userId)) userId = userId[0];
+  if (Array.isArray(hospitalId)) hospitalId = hospitalId[0];
+    if (Array.isArray(doctorId)) doctorId = doctorId[0];
+
+
+  const whereClause: any = {};
+
+  if (userId !== undefined) {
+    whereClause.userId = Number(userId);
+  }
+
+  if (hospitalId !== undefined) {
+    whereClause.hospitalId = Number(hospitalId);
+  }
+
+    if (doctorId !== undefined) {
+    whereClause.doctorId = Number(doctorId);
+  }
+
+  const booking = await Booking.findAll({
+    where: whereClause,
+      order: [["createdAt", "DESC"]],
+  });
+
+  if (!booking.length) {
+    res.status(404).json({
+      success: false,
+      message: "No data found",
+      data: null,
     });
-  },
-);
+    return;
+  }
+
+  res.status(200).json({
+    success: true,
+    data: booking,
+  });
+});

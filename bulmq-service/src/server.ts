@@ -6,6 +6,7 @@ import { logger } from "./utils/logger";
 import {  bookingWorker } from "./worker/booking-remainder-user.worker";
 import { bookingWorkerHospital } from "./worker/booking-remainder-hospital.worker";
 import medicinWorker from "./worker/medicin-remainder.worker";
+import { blacklistReminderHospitalWorker } from "./worker/blacklist-hospital-worker";
 
 
 const PORT = env.PORT;
@@ -18,7 +19,8 @@ const startServer = async () => {
         
       await  medicinWorker;
       await bookingWorkerHospital;
-     await bookingWorker;
+      await bookingWorker;
+      await blacklistReminderHospitalWorker;
 
         // Starting blood Service
         app.listen(PORT, () => {

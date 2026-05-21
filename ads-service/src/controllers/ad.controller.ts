@@ -3,6 +3,7 @@ import Ad from "../models/ad.model";
 import axios from "axios";
 import dotenv from "dotenv";
 import { Op, literal } from "sequelize";
+import { publishEvent } from "../events/publisher";
 dotenv.config();
 
 // ✅ Create Donor
@@ -23,6 +24,12 @@ export const createAd = async (req: Request, res: Response): Promise<any> => {
     const ad = await Ad.create({
       imageUrl, startDate, endDate, kilometer, hospitalId,  latitude: hospital?.data?.data?.latitude, longitude: hospital?.data?.data?.longitude,
     } as any);
+
+    await publishEvent("ad_events", "AD_CREATED", {
+      adId: ad.id,
+      imageUrl: ad.imageUrl,
+      hospitalId: ad.hospitalId
+    });
 
     return res.status(201).json({
       message: "Ad created",
@@ -150,6 +157,11 @@ export const updateAd = async (req: Request, res: Response): Promise<any> => {
 
     await ad.update(req.body);
 
+    await publishEvent("ad_events", "AD_UPDATED", {
+      adId: ad.id,
+      hospitalId: ad.hospitalId
+    });
+
     res.json({ message: "Updated", ad });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -166,6 +178,11 @@ export const deleteAd = async (req: Request, res: Response): Promise<any> => {
     }
 
     await ad.destroy();
+
+    await publishEvent("ad_events", "AD_DELETED", {
+      adId: ad.id,
+      hospitalId: ad.hospitalId
+    });
 
     res.json({ message: "Deleted successfully" });
   } catch (error: any) {

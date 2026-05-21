@@ -9,19 +9,27 @@ const callBulmqService = async (options: any) => {
 };
 
 const breaker = new CircuitBreaker(callBulmqService, {
-  timeout: 10000,
-  errorThresholdPercentage: 50,
+  timeout: 10000, 
+  errorThresholdPercentage: 50, 
   resetTimeout: 10000,
 });
 
 breaker.fallback(() => {
-  return { status: 503, data: { success: false, message: "bulmq service temporarily unavailable" } };
+  return { status: 503, data: { success: false, message: "bulmqservice temporarily unavailable" } };
+
 });
 
 export const proxyRequest = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const targetPath = req.originalUrl.replace("/api", "");
-    const url = `${SERVICES.BULMQ_SERVICE}${targetPath}`;
+    // Only strip the global /api prefix. The microservice still needs /review or /rating to route internally.
+    const cleanedPath = req.originalUrl.replace("/api/booking-task/hospital", "/booking-task/hospital").replace("/api/booking-task/users", "/booking-task/users").replace("/api/medicin-task", "/medicin-task");
+    const url = `${SERVICES.BULMQ_SERVICE}${cleanedPath}`;
+
+    logger.info("Forwarding bulmq request", { 
+      originalUrl: req.originalUrl, 
+      forwardedUrl: url,
+      method: req.method 
+    });
 
     const options = {
       method: req.method,
@@ -33,33 +41,37 @@ export const proxyRequest = async (req: Request, res: Response, next: NextFuncti
           const { host, "content-length": contentLength, "transfer-encoding": transferEncoding, ...headers } = req.headers;
           return headers;
         })(),
-        "X-Request-ID": (req as any).id || "gateway-internal",
+        "X-Request-ID": (req as any).id,
       },
-      validateStatus: (status: number) => true,
+      validateStatus: (status: number) => status < 500, 
+
     };
 
     const response: any = await breaker.fire(options);
 
-    if (response.headers && response.headers["set-cookie"]) {
-      res.setHeader("Set-Cookie", response.headers["set-cookie"]);
+    if (response.headers && response.headers['set-cookie']) {
+      res.setHeader('Set-Cookie', response.headers['set-cookie']);
     }
 
-    return res.status(response.status).json(response.data);
+    res.status(response.status).json(response.data);
+
   } catch (error: any) {
     if (error.response) {
-      return res.status(error.response.status).json({
+      res.status(error.response.status).json({
         success: false,
-        message: "BulMQ Service Error",
-        data: error.response.data,
+        message: "Service error",
+        data: error.response.data
       });
     } else {
-      logger.error("API Gateway Proxy Error (BulMQ):", {
+      logger.error("API Gateway Proxy Error (review rating):", {
         message: error.message,
         path: req.originalUrl,
+        requestId: (req as any).id,
       });
-      return res.status(503).json({
+      res.status(503).json({
         success: false,
-        message: "BulMQ service temporarily unavailable or unreachable",
+        message: "Service unavailable",
+
       });
     }
   }

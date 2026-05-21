@@ -392,13 +392,13 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
 export const verifyLoginOtp = verifyOtp;
 
 // RESET PASSWORD - POST /lab/auth/reset-password
-export const resetPassword: any = asyncHandler(async (req: Request, res: Response) => {
-  const { email, otp, newPassword } = req.body;
+export const resetPassword: any = asyncHandler(async (req: any, res: Response) => {
+  const { newPassword } = req.body;
 
-  const lab = await Lab.scope("withPassword").findOne({ where: { email } });
+  const lab = await Lab.scope("withPassword").findByPk(req.user.id);
 
-  if (!lab || lab.otp !== otp.toString() || (lab.otpExpiry && new Date() > lab.otpExpiry)) {
-    res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+  if (!lab) {
+    res.status(404).json({ success: false, message: "Lab not found" });
     return;
   }
 

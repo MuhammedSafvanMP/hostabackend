@@ -45,7 +45,7 @@ export const bookingWorker: any = new Worker(
       await client.calls.create({
         to: "+91" + phone,
 
-        from: process.env.TWLIO_NUMBER,
+        from: process.env.TWILIO_NUMBER,
 
         twiml: `
 <Response>
@@ -55,7 +55,7 @@ export const bookingWorker: any = new Worker(
     Namaskaram.
 
     Ningalude Doctor 
-    ${doctor?.data?.data?.displayName} 
+    ${doctor?.data?.data?.displayName}
     umayulla booking 
 
     ${consulting_time_spoken} samayathinu aanu.
