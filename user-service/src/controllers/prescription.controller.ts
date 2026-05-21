@@ -162,6 +162,10 @@ import { httpClient } from "../utils/httpClient";
 
 // REGISTER
 export const createPrescription: any = asyncHandler(async (req: Request, res: Response) => {
+  console.log("REQ.USER =>", (req as any).user);
+  console.log("REQ.BODY =>", req.body);
+  console.log(typeof (req as any).user);
+
   const { bookingId, hospitalId, doctorId,  patientId, complaint, medications, investigations, advice, next_consultation, empty_stomach  } = req.body;
   const authHeader = req.headers.authorization;
 
@@ -335,29 +339,11 @@ export const deletePrescription: any = asyncHandler(async (req: Request, res: Re
 
   res.status(200).json({
     success: true,
-    message: "Prescription moved to blacklist",
+    message: "Prescription deleted successfully",
   });
 });
 
-// GET BLACKLISTED PRESCRIPTIONS
-export const getBlacklistedPrescriptions: any = asyncHandler(async (req: Request, res: Response) => {
-  const prescriptions = await Prescription.findAll({
-    where: { isDelete: true }
-  });
 
-  if (prescriptions.length === 0) {
-    res.status(404).json({
-      success: false,
-      message: "No blacklisted prescriptions found",
-    });
-    return;
-  }
-
-  res.status(200).json({
-    success: true,
-    data: prescriptions,
-  });
-});
 
 
 

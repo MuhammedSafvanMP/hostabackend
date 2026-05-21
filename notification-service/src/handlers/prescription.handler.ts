@@ -12,16 +12,18 @@ export const handlePrescriptionEvent = async (routingKey: string, content: any) 
       msg = `A prescription on your profile has been deleted / blacklisted. (Prescription ID: ${content.prescriptionId})`;
     }
 
+    const includeHospital = routingKey !== "PRESCRIPTION_CREATED";
+
     await Notification.create({
       userIds: content.userId ? [content.userId] : [],
-      hospitalIds: content.hospitalId ? [content.hospitalId] : [],
+      hospitalIds: (includeHospital && content.hospitalId) ? [content.hospitalId] : [],
       message: msg,
     }).catch((err) => console.error(`Failed to save ${routingKey} notification`, err));
 
     if (content.userId) {
       socketEmitter.to(`user_${content.userId}`).emit("prescription_event", { event: routingKey, message: msg, data: content });
     }
-    if (content.hospitalId) {
+    if (includeHospital && content.hospitalId) {
       socketEmitter.to(`hospital_${content.hospitalId}`).emit("prescription_event", { event: routingKey, message: msg, data: content });
     }
   }

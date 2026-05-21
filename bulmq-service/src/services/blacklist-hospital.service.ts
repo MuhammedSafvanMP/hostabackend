@@ -15,14 +15,13 @@ export const scheduleBlacklistReminderHospital = async ({
 }: IBlacklistReminderHospital) => {
   try {
 
-    // 3 days before blacklist
+    // 1 minute before permanent delete (which happens 3 mins after blacklisting)
     const reminderDate = new Date(blacklistDate);
-
-    reminderDate.setDate(reminderDate.getDate() - 3);
+    reminderDate.setMinutes(reminderDate.getMinutes() + 2);
 
     const delay = reminderDate.getTime() - Date.now();
 
-    const body = `Reminder: Hospital ${hospitalName} will be blacklisted in 3 days. Please take necessary action immediately.`;
+    const body = `Reminder: Hospital ${hospitalName} will be permanently deleted in 1 minute. Please take necessary action immediately.`;
 
     const job = await blacklistReminderHospitalQueue.add(
       "blacklist-reminder-hospital",

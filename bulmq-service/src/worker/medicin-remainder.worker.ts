@@ -15,16 +15,13 @@ const medicinWorker: any = new Worker(
   "medicin-queue",
 
   async (job: any) => {
-    const { patientId } = job.data;
+    const { patientId, phone } = job.data;
 
-    const user = await axios.get(`${process.env.USER_SERVICE_API}/users/${patientId}`);
-    
-
-    if (user?.data?.data?.phone) {
+    if (phone) {
       await client.calls.create({
-        to: "+91" + user?.data?.data?.phone,
+        to: "+91" + phone,
 
-        from: process.env.TWLIO_NUMBER,
+        from: process.env.TWILIO_NUMBER,
 
         twiml: `
     <Response>

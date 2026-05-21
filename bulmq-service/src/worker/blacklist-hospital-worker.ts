@@ -25,8 +25,8 @@ export const blacklistReminderHospitalWorker = new Worker(
     } = job.data;
 
     await client.messages.create({
-      to: "+91" + phone,
-      from: process.env.TWLIO_NUMBER,
+      to: "whatsapp:+91" + phone,
+      from: "whatsapp:" + process.env.TWILIO_NUMBER,
       body,
     });
 

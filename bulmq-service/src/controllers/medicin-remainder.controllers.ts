@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import scheduleMedicin from "../services/medicin.service";
 import { medicinQueue } from "../queues/medicin-remainder.queue";
+import axios from "axios";
 
 
 const generateMedicineDates = (
@@ -78,9 +79,27 @@ asyncHandler(async (req: Request, res: Response) => {
       timeSlots,
       startDate,
       endDate,
-      message
+      message,
+      phone
     } = req.body;
 
+    let phoneToUse = phone;
+
+    if (!phoneToUse && patientId) {
+      try {
+        const userResp = await axios.get(`${process.env.USER_SERVICE_API}/users/${patientId}`, {
+          headers: req.headers.authorization ? { Authorization: req.headers.authorization } : {}
+        });
+        phoneToUse = userResp.data?.data?.phone;
+      } catch (err) {
+        console.error("Failed to fetch user phone", err);
+      }
+    }
+
+    if (!phoneToUse) {
+      res.status(400).json({ success: false, message: "User phone number not found" });
+      return;
+    }
 
     // Generate all future schedule dates
     const jobDates =
@@ -108,6 +127,7 @@ asyncHandler(async (req: Request, res: Response) => {
               medicineName,
               dosage,
               message,
+              phone: phoneToUse,
               scheduleTime: date
             },
             {

@@ -553,6 +553,20 @@ export const hospitalDelete: any = asyncHandler(async (req: Request, res: Respon
     hospitalId: id,
   });
 
+  try {
+    const bulmqUrl = process.env.BULMQ_SERVICE_API || "http://bulmq-service:3018";
+    await axios.post(`${bulmqUrl}/api/blacklist-reminder/hospital`, {
+      hospitalId: id,
+      hospitalName: hospital.name,
+      phone: hospital.phone,
+      blacklistDate: new Date()
+    }, {
+      headers: { Authorization: req.headers.authorization }
+    });
+  } catch (error) {
+    console.error("Failed to schedule hospital blacklist reminder:", error);
+  }
+
   res.status(200).json({
     success: true,
     message: "Hospital account moved to blacklist. It will be permanently deleted after 30 days.",

@@ -31,8 +31,7 @@ import {
   getPrescription,
   getAPrescription,
   deletePrescription,
-  updateData,
-  getBlacklistedPrescriptions
+  updateData
 } from "../controllers/prescription.controller";
 
 
@@ -85,7 +84,6 @@ router.delete("/patients/:id", authenticate, checkPermission("patient", "delete"
 
 router.post("/prescription", authenticate, checkPermission("prescription", "create"), createPrescription);
 router.get("/prescription", authenticate, checkPermission("prescription", "view"), getPrescription);
-router.get("/prescription/blacklist", authenticate, checkPermission("prescription", "view"), getBlacklistedPrescriptions);
 router.get("/prescription/:id", authenticate, checkPermission("prescription", "view"), getAPrescription);
 router.put("/prescription/:id", authenticate, checkPermission("prescription", "edit"), updateData);
 router.delete("/prescription/:id", authenticate, checkPermission("prescription", "delete"), deletePrescription);
