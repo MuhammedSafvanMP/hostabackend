@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
-import scheduleMedicin from "../services/medicin.service";
 import { medicinQueue } from "../queues/medicin-remainder.queue";
 import axios from "axios";
 
