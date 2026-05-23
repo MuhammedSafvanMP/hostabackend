@@ -3,6 +3,8 @@ import asyncHandler from "express-async-handler";
 import Booking from "../models/booking.model";
 import { publishEvent } from "../events/publisher";
 import { httpClient } from "../utils/httpClient";
+// import { sendPushNotification } from "../events/pushnotification";
+import { sendBookingPushNotifications } from "../utils/sendBookingPush";
 import axios from "axios";
 import dotenv from "dotenv";
 dotenv.config();
@@ -156,6 +158,43 @@ export const Registeration: any = asyncHandler(
       booking_date,
     });
 
+    
+
+
+    try {
+      // TOKENS
+      const hospitalToken = hospitalRes?.data?.data?.fcmToken;
+      const doctorToken = doctor?.data?.fcmToken;
+      // USER TOKEN
+      let userToken;
+      if (userId) {
+        const userRes = await httpClient.get(
+          `${process.env.USER_SERVICE_URL}/users/${userId}`,
+          {
+            headers: {
+              Authorization: req.headers.authorization,
+            },
+          }
+        );
+        userToken = userRes?.data?.data?.fcmToken;
+      }
+
+      await sendBookingPushNotifications({
+        hospitalToken,
+        doctorToken,
+        userToken,
+        patient_name,
+        doctorName,
+        booking_date,
+        type: "BOOKING_REGISTERED",
+      });
+
+    } catch (error: any) {
+      console.error(
+        "Push notification failed:",
+        error.message
+      );
+    }
     // ==============================
     // 9. RESPONSE
     // ==============================
@@ -219,7 +258,21 @@ export const updateData: any = asyncHandler(
       // ✅ Get updated booking object
       const updatedBooking = booking[1][0];
 
-      const eventName = updatedBooking.status === "cancel" ? "BOOKING_CANCELLED" : "BOOKING_UPDATED";
+
+
+
+      let eventName: "BOOKING_UPDATED" | "BOOKING_CANCELLED" | "BOOKING_ACCEPTED" | "BOOKING_COMPLETED" = "BOOKING_UPDATED";
+
+      if (updatedBooking.status === "cancel") {
+        eventName = "BOOKING_CANCELLED";
+      } else if (updatedBooking.status === "accepted") {
+        eventName = "BOOKING_ACCEPTED";
+      } else if (updatedBooking.status === "completed") {
+        eventName = "BOOKING_COMPLETED";
+      }
+      
+
+
       
       const eventPayload = {
         bookingId: updatedBooking.id,
