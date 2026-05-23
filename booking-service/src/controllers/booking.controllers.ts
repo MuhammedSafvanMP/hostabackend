@@ -12,6 +12,8 @@ export const Registeration: any = asyncHandler(
   async (req: any, res: Response): Promise<void> => {
     const {
       patient_dob,
+      patient_age,
+      patient_gender,
       patient_name,
       patient_place,
       patient_phone,
@@ -21,7 +23,8 @@ export const Registeration: any = asyncHandler(
       department,
       displayName,
       booking_date,
-      consulting_time
+      consulting_time,
+      booking_status
     } = req.body;
 
     
@@ -91,6 +94,8 @@ export const Registeration: any = asyncHandler(
     // ==============================
     const newbooking = await Booking.create({
       patient_dob,
+      patient_age,
+      patient_gender,
       patient_name,
       patient_place,
       patient_phone,
@@ -99,8 +104,9 @@ export const Registeration: any = asyncHandler(
       doctorId,
       booking_date,
       doctor_name: displayName,
-    doctor_department: department,
-    consulting_time,
+      doctor_department: department,
+      consulting_time,
+      booking_status: booking_status || "user booking",
     });
 
     // ==============================

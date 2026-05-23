@@ -17,7 +17,7 @@ interface IAddress {
 interface IStaff {
   id: number;
   hospitalId: number;
-  staffId?: string; // Virtual ID
+  staffId?: string;
   name: string;
   designation?: string;
   joiningDate?: Date;
@@ -47,6 +47,7 @@ interface IStaff {
 type StaffCreationAttributes = Optional<
   IStaff,
   | "id"
+  | "staffId"
   | "email"
   | "password"
   | "dob"
@@ -74,7 +75,7 @@ class Staff
 {
   public id!: number;
   public hospitalId!: number;
-  public readonly staffId!: string;
+  public staffId!: string;
   public name!: string;
   public designation?: string;
   public joiningDate?: Date;
@@ -129,12 +130,9 @@ Staff.init(
     },
 
     staffId: {
-      type: DataTypes.VIRTUAL,
-      get() {
-        const id = this.getDataValue("id");
-        if (!id) return null;
-        return `#STF${String(id).padStart(5, "0")}`;
-      },
+      type: DataTypes.STRING,
+      unique: true,
+      allowNull: true,
     },
 
     name: {
@@ -275,6 +273,12 @@ Staff.beforeUpdate(async (staff: Staff) => {
   if (staff.changed("password") && staff.password) {
     staff.password = await bcrypt.hash(staff.password, 10);
   }
+});
+
+// auto-generate staffId after record is created
+Staff.afterCreate(async (staff: Staff) => {
+  const generatedStaffId = `STF${String(staff.id).padStart(5, "0")}`;
+  await staff.update({ staffId: generatedStaffId });
 });
 
 export default Staff;

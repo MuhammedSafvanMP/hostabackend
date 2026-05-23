@@ -90,17 +90,15 @@ export const userService = {
 
       console.log("data", data);
 
-      if (data?.firstName && data?.lastName) {
-        // Extract only valid patient fields matching the new IPatient interface
+      if (data?.name) {
         const {
-          firstName, lastName, bloodGroup, gender, maritalStatus,
+          name, bloodGroup, gender, maritalStatus,
           patientType, age, dob, mobileNumber, emergencyNumber,
           guardianName, addressLine, location, email, password, hospitalId
         } = data;
 
         await Patient.create({
-          firstName,
-          lastName,
+          name,
           bloodGroup: bloodGroup || "O+",
           gender: gender || "Male",
           maritalStatus,
@@ -134,14 +132,13 @@ export const userService = {
           userId: user.id,
           email: user.email,
           roleId: user.roleId,
-          firstName: data?.firstName,
-          lastName: data?.lastName
+          name: data?.name
         });
 
-        if (data?.firstName && data?.lastName) {
+        if (data?.name) {
           await publishEvent("patient_events", "PATIENT_REGISTERED", {
             userId: user.id,
-            patientName: `${data.firstName} ${data.lastName}`,
+            patientName: data.name,
             phone: data.mobileNumber
           });
         }

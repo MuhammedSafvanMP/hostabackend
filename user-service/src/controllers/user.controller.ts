@@ -188,7 +188,7 @@ export const createPatient: any = asyncHandler(async (req: Request, res: Respons
   try {
     // 1. Extract Patient Info
     const {
-      firstName, lastName, bloodGroup, gender, maritalStatus,
+      name, bloodGroup, gender, maritalStatus,
       patientType, age, dob, mobileNumber, emergencyNumber,
       guardianName, addressLine, location, email, password, userId, hospitalId
     } = req.body;
@@ -226,7 +226,7 @@ export const createPatient: any = asyncHandler(async (req: Request, res: Respons
           finalUserId = existingUserByEmail.id;
         } else {
           const newUser = await User.create({
-            name: `${firstName} ${lastName}`,
+            name: name || mobileNumber,
             email: userEmail,
             phone: mobileNumber,
             roleId: 3 // Default patient role
@@ -240,8 +240,7 @@ export const createPatient: any = asyncHandler(async (req: Request, res: Respons
               userId: newUser.id,
               email: newUser.email,
               roleId: newUser.roleId,
-              firstName,
-              lastName
+              name,
             });
           } catch (err) {
             console.error("Failed to publish USER_REGISTERED event for auto-created user:", err);
@@ -252,7 +251,7 @@ export const createPatient: any = asyncHandler(async (req: Request, res: Respons
 
     // 4. Create Patient
     const patient = await Patient.create({
-      firstName, lastName, bloodGroup, gender, maritalStatus,
+      name, bloodGroup, gender, maritalStatus,
       patientType, age, dob, mobileNumber, emergencyNumber,
       guardianName, addressLine, location, email, password, userId: finalUserId, hospitalId
     }, { transaction: t });
@@ -291,7 +290,7 @@ export const createPatient: any = asyncHandler(async (req: Request, res: Respons
         patientId: result?.id,
         userId: finalUserId,
         hospitalId: hospitalId,
-        patientName: `${firstName} ${lastName}`,
+        patientName: name,
         phone: mobileNumber
       });
     } catch (err) {
@@ -414,7 +413,7 @@ export const updatePatient: any = asyncHandler(async (req: Request, res: Respons
 
     // 1. Update Patient Profile Fields
     const {
-      firstName, lastName, bloodGroup, gender, maritalStatus,
+      name, bloodGroup, gender, maritalStatus,
       patientType, age, dob, mobileNumber, emergencyNumber,
       guardianName, addressLine, location, email, password, userId, hospitalId
     } = req.body;
@@ -429,7 +428,7 @@ export const updatePatient: any = asyncHandler(async (req: Request, res: Respons
     }
 
     await patient.update({
-      firstName, lastName, bloodGroup, gender, maritalStatus,
+      name, bloodGroup, gender, maritalStatus,
       patientType, age, dob, mobileNumber, emergencyNumber,
       guardianName, addressLine, location, email, password, userId, hospitalId
     }, { transaction: t });
@@ -475,7 +474,7 @@ export const updatePatient: any = asyncHandler(async (req: Request, res: Respons
         patientId: patient.id,
         userId: patient.userId || null,
         hospitalId: patient.hospitalId,
-        patientName: `${firstName || patient.firstName} ${lastName || patient.lastName}`,
+        patientName: `${name || patient.name} `,
       });
     } catch (err) {
       console.error("Failed to publish PATIENT_UPDATED event:", err);

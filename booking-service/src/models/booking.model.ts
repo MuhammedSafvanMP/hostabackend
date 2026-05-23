@@ -16,6 +16,8 @@ interface IBooking {
   patient_phone: string;
   patient_place?: string;
   patient_dob?: string;
+  patient_age: number;
+  patient_gender?: string;
 
   userId?: number;
 
@@ -38,6 +40,8 @@ interface IBooking {
     | "completed"
     | "cancel";
 
+  booking_status: "user booking" | "hospital booking";
+
   isActive?: boolean;
 }
 
@@ -49,6 +53,9 @@ type BookingCreationAttributes = Optional<
   IBooking,
   | "id"
   | "userId"
+  | "patient_place"
+  | "patient_dob"
+  | "patient_gender"
   | "consulting_time"
   | "token"
   | "status"
@@ -69,6 +76,8 @@ class Booking
   public patient_phone!: string;
   public patient_place?: string;
   public patient_dob?: string;
+  public patient_age!: number;
+  public patient_gender?: string;
 
   public userId?: number;
 
@@ -90,6 +99,8 @@ class Booking
     | "declined"
     | "completed"
     | "cancel";
+
+  public booking_status!: "user booking" | "hospital booking";
 
   public isActive?: boolean;
 
@@ -137,6 +148,16 @@ Booking.init(
 
     patient_dob: {
       type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    patient_age: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+
+    patient_gender: {
+      type: DataTypes.ENUM("Male", "Female", "Other"),
       allowNull: true,
     },
 
@@ -192,6 +213,12 @@ Booking.init(
       allowNull: false,
 
       defaultValue: "pending",
+    },
+
+    booking_status: {
+      type: DataTypes.ENUM("user booking", "hospital booking"),
+      allowNull: false,
+      defaultValue: "user booking",
     },
 
     isActive: {

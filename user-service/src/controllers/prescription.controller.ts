@@ -156,6 +156,7 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import Patient from "../models/patient.model";
 import Prescription from "../models/prescription.model";
+import User from "../models/user.model";
 import { publishEvent } from "../events/publisher";
 import { httpClient } from "../utils/httpClient";
 
@@ -166,15 +167,41 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
   console.log("REQ.BODY =>", req.body);
   console.log(typeof (req as any).user);
 
-  const { bookingId, hospitalId, doctorId,  patientId, complaint, medications, investigations, advice, next_consultation, empty_stomach  } = req.body;
+  const { bookingId, hospitalId, doctorId, patientId, userId, complaint, medications, investigations, advice, next_consultation, empty_stomach  } = req.body;
   const authHeader = req.headers.authorization;
 
   const errors: string[] = [];
 
-  // 1. Validate Patient (Local)
-  const patientExists = await Patient.findOne({ where: { id: patientId, isDelete: false } });
-  if (!patientExists) {
-    errors.push(`Patient with ID ${patientId} does not exist.`);
+  // 1. Validate / Auto-Create Patient
+  let finalPatientId = patientId;
+  let patientExists = null;
+
+  if (finalPatientId) {
+    patientExists = await Patient.findOne({ where: { id: finalPatientId, isDelete: false } });
+  }
+
+  // Auto Create Patient if not found but we have a userId
+  if (!patientExists && userId) {
+    const user = await User.findOne({ where: { id: userId, isDelete: false } });
+    
+    if (user) {
+      patientExists = await Patient.create({
+        userId: user.id,
+        hospitalId: hospitalId,
+        name: user.name,
+        gender: "Other",
+        age: 0,
+        dob: new Date(),
+        mobileNumber: user.phone || "N/A",
+        addressLine: "N/A",
+        location: { place: "N/A", pincode: 0 },
+      });
+      finalPatientId = patientExists.id;
+    } else {
+      errors.push(`User with ID ${userId} does not exist. Cannot auto-create patient.`);
+    }
+  } else if (!patientExists) {
+    errors.push(`Patient with ID ${patientId} does not exist and no userId provided to auto-create.`);
   }
 
   // 2. Validate Doctor (Cross-Service: doctor-service)
@@ -209,9 +236,11 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
     return;
   }
 
+  const finalUserId = patientExists ? patientExists.userId : userId;
+
   // 5. Create Prescription
   const prescription = await Prescription.create({
-    bookingId, hospitalId, doctorId,  patientId, complaint, medications, investigations, advice, next_consultation, empty_stomach 
+    bookingId, hospitalId, doctorId, patientId: finalPatientId, userId: finalUserId, complaint, medications, investigations, advice, next_consultation, empty_stomach 
   });
 
   await publishEvent(
@@ -221,8 +250,8 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
       prescriptionId: prescription.id,
       bookingId,
       doctorId,
-      patientId,
-      userId: patientExists ? patientExists.userId : null,
+      patientId: finalPatientId,
+      userId: finalUserId,
       hospitalId: prescription.hospitalId,
     }
   );
