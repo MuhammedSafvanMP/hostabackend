@@ -1,5 +1,5 @@
-import Notification from "../models/notification.model.js";
-import { socketEmitter } from "../utils/socket.emitter.js";
+import Notification from "../models/notification.model";
+import { socketEmitter } from "../utils/socket.emitter";
 
 export const handleAdEvent = async (routingKey: string, content: any) => {
   if (routingKey === "AD_CREATED" || routingKey === "AD_UPDATED" || routingKey === "AD_DELETED") {

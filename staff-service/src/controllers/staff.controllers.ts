@@ -464,6 +464,8 @@ export const staffDelete: any = asyncHandler(async (req: Request, res: Response)
     return;
   }
 
+
+
   // 🔥 Move to blacklist (soft delete)
   await staff.update({
     isActive: false,
@@ -480,29 +482,196 @@ export const staffDelete: any = asyncHandler(async (req: Request, res: Response)
   });
 });
 
-// GET ALL - GET /staff
-export const getStaffs: any = asyncHandler(async (req: Request, res: Response) => {
-  const staff = await Staff.findAll({
-    where: { isDelete: false }
+
+// GET ALL + SEARCH + PAGINATION - GET /staff
+export const getStaffs = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+
+  let {
+    hospitalId,
+    name,
+    gender,
+    phone,
+    status,
+    designation,
+    staffType,
+    email,
+    staffId,
+    search_query,
+    page = 1,
+    limit = 10,
+  }: any = req.query;
+
+  // convert array -> string
+  if (Array.isArray(hospitalId)) hospitalId = hospitalId[0];
+  if (Array.isArray(name)) name = name[0];
+  if (Array.isArray(gender)) gender = gender[0];
+  if (Array.isArray(phone)) phone = phone[0];
+  if (Array.isArray(status)) status = status[0];
+  if (Array.isArray(designation)) designation = designation[0];
+  if (Array.isArray(staffType)) staffType = staffType[0];
+  if (Array.isArray(email)) email = email[0];
+  if (Array.isArray(staffId)) staffId = staffId[0];
+  if (Array.isArray(search_query)) search_query = search_query[0];
+
+  page = Number(page) || 1;
+  limit = Number(limit) || 10;
+
+  const offset = (page - 1) * limit;
+
+  const whereClause: any = {
+    isDelete: false,
+  };
+
+  // hospitalId
+  if (hospitalId) {
+    whereClause.hospitalId = Number(hospitalId);
+  }
+
+  // active status
+  if (status !== undefined) {
+    whereClause.isActive = status;
+  }
+
+  // name
+  if (name) {
+    whereClause.name = {
+      [Op.iLike]: `%${name}%`,
+    };
+  }
+
+  // gender
+  if (gender) {
+    whereClause.gender = {
+      [Op.iLike]: `%${gender}%`,
+    };
+  }
+
+  // phone
+  if (phone) {
+    whereClause.phone = {
+      [Op.iLike]: `%${phone}%`,
+    };
+  }
+
+  // staffId
+  if (staffId) {
+    whereClause.staffId = {
+      [Op.iLike]: `%${staffId}%`,
+    };
+  }
+
+  // designation
+  if (designation) {
+    whereClause.designation = {
+      [Op.iLike]: `%${designation}%`,
+    };
+  }
+
+  // staffType
+  if (staffType) {
+    whereClause.staffType = {
+      [Op.iLike]: `%${staffType}%`,
+    };
+  }
+
+  // email
+  if (email) {
+    whereClause.email = {
+      [Op.iLike]: `%${email}%`,
+    };
+  }
+
+  // GLOBAL SEARCH
+  if (search_query) {
+    whereClause[Op.or] = [
+      {
+        name: {
+          [Op.iLike]: `%${search_query}%`,
+        },
+      },
+      {
+        email: {
+          [Op.iLike]: `%${search_query}%`,
+        },
+      },
+      {
+        phone: {
+          [Op.iLike]: `%${search_query}%`,
+        },
+      },
+      {
+        designation: {
+          [Op.iLike]: `%${search_query}%`,
+        },
+      },
+      {
+        staffType: {
+          [Op.iLike]: `%${search_query}%`,
+        },
+      },
+      {
+        gender: {
+          [Op.iLike]: `%${search_query}%`,
+        },
+      },
+      {
+        staffId: {
+          [Op.iLike]: `%${search_query}%`,
+        },
+      },
+    ];
+  }
+
+  const { count, rows } = await Staff.findAndCountAll({
+    where: whereClause,
+    limit,
+    offset,
+    order: [["createdAt", "DESC"]],
   });
 
-  if (staff.length === 0) {
+  if (rows.length === 0) {
     res.status(404).json({
       success: false,
       message: "No data found",
-      data: null,
-      error: { code: "NO_DATA_FOUND", details: null },
+      data: [],
+      pagination: {
+        totalItems: 0,
+        totalPages: 0,
+        currentPage: page,
+        limit,
+      },
+      error: {
+        code: "NO_DATA_FOUND",
+        details: null,
+      },
     });
     return;
   }
 
   res.status(200).json({
     success: true,
-    status: "Success",
-    data: staff,
+    message: "Staff fetched successfully",
+    data: rows,
+
+    pagination: {
+      totalItems: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+      limit,
+      hasNextPage: page < Math.ceil(count / limit),
+      hasPreviousPage: page > 1,
+    },
+
     error: null,
   });
 });
+
+
+
+
+
+
+
 
 // GET BLACKLISTED - GET /staff/blacklist
 export const getBlacklistedStaffs: any = asyncHandler(async (req: Request, res: Response) => {

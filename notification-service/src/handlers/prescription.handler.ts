@@ -1,5 +1,5 @@
-import Notification from "../models/notification.model.js";
-import { socketEmitter } from "../utils/socket.emitter.js";
+import Notification from "../models/notification.model";
+import { socketEmitter } from "../utils/socket.emitter";
 
 export const handlePrescriptionEvent = async (routingKey: string, content: any) => {
   if (routingKey === "PRESCRIPTION_CREATED" || routingKey === "PRESCRIPTION_UPDATED" || routingKey === "PRESCRIPTION_DELETED") {

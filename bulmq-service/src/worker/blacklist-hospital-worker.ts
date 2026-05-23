@@ -24,15 +24,20 @@ export const blacklistReminderHospitalWorker = new Worker(
       body,
     } = job.data;
 
-    await client.messages.create({
-      to: "whatsapp:+91" + phone,
-      from: "whatsapp:" + process.env.TWILIO_NUMBER,
-      body,
-    });
+    console.log("📋 Processing blacklist reminder job:", { hospitalId, hospitalName, phone, body });
 
-    console.log(
-      `Blacklist reminder sent to hospital ${hospitalName}`
-    );
+    try {
+      const response = await client.messages.create({
+        to: "whatsapp:+91" + phone,
+        from: "whatsapp:+14155238886", // Twilio WhatsApp Sandbox number
+        body,
+      });
+
+      console.log(`✅ WhatsApp reminder sent to hospital ${hospitalName}. SID: ${response.sid}`);
+    } catch (error) {
+      console.error(`❌ Failed to send WhatsApp to hospital ${hospitalName}:`, error);
+      throw error; // Re-throw so BullMQ marks job as failed
+    }
 
   },
 

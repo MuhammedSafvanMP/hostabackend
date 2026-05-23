@@ -17,13 +17,12 @@ interface IPatient {
   userId?: number;
   hospitalId: number;
 
-  firstName: string;
-  lastName: string;
+  name: string;
 
-  bloodGroup: string;
+  bloodGroup?: string;
   gender: string;
   maritalStatus?: string;
-  patientType: string;
+  patientType?: string;
 
   age?: number;
   dob?: Date;
@@ -41,7 +40,6 @@ interface IPatient {
 
   vitals?: any[];
 
-  // ✅ Added Soft Delete Fields
   deleteDate?: Date;
   isActive?: boolean;
   isDelete?: boolean;
@@ -54,13 +52,12 @@ class Patient extends Model<IPatient> implements IPatient {
   public userId!: number;
   public hospitalId!: number;
 
-  public firstName!: string;
-  public lastName!: string;
+  public name!: string;
 
-  public bloodGroup!: string;
+  public bloodGroup?: string;
   public gender!: string;
   public maritalStatus!: string;
-  public patientType!: string;
+  public patientType?: string;
 
   public age!: number;
   public dob!: Date;
@@ -78,7 +75,6 @@ class Patient extends Model<IPatient> implements IPatient {
 
   public readonly vitals?: any[];
 
-  // ✅ Added Soft Delete Fields
   public deleteDate?: Date;
   public isActive?: boolean;
   public isDelete?: boolean;
@@ -118,12 +114,7 @@ Patient.init(
     },
 
     // Basic Info
-    firstName: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-
-    lastName: {
+    name: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -140,7 +131,7 @@ Patient.init(
         "AB+",
         "AB-"
       ),
-      allowNull: false,
+      allowNull: true,
     },
 
     gender: {
@@ -160,7 +151,7 @@ Patient.init(
 
     patientType: {
       type: DataTypes.ENUM("Inpatient", "Outpatient"),
-      allowNull: false,
+      allowNull: true,
     },
 
     age: {

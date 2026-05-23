@@ -553,14 +553,14 @@ export const hospitalDelete: any = asyncHandler(async (req: Request, res: Respon
     hospitalId: id,
   });
 
-  try {
-    const bulmqUrl = process.env.BULMQ_SERVICE_API || "http://bulmq-service:3018";
-    await axios.post(`${bulmqUrl}/api/blacklist-reminder/hospital`, {
-      hospitalId: id,
-      hospitalName: hospital.name,
-      phone: hospital.phone,
-      blacklistDate: new Date()
-    }, {
+    try {
+      const bulmqApi = process.env.BULMQ_SERVICE_API || "http://bulmq-service:3018";
+      await axios.post(`${bulmqApi}/blacklist-reminder/hospital`, {
+        hospitalId: id,
+        hospitalName: hospital.name,
+        phone: hospital.phone,
+        blacklistDate: new Date(),
+      }, {
       headers: { Authorization: req.headers.authorization }
     });
   } catch (error) {
@@ -673,3 +673,10 @@ export const logout: any = asyncHandler(async (req: Request, res: Response) => {
   });
   res.status(200).json({ success: true, message: "Logged out successfully" });
 });
+
+
+
+
+
+
+
