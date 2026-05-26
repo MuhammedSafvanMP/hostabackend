@@ -1,6 +1,6 @@
 import amqp from 'amqplib';
-import { env } from '../config/env.js';
-import BloodDonor from '../models/bloodDonor.model.js';
+import { env } from '../config/env';
+import BloodDonor from '../models/bloodDonor.model';
 
 export const startSubscriber = async () => {
     try {

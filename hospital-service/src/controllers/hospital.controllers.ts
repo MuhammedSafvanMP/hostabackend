@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
 import Hospital from "../models/hospital.model";
 import { publishEvent } from "../events/publisher";
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import twilio from "twilio";
 import { logger } from "../utils/logger";
 import { sendEmail } from "../services/mail.service";
@@ -554,8 +554,8 @@ export const hospitalDelete: any = asyncHandler(async (req: Request, res: Respon
   });
 
     try {
-      const bulmqApi = process.env.BULMQ_SERVICE_API || "http://bulmq-service:3018";
-      await axios.post(`${bulmqApi}/blacklist-reminder/hospital`, {
+     
+      await axios.post(`${process.env.BULMQ_SERVICE_URL}/blacklist-reminder/hospital`, {
         hospitalId: id,
         hospitalName: hospital.name,
         phone: hospital.phone,
@@ -577,28 +577,290 @@ export const hospitalDelete: any = asyncHandler(async (req: Request, res: Respon
 });
 
 // GET ALL - GET /hospital 
-export const getHospital: any = asyncHandler(async (req: Request, res: Response) => {
-  const hospital = await Hospital.findAll({
-    where: { isDelete: false }
-  });
+export const getHospital = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
 
-  if (hospital.length === 0) {
-    res.status(404).json({
-      success: false,
-      message: "No data found",
-      data: null,
-      error: { code: "NO_DATA_FOUND", details: null },
+    const normalizeQuery = (value: any) =>
+      Array.isArray(value) ? value[0] : value;
+
+    let {
+      speciality,
+      name,
+      country,
+      state,
+      status,
+      district,
+      place,
+      search_query,
+      hospitalId,
+      pincode,
+      page = 1,
+      limit = 10,
+    }: any = req.query;
+
+    /* -------------------------- NORMALIZE -------------------------- */
+
+    speciality = String(normalizeQuery(speciality) || "");
+    hospitalId = String(normalizeQuery(hospitalId) || "");
+    name = String(normalizeQuery(name) || "");
+    status = String(normalizeQuery(status) || "");
+    country = String(normalizeQuery(country) || "");
+    state = String(normalizeQuery(state) || "");
+    district = String(normalizeQuery(district) || "");
+    place = String(normalizeQuery(place) || "");
+    pincode = String(normalizeQuery(pincode) || "");
+    search_query = String(normalizeQuery(search_query) || "");
+
+    /* -------------------------- PAGINATION -------------------------- */
+
+    const pageNum = Math.max(Number(page) || 1, 1);
+
+    const limitNum = Math.min(
+      Math.max(Number(limit) || 10, 1),
+      100
+    );
+
+    /* -------------------------- WHERE CLAUSE -------------------------- */
+
+    const andConditions: any[] = [];
+
+    /* -------------------------- FILTERS -------------------------- */
+
+    // Hospital ID
+    if (hospitalId && !isNaN(Number(hospitalId))) {
+      andConditions.push({
+        id: Number(hospitalId),
+      });
+    }
+
+    // Status
+    if (status) {
+      andConditions.push({
+        isActive: status === "true",
+      });
+    }
+
+    // Name
+    if (name.trim()) {
+      andConditions.push({
+        name: {
+          [Op.iLike]: `%${name.trim()}%`,
+        },
+      });
+    }
+
+    // Speciality
+    if (speciality.trim()) {
+      andConditions.push({
+        type: {
+          [Op.iLike]: `%${speciality.trim()}%`,
+        },
+      });
+    }
+
+    /* -------------------------- JSONB FILTERS -------------------------- */
+
+    // Pincode
+    if (pincode.trim()) {
+      andConditions.push(
+        Sequelize.where(
+          Sequelize.cast(
+            Sequelize.json("address.pincode"),
+            "TEXT"
+          ),
+          {
+            [Op.iLike]: `%${pincode.trim()}%`,
+          }
+        )
+      );
+    }
+
+    // Place
+    if (place.trim()) {
+      andConditions.push(
+        Sequelize.where(
+          Sequelize.cast(
+            Sequelize.json("address.place"),
+            "TEXT"
+          ),
+          {
+            [Op.iLike]: `%${place.trim()}%`,
+          }
+        )
+      );
+    }
+
+    // Country
+    if (country.trim()) {
+      andConditions.push(
+        Sequelize.where(
+          Sequelize.cast(
+            Sequelize.json("address.country"),
+            "TEXT"
+          ),
+          {
+            [Op.iLike]: `%${country.trim()}%`,
+          }
+        )
+      );
+    }
+
+    // State
+    if (state.trim()) {
+      andConditions.push(
+        Sequelize.where(
+          Sequelize.cast(
+            Sequelize.json("address.state"),
+            "TEXT"
+          ),
+          {
+            [Op.iLike]: `%${state.trim()}%`,
+          }
+        )
+      );
+    }
+
+    // District
+    if (district.trim()) {
+      andConditions.push(
+        Sequelize.where(
+          Sequelize.cast(
+            Sequelize.json("address.district"),
+            "TEXT"
+          ),
+          {
+            [Op.iLike]: `%${district.trim()}%`,
+          }
+        )
+      );
+    }
+
+    /* -------------------------- GLOBAL SEARCH -------------------------- */
+
+    if (search_query.trim()) {
+      const search = search_query.trim();
+
+      andConditions.push({
+        [Op.or]: [
+
+          {
+            name: {
+              [Op.iLike]: `%${search}%`,
+            },
+          },
+
+          {
+            email: {
+              [Op.iLike]: `%${search}%`,
+            },
+          },
+
+          {
+            phone: {
+              [Op.iLike]: `%${search}%`,
+            },
+          },
+
+          {
+            type: {
+              [Op.iLike]: `%${search}%`,
+            },
+          },
+
+          Sequelize.where(
+            Sequelize.cast(
+              Sequelize.json("address.district"),
+              "TEXT"
+            ),
+            {
+              [Op.iLike]: `%${search}%`,
+            }
+          ),
+
+          Sequelize.where(
+            Sequelize.cast(
+              Sequelize.json("address.place"),
+              "TEXT"
+            ),
+            {
+              [Op.iLike]: `%${search}%`,
+            }
+          ),
+
+          Sequelize.where(
+            Sequelize.cast(
+              Sequelize.json("address.state"),
+              "TEXT"
+            ),
+            {
+              [Op.iLike]: `%${search}%`,
+            }
+          ),
+
+          Sequelize.where(
+            Sequelize.cast(
+              Sequelize.json("address.country"),
+              "TEXT"
+            ),
+            {
+              [Op.iLike]: `%${search}%`,
+            }
+          ),
+
+          Sequelize.where(
+            Sequelize.cast(
+              Sequelize.json("address.pincode"),
+              "TEXT"
+            ),
+            {
+              [Op.iLike]: `%${search}%`,
+            }
+          ),
+        ],
+      });
+    }
+
+    /* -------------------------- FINAL WHERE -------------------------- */
+
+    const whereClause =
+      andConditions.length > 0
+        ? { [Op.and]: andConditions }
+        : {};
+
+    /* -------------------------- QUERY -------------------------- */
+
+    const hospital = await Hospital.findAndCountAll({
+      where: whereClause,
+      limit: limitNum,
+      offset: (pageNum - 1) * limitNum,
+      order: [["createdAt", "DESC"]],
     });
+
+    /* -------------------------- PAGINATION -------------------------- */
+
+    const totalPages =
+      Math.ceil(hospital.count / limitNum) || 1;
+
+    /* -------------------------- RESPONSE -------------------------- */
+
+    res.status(200).json({
+      success: true,
+      data: hospital.rows,
+      pagination: {
+        totalItems: hospital.count,
+        totalPages,
+        currentPage: pageNum,
+        limit: limitNum,
+        hasNextPage: pageNum < totalPages,
+        hasPreviousPage: pageNum > 1,
+      },
+      error: null,
+    });
+
     return;
   }
+);
 
-  res.status(200).json({
-    success: true,
-    status: "Success",
-    data: hospital,
-    error: null,
-  });
-});
 
 // GET BLACKLISTED - GET /hospital/blacklist
 export const getBlacklistedHospitals: any = asyncHandler(async (req: Request, res: Response) => {

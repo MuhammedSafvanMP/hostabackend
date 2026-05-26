@@ -17,6 +17,7 @@ interface IAmbulance {
   otp?: string;
   otpExpiry?: Date;
   userId?: number;
+  hospitalId: number;
 }
 
 class Ambulance extends Model<IAmbulance> implements IAmbulance {
@@ -29,6 +30,7 @@ class Ambulance extends Model<IAmbulance> implements IAmbulance {
   public otp!: string;
   public otpExpiry!: Date;
   public userId!: number;
+  public hospitalId: number;
   
 }
 
@@ -63,6 +65,10 @@ Ambulance.init(
       type: DataTypes.JSONB,
     },
     userId: {
+      type: DataTypes.INTEGER,
+      allowNull: true, 
+    },
+     hospitalId: {
       type: DataTypes.INTEGER,
       allowNull: true, 
     },

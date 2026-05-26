@@ -2,10 +2,12 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import Ambulance from "../models/ambulance.model";
 import { publishEvent } from "../events/publisher";
-import { generateToken } from "../services/jwt.service";
 import twilio from "twilio";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import { httpClient } from "../utils/httpClient";
+import { Op, Sequelize } from "sequelize";
+
 dotenv.config();
 
 const APPLE_TEST_NUMBER = "9999999999";
@@ -21,73 +23,88 @@ const getTwilioClient = () => {
   return twilio(sid, token);
 };
 
-import { httpClient } from "../utils/httpClient";
+
 
 // REGISTER - POST /ambulance/register
-export const Registeration: any = asyncHandler(async (req: any, res: Response) => {
-  const { serviceName, address, phone, vehicleType, userId: bodyUserId } = req.body;
-  const tokenUserId = req.user.id;
-  const authHeader = req.headers.authorization;
 
-  // 1. Security Check: If userId is provided in body, it must match the token ID
-  if (bodyUserId && Number(bodyUserId) !== Number(tokenUserId)) {
-    res.status(403).json({
-      success: false,
-      message: "Security violation: The provided userId does not match your authenticated account.",
-      error: { code: "USER_ID_MISMATCH" }
-    });
-    return;
+export const Registeration: any = asyncHandler(async (req: any, res: Response): Promise<void> => {
+  const { serviceName, address, phone, vehicleType, userId, hospitalId } = req.body;
+  
+
+  // Validate user only if provided
+  if (userId) {
+    try {
+      await httpClient.get(
+        `${process.env.USER_SERVICE_URL}/users/${userId}`,
+        { headers: { Authorization: req.headers.authorization } }
+      );
+    } catch (err) {
+       res.status(404).json({
+        success: false,
+        message: `User not found with ID ${userId}`,
+        error: { code: "USER_NOT_FOUND" }
+      });
+      return;
+    }
   }
 
-  const userId = tokenUserId; // Use token ID as the source of truth
+  // Validate hospital only if provided
+  if (hospitalId) {
+    try {
+  
+      
+   await httpClient.get(
+        `${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`,
+        { headers: { Authorization: req.headers.authorization } }
+      );
 
-  // 2. Validate User Existence (Cross-Service: user-service)
-  try {
-    await httpClient.get(`${process.env.USER_SERVICE_URL}/users/${userId}`, {
-      headers: { Authorization: authHeader }
-    });
-  } catch (error: any) {
-    console.error("User validation failed:", error.message);
-    res.status(404).json({
-      success: false,
-      message: `User with ID ${userId} does not exist in the user service.`,
-      error: { code: "USER_NOT_FOUND" }
-    });
-    return;
+  
+    } catch (err) {
+       res.status(404).json({
+        success: false,
+        message: `Hospital not found with ID ${hospitalId}`,
+        error: { code: "HOSPITAL_NOT_FOUND" }
+      });
+      return;
+    }
   }
 
-  const exist = await Ambulance.findOne({ where: { phone: phone } });
+  const exist = await Ambulance.findOne({ where: { phone } });
+
+  
   if (exist) {
-    res.status(400).json({
+     res.status(400).json({
       success: false,
       message: "Ambulance already exists",
-      data: null,
-      error: { code: "AMBULANCE_ALREADY_EXISTS", details: null },
+      error: { code: "AMBULANCE_ALREADY_EXISTS" },
     });
     return;
   }
 
+  
   const newAmbulance = await Ambulance.create({
-    serviceName: serviceName,
-    address: address,
-    phone: phone,
-    vehicleType: vehicleType,
-    userId: req.user.id, // Linked to User account
+    serviceName,
+    address,
+    phone,
+    vehicleType,
+    userId: userId || null,
+    hospitalId: hospitalId || null,
   });
+  
 
   await publishEvent("ambulance_events", "AMBULANCE_REGISTERED", {
-    ambulanceId: newAmbulance.id,
-    phone: newAmbulance.phone,
+    ambulanceId: newAmbulance?.id,
+    phone: newAmbulance?.phone,
   });
 
-  const ambulanceData = newAmbulance.toJSON();
-
-  res.status(201).json({
+  
+   res.status(201).json({
     success: true,
     message: "Registration completed successfully",
-    data: ambulanceData,
+    data: newAmbulance.toJSON(),
     error: null,
   });
+  return;
 });
 
 
@@ -273,27 +290,170 @@ export const ambulanceDelete: any = asyncHandler(async (req: Request, res: Respo
 });
 
 // GET ALL - GET /ambulance
-export const getAmbulaces: any = asyncHandler(async (req: Request, res: Response) => {
-  const ambulances = await Ambulance.findAll();
 
-  if (ambulances.length === 0) {
-    res.status(404).json({
-      success: false,
-      message: "No data found",
-      data: null,
-      error: { code: "NO_DATA_FOUND", details: null },
+export const getAmbulaces = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    let {
+      userId,
+      hospitalId,
+      name,
+      country,
+      state,
+      place,
+      district,
+      pincode,
+      vehicleType,
+      search_query,
+    }: any = req.query;
+
+    // Handle array query params
+    if (Array.isArray(userId)) userId = userId[0];
+    if (Array.isArray(hospitalId)) hospitalId = hospitalId[0];
+    if (Array.isArray(country)) country = country[0];
+    if (Array.isArray(state)) state = state[0];
+    if (Array.isArray(district)) district = district[0];
+    if (Array.isArray(name)) name = name[0];
+    if (Array.isArray(place)) place = place[0];
+    if (Array.isArray(pincode)) pincode = pincode[0];
+    if (Array.isArray(vehicleType)) vehicleType = vehicleType[0];
+    if (Array.isArray(search_query)) search_query = search_query[0];
+
+
+    const where: any = {};
+
+    // Integer filters (safe)
+    if (userId && !isNaN(Number(userId))) {
+      where.userId = Number(userId);
+    }
+
+    if (hospitalId && !isNaN(Number(hospitalId))) {
+      where.hospitalId = Number(hospitalId);
+    }
+
+    // Name filter
+    if (name) {
+      where.serviceName = {
+        [Op.iLike]: `%${name}%`,
+      };
+    }
+
+      if (vehicleType) {
+      where.vehicleType = {
+        [Op.iLike]: `%${vehicleType}%`,
+      };
+    }
+
+    // JSONB address filters
+    const andConditions: any[] = [];
+
+    if (pincode && !isNaN(Number(pincode))) {
+      andConditions.push(
+        Sequelize.where(
+          Sequelize.cast(Sequelize.json("address.pincode"), "text"),
+          String(pincode)
+        )
+      );
+    }
+
+    if (place) {
+      andConditions.push(
+        Sequelize.where(
+          Sequelize.cast(Sequelize.json("address.place"), "text"),
+          {
+            [Op.iLike]: `%${place}%`,
+          }
+        )
+      );
+    }
+
+    if (country) {
+      andConditions.push(
+        Sequelize.where(
+          Sequelize.cast(Sequelize.json("address.country"), "text"),
+          {
+            [Op.iLike]: `%${country}%`,
+          }
+        )
+      );
+    }
+
+    if (state) {
+      andConditions.push(
+        Sequelize.where(
+          Sequelize.cast(Sequelize.json("address.state"), "text"),
+          {
+            [Op.iLike]: `%${state}%`,
+          }
+        )
+      );
+    }
+
+    if (district) {
+      andConditions.push(
+        Sequelize.where(
+          Sequelize.cast(Sequelize.json("address.district"), "text"),
+          {
+            [Op.iLike]: `%${district}%`,
+          }
+        )
+      );
+    }
+
+ if (search_query) {
+  where[Op.or] = [
+    {
+      serviceName: {
+        [Op.iLike]: `%${search_query}%`,
+      },
+    },
+
+     {
+      vehicleType: {
+        [Op.iLike]: `%${search_query}%`,
+      },
+    },
+
+    Sequelize.literal(
+      `address->>'district' ILIKE '%${search_query}%'`
+    ),
+
+       Sequelize.literal(
+      `address->>'place' ILIKE '%${search_query}%'`
+    ),
+       Sequelize.literal(
+      `address->>'state' ILIKE '%${search_query}%'`
+    ),
+       Sequelize.literal(
+      `address->>'country' ILIKE '%${search_query}%'`
+    ),
+
+  ];
+}
+
+
+
+    // Add AND conditions
+    if (andConditions.length > 0) {
+      where[Op.and] = andConditions;
+    }
+
+    const ambulance = await Ambulance.findAll({
+      where,
+      order: [["createdAt", "DESC"]],
     });
-    return;
+
+    if (!ambulance.length) {
+      res.status(404).json({
+        success: false,
+        message: "No data found",
+        data: null,
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: ambulance,
+    });
   }
-
-  const safeAmbulances = ambulances.map(ambulance => {
-    return ambulance.toJSON();
-  });
-
-  res.status(200).json({
-    success: true,
-    status: "Success",
-    data: safeAmbulances,
-    error: null,
-  });
-});
+);

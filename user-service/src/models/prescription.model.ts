@@ -39,6 +39,7 @@ interface IPrescription {
   next_consultation?: Date;
 
   empty_stomach?: boolean;
+  date?: Date; 
 
   deleteDate?: Date;
   isActive?: boolean;
@@ -96,6 +97,7 @@ class Prescription
   public next_consultation?: Date;
 
   public empty_stomach?: boolean;
+  public date?: Date;
 
   public deleteDate?: Date;
   public isActive?: boolean;
@@ -168,6 +170,10 @@ Prescription.init(
     empty_stomach: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+    },
+
+      date: {
+      type: DataTypes.DATE,
     },
     
     deleteDate: {

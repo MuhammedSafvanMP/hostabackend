@@ -3,10 +3,10 @@ import asyncHandler from "express-async-handler";
 import Booking from "../models/booking.model";
 import { publishEvent } from "../events/publisher";
 import { httpClient } from "../utils/httpClient";
-// import { sendPushNotification } from "../events/pushnotification";
 import { sendBookingPushNotifications } from "../utils/sendBookingPush";
 import axios from "axios";
 import dotenv from "dotenv";
+import { Op, Sequelize } from "sequelize";
 dotenv.config();
 
 // REGISTER - POST /booking/register
@@ -26,10 +26,11 @@ export const Registeration: any = asyncHandler(
       displayName,
       booking_date,
       consulting_time,
-      booking_status
+      booking_status,
+      status,
     } = req.body;
-
     
+
     
     const errors: string[] = [];
 
@@ -109,6 +110,7 @@ export const Registeration: any = asyncHandler(
       doctor_department: department,
       consulting_time,
       booking_status: booking_status || "user booking",
+      status
     });
 
     // ==============================
@@ -393,16 +395,50 @@ export const bookingDelete: any = asyncHandler(
 
 // GET ALL - GET /booking
 
-export const getBookings = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  let { userId, hospitalId, doctorId }: any = req.query;
+export const getBookings = asyncHandler(async (req: Request, res: Response) : Promise<void> => {
+  let {
+    userId,
+    hospitalId,
+    doctorId,
+    department,
+    phone,
+    status,
+    doctor_name,
+    patient_name,
+    gender,
+    startDate,
+    endDate,
+    date,
+    page = 1,
+    limit = 10,
+    search_query,
+  }: any = req.query;
 
-  if (Array.isArray(userId)) userId = userId[0];
-  if (Array.isArray(hospitalId)) hospitalId = hospitalId[0];
-    if (Array.isArray(doctorId)) doctorId = doctorId[0];
+  // Normalize arrays
+  const extract = (val: any) => (Array.isArray(val) ? val[0] : val);
 
+  userId = extract(userId);
+  hospitalId = extract(hospitalId);
+  doctorId = extract(doctorId);
+  department = extract(department);
+  phone = extract(phone);
+  status = extract(status);
+  doctor_name = extract(doctor_name);
+  page = extract(page);
+  limit = extract(limit);
+  search_query = extract(search_query);
+  patient_name = extract(patient_name);
+  gender = extract(gender);
+    startDate = extract(startDate);
+      endDate = extract(endDate);
+        date = extract(date);
+
+  const pageNum = Number(page);
+  const limitNum = Number(limit);
 
   const whereClause: any = {};
 
+  // Filters
   if (userId !== undefined) {
     whereClause.userId = Number(userId);
   }
@@ -411,26 +447,130 @@ export const getBookings = asyncHandler(async (req: Request, res: Response): Pro
     whereClause.hospitalId = Number(hospitalId);
   }
 
-    if (doctorId !== undefined) {
+  if (doctorId !== undefined) {
     whereClause.doctorId = Number(doctorId);
   }
 
-  const booking = await Booking.findAll({
+  if (department) {
+    whereClause.doctor_department = {
+      [Op.iLike]: `%${department}%`,
+    };
+  }
+
+   if (department) {
+    whereClause.patient_gender = {
+      [Op.iLike]: `%${gender}%`,
+    };
+  }
+
+
+  if (phone) {
+    whereClause.patient_phone = {
+      [Op.iLike]: `%${phone}%`,
+    };
+  }
+
+  if (status) {
+    whereClause.status = status;
+  }
+
+  if (doctor_name) {
+    whereClause.doctor_name = {
+      [Op.iLike]: `%${doctor_name}%`,
+    };
+  }
+
+   if (patient_name) {
+    whereClause.patient_name = {
+      [Op.iLike]: `%${patient_name}%`,
+    };
+  }
+
+  if (startDate || endDate || date) {
+  const startDates = new Date(startDate || date);
+  startDates.setHours(0, 0, 0, 0);
+
+  const endDates = new Date(endDate);
+  endDate.setHours(23, 59, 59, 999);
+
+  whereClause.booking_date = {
+    [Op.between]: [startDates, endDates],
+  };
+}
+
+
+  // Global search
+ if (search_query?.trim()) {
+  const search = search_query.trim();
+
+  whereClause[Op.or] = [
+    Sequelize.where(
+      Sequelize.fn("COALESCE", Sequelize.col("doctor_name"), ""),
+      {
+        [Op.iLike]: `%${search}%`,
+      }
+    ),
+
+    Sequelize.where(
+      Sequelize.fn("COALESCE", Sequelize.col("doctor_department"), ""),
+      {
+        [Op.iLike]: `%${search}%`,
+      }
+    ),
+
+    Sequelize.where(
+      Sequelize.fn("COALESCE", Sequelize.col("patient_phone"), ""),
+      {
+        [Op.iLike]: `%${search}%`,
+      }
+    ),
+
+    Sequelize.where(
+      Sequelize.cast(Sequelize.col("patient_gender"), "TEXT"),
+      {
+        [Op.iLike]: `%${search}%`,
+      }
+    ),
+
+    Sequelize.where(
+      Sequelize.fn("COALESCE", Sequelize.col("patient_name"), ""),
+      {
+        [Op.iLike]: `%${search}%`,
+      }
+    ),
+  ];
+}
+
+  // IMPORTANT: pagination query
+  const { count, rows } = await Booking.findAndCountAll({
     where: whereClause,
-      order: [["createdAt", "DESC"]],
+    limit: limitNum,
+    offset: (pageNum - 1) * limitNum,
+    order: [["createdAt", "DESC"]],
   });
 
-  if (!booking.length) {
-    res.status(404).json({
+  if (count === 0) {
+   res.status(404).json({
       success: false,
       message: "No data found",
-      data: null,
+      data: [],
     });
-    return;
+    return ;
   }
+
+  const totalPages = Math.ceil(count / limitNum);
 
   res.status(200).json({
     success: true,
-    data: booking,
+    data: rows,
+    pagination: {
+      totalItems: count,
+      totalPages,
+      currentPage: pageNum,
+      limit: limitNum,
+      hasNextPage: pageNum < totalPages,
+      hasPreviousPage: pageNum > 1,
+    },
   });
+  return ;
 });
