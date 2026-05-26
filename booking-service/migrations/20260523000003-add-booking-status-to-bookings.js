@@ -1,25 +1,179 @@
-"use strict";
+'use strict';
+
+/** @type {import('sequelize-cli').Migration} */
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    const table = await queryInterface.describeTable("bookings");
-
-    if (!table.booking_status) {
-      await queryInterface.addColumn("bookings", "booking_status", {
-        type: Sequelize.ENUM("user booking", "hospital booking"),
+    await queryInterface.createTable('bookings', {
+      id: {
+        type: Sequelize.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
         allowNull: false,
-        defaultValue: "user booking", // Provide default for existing records
-      });
-    }
+      },
+
+      patient_name: {
+        type: Sequelize.STRING(120),
+        allowNull: false,
+      },
+
+      patient_phone: {
+        type: Sequelize.STRING(20),
+        allowNull: false,
+      },
+
+      patient_place: {
+        type: Sequelize.STRING(120),
+        allowNull: true,
+      },
+
+      patient_dob: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+
+      patient_age: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+
+      patient_gender: {
+        type: Sequelize.ENUM('Male', 'Female', 'Other'),
+        allowNull: true,
+      },
+
+      userId: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
+
+      doctorId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+
+      hospitalId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+
+      booking_date: {
+        type: Sequelize.DATE,
+        allowNull: false,
+      },
+
+      consulting_time: {
+        type: Sequelize.STRING(50),
+        allowNull: true,
+      },
+
+      doctor_name: {
+        type: Sequelize.STRING(120),
+        allowNull: false,
+      },
+
+      doctor_department: {
+        type: Sequelize.STRING(120),
+        allowNull: false,
+      },
+
+      token: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
+
+      status: {
+        type: Sequelize.ENUM(
+          'pending',
+          'accepted',
+          'declined',
+          'completed',
+          'cancel'
+        ),
+        allowNull: false,
+        defaultValue: 'pending',
+      },
+
+      booking_status: {
+        type: Sequelize.ENUM(
+          'user booking',
+          'hospital booking'
+        ),
+        allowNull: false,
+        defaultValue: 'user booking',
+      },
+
+      isActive: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+      },
+
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+      },
+
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+      },
+    });
+
+    // =========================
+    // INDEXES (important for performance)
+    // =========================
+
+    // await queryInterface.addIndex('bookings', ['doctorId']);
+    // await queryInterface.addIndex('bookings', ['hospitalId']);
+    // await queryInterface.addIndex('bookings', ['userId']);
+    // await queryInterface.addIndex('bookings', ['booking_date']);
+    // await queryInterface.addIndex('bookings', ['status']);
+
+    await queryInterface.addIndex(
+  'bookings',
+  ['doctorId'],
+  {
+    name: 'idx_bookings_doctorId',
+  }
+);
+
+await queryInterface.addIndex(
+  'bookings',
+  ['hospitalId'],
+  {
+    name: 'idx_bookings_hospitalId',
+  }
+);
+
+await queryInterface.addIndex(
+  'bookings',
+  ['userId'],
+  {
+    name: 'idx_bookings_userId',
+  }
+);
+
+await queryInterface.addIndex(
+  'bookings',
+  ['booking_date'],
+  {
+    name: 'idx_bookings_booking_date',
+  }
+);
+
+await queryInterface.addIndex(
+  'bookings',
+  ['status'],
+  {
+    name: 'idx_bookings_status',
+  }
+);
   },
 
   async down(queryInterface, Sequelize) {
-    const table = await queryInterface.describeTable("bookings");
-
-    if (table.booking_status) {
-      await queryInterface.removeColumn("bookings", "booking_status");
-      // Note: PostgreSQL requires manual type drop for ENUMs created this way if needed,
-      // but queryInterface.removeColumn is sufficient for rollback.
-    }
+    await queryInterface.dropTable('bookings');
   },
 };

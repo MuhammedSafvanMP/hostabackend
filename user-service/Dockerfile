@@ -124,14 +124,11 @@ RUN npm install --omit=dev --legacy-peer-deps
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/config ./config
-
-# ❌ ONLY INCLUDE THIS IF IT EXISTS
-# COPY --from=builder /app/migrations ./migrations
-
+COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/.sequelizerc* ./
 
 USER node
 
 EXPOSE 3002
 
-CMD ["node", "dist/server.js"]
+CMD ["sh", "-c", "npx sequelize-cli db:migrate && node dist/server.js"]

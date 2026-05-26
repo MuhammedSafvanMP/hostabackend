@@ -34,6 +34,21 @@ import {
   updateData
 } from "../controllers/prescription.controller";
 
+import {
+  createLabResult,
+  getLabResults,
+  getLabResult,
+  updateLabResult,
+  deleteLabResult,
+} from "../controllers/labResult.controller";
+
+import {
+  createDocument,
+  getDocuments,
+  getDocument,
+  updateDocument,
+  deleteDocument,
+} from "../controllers/document.controller";
 
 import { validate, validateParams } from "../middleware/validate.middleware";
 import { registerSchema, loginSchema, idParamSchema, loginWithPhoneSchema, verifyOtpSchema, updateUserSchema, sendOtpEmailSchema, verifyOtpEmailSchema, resetPasswordEmailSchema, changePasswordSchema } from "../validators/user.validator";
@@ -88,6 +103,19 @@ router.get("/prescription/:id", authenticate, checkPermission("prescription", "v
 router.put("/prescription/:id", authenticate, checkPermission("prescription", "edit"), updateData);
 router.delete("/prescription/:id", authenticate, checkPermission("prescription", "delete"), deletePrescription);
 
+// Lab Result
+router.post("/lab-results", authenticate, checkPermission("labresult", "create"), createLabResult);
+router.get("/lab-results", authenticate, checkPermission("labresult", "view"), getLabResults);
+router.get("/lab-results/:id", authenticate, validateParams(idParamSchema), checkPermission("labresult", "view"), getLabResult);
+router.put("/lab-results/:id", authenticate, validateParams(idParamSchema), checkPermission("labresult", "edit"), updateLabResult);
+router.delete("/lab-results/:id", authenticate, validateParams(idParamSchema), checkPermission("labresult", "delete"), deleteLabResult);
+
+// Document
+router.post("/documents", authenticate, checkPermission("document", "create"), createDocument);
+router.get("/documents", authenticate, checkPermission("document", "view"), getDocuments);
+router.get("/documents/:id", authenticate, validateParams(idParamSchema), checkPermission("document", "view"), getDocument);
+router.put("/documents/:id", authenticate, validateParams(idParamSchema), checkPermission("document", "edit"), updateDocument);
+router.delete("/documents/:id", authenticate, validateParams(idParamSchema), checkPermission("document", "delete"), deleteDocument);
 
 export default router;
 

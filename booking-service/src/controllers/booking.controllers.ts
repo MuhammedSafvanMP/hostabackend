@@ -30,7 +30,6 @@ export const Registeration: any = asyncHandler(
     } = req.body;
 
     
-    
     const errors: string[] = [];
 
     // ==============================
@@ -273,7 +272,7 @@ export const updateData: any = asyncHandler(
       
 
 
-      
+
       const eventPayload = {
         bookingId: updatedBooking.id,
         userId: updatedBooking.userId,
