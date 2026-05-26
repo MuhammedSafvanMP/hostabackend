@@ -1,6 +1,6 @@
 import amqp from 'amqplib';
-import { env } from '../config/env.js';
-import { logger } from '../utils/logger.js';
+import { env } from '../config/env';
+import { logger } from '../utils/logger';
 
 export const startSubscriber = async () => {
     try {

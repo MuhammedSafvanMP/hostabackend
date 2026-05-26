@@ -8,7 +8,7 @@ import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
 import Doctor from "../models/doctor.model";
 import { publishEvent } from "../events/publisher";
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import twilio from "twilio";
 import axios from "axios";
 import { sendEmail } from "../services/mail.service";
@@ -68,23 +68,9 @@ export const sendDoctorOtpEmail = async (email: string, otp: string, doctorName:
 
 // REGISTER - POST /doctor/register
 export const Registeration: any = asyncHandler(async (req: any, res: Response) => {
-  const { hospitalId: bodyHospitalId, firstName, lastName, phone, joiningDate, email, password, fees, department, specialist, dob, gender, knowLanguages,   consultingTwo,
+  const { hospitalId, firstName, lastName, phone, joiningDate, email, password, fees, department, specialist, dob, gender, knowLanguages,   consultingTwo,
   consultingOne, bookingOpen, qualification, address, displayName, outDoorConsulting ,experience, appointmentCount, regNo} = req.body;
-
-  const tokenHospitalId = req.user?.id;
-  const authHeader = req.headers.authorization;
-
-  // 1. Security Check: hospitalId in body must match token ID
-  if (bodyHospitalId && Number(bodyHospitalId) !== Number(tokenHospitalId)) {
-    res.status(403).json({
-      success: false,
-      message: "Security violation: The provided hospitalId does not match your authenticated account.",
-      error: { code: "HOSPITAL_ID_MISMATCH" }
-    });
-    return;
-  }
-
-  const hospitalId = tokenHospitalId; // Source of truth
+ 
 
   if (!hospitalId) {
     res.status(400).json({ success: false, message: "Hospital ID is required" });
@@ -94,7 +80,7 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
   // 2. Validate hospitalId via hospital-service
   try {
     const hospitalResponse = await axios.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
-      headers: { Authorization: authHeader }
+      headers: { Authorization: req.headers.authorization }
     });
     if (!hospitalResponse.data || !hospitalResponse.data.success) {
       res.status(400).json({ success: false, message: "Invalid hospital ID" });
@@ -407,28 +393,175 @@ export const doctorDelete: any = asyncHandler(async (req: Request, res: Response
 
 
 // GET ALL - GET /doctor
-export const getDoctors: any = asyncHandler(async (req: Request, res: Response) => {
-  const doctor = await Doctor.findAll({
-    where: { isDelete: false }
-  });
+export const getDoctors = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
 
-  if (doctor.length === 0) {
-    res.status(404).json({
-      success: false,
-      message: "No data found",
-      data: null,
-      error: { code: "NO_DATA_FOUND", details: null },
+    const normalizeQuery = (value: any) =>
+      Array.isArray(value) ? value[0] : value;
+
+    let {
+      hospitalId,
+      speciality,
+      name,
+      status,
+      search_query,
+      page = 1,
+      limit = 10,
+    }: any = req.query;
+
+   hospitalId = normalizeQuery(hospitalId);
+speciality = normalizeQuery(speciality);
+name = normalizeQuery(name);
+status = normalizeQuery(status);
+search_query = normalizeQuery(search_query)
+
+    const whereClause: any = {};
+    const andConditions: any[] = [];
+
+    /* ------------------------------ PAGINATION ----------------------------- */
+
+    const pageNum = Math.max(Number(page) || 1, 1);
+
+    // max 100 limit protection
+    const limitNum = Math.min(
+      Math.max(Number(limit) || 10, 1),
+      100
+    );
+
+    /* ---------------------------- FILTERS -------------------------------- */
+
+    if (hospitalId) {
+      andConditions.push({
+        hospitalId: Number(hospitalId),
+      });
+    }
+
+    if (status !== undefined) {
+      andConditions.push({
+        isActive: status === "true",
+      });
+    }
+
+    if (name) {
+      andConditions.push({
+        displayName: {
+          [Op.iLike]: `%${name}%`,
+        },
+      });
+    }
+
+    if (speciality) {
+      andConditions.push({
+        department: {
+          [Op.iLike]: `%${speciality}%`,
+        },
+      });
+    }
+
+    /* -------------------------- SEARCH QUERY ------------------------------ */
+
+
+    if (search_query?.trim()) {
+  const search = search_query.trim();
+
+  andConditions.push({
+    [Op.or]: [
+      Sequelize.where(
+        Sequelize.fn(
+          "COALESCE",
+          Sequelize.col("displayName"),
+          ""
+        ),
+        {
+          [Op.iLike]: `%${search}%`,
+        }
+      ),
+
+      Sequelize.where(
+        Sequelize.fn(
+          "COALESCE",
+          Sequelize.col("email"),
+          ""
+        ),
+        {
+          [Op.iLike]: `%${search}%`,
+        }
+      ),
+
+      Sequelize.where(
+        Sequelize.fn(
+          "COALESCE",
+          Sequelize.col("phone"),
+          ""
+        ),
+        {
+          [Op.iLike]: `%${search}%`,
+        }
+      ),
+
+      Sequelize.where(
+        Sequelize.fn(
+          "COALESCE",
+          Sequelize.col("department"),
+          ""
+        ),
+        {
+          [Op.iLike]: `%${search}%`,
+        }
+      ),
+
+      Sequelize.where(
+        Sequelize.cast(
+          Sequelize.col("gender"),
+          "TEXT"
+        ),
+        {
+          [Op.iLike]: `%${search}%`,
+        }
+      ),
+    ],
+  });
+}
+
+
+    if (andConditions.length > 0) {
+      whereClause[Op.and] = andConditions;
+    }
+
+    /* ----------------------------- QUERY -------------------------------- */
+
+    const doctors = await Doctor.findAndCountAll({
+      where: whereClause,
+      limit: limitNum,
+      offset: (pageNum - 1) * limitNum,
+      order: [["createdAt", "DESC"]],
+    });
+
+    /* --------------------------- PAGINATION ------------------------------- */
+
+    const totalPages =
+      Math.ceil(doctors.count / limitNum) || 1;
+
+    /* ----------------------------- RESPONSE ------------------------------- */
+
+     res.status(200).json({
+      success: true,
+      data: doctors.rows,
+      pagination: {
+        totalItems: doctors.count,
+        totalPages,
+        currentPage: pageNum,
+        limit: limitNum,
+        hasNextPage: pageNum < totalPages,
+        hasPreviousPage: pageNum > 1,
+      },
+      error: null,
     });
     return;
   }
+);
 
-  res.status(200).json({
-    success: true,
-    status: "Success",
-    data: doctor,
-    error: null,
-  });
-});
+
 
 // GET BLACKLISTED - GET /doctor/blacklist
 export const getBlacklistedDoctors: any = asyncHandler(async (req: Request, res: Response) => {

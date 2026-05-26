@@ -5,19 +5,13 @@ import sequelize from "../config/db";
    INTERFACE
 ======================= */
 
-interface IPicture {
-  imageUrl?: string;
-  public_id?: string;
-
-}
 
 export interface ISpeciality {
   id: number;
   name: string;
-  picture?: IPicture;
+  imageUrl?: string;
   isActive?: boolean;
   isDelete?: boolean;
-  hospitalId?: number;
 }
 
 /* =======================
@@ -26,7 +20,7 @@ export interface ISpeciality {
 
 type SpecialityCreationAttributes = Optional<
   ISpeciality,
-  "id" | "picture" | "isActive" | "isDelete" | "hospitalId"
+  "id" | "imageUrl" | "isActive" | "isDelete" 
 >;
 
 /* =======================
@@ -39,10 +33,9 @@ class Speciality
 {
   public id!: number;
   public name!: string;
-  public picture?: IPicture;
+  public imageUrl?: string;
   public isActive?: boolean;
   public isDelete?: boolean;
-  public hospitalId?: number;
 
   // timestamps
   public readonly createdAt!: Date;
@@ -61,11 +54,6 @@ Speciality.init(
       primaryKey: true,
     },
 
-    hospitalId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },  
-
     name: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -75,8 +63,9 @@ Speciality.init(
       },
     },
 
-    picture: {
-      type: DataTypes.JSONB, // store { imageUrl, public_id }
+    imageUrl: {
+      type: DataTypes.STRING, // 🔥 store imageUrl + public_id
+      allowNull: true
     },
 
     isActive: {
@@ -92,9 +81,8 @@ Speciality.init(
   {
     sequelize,
     modelName: "Speciality",
-    tableName: "speciality",
+    tableName: "specialitys",
     timestamps: true,
-    paranoid: true, // 🔥 Enables Soft Delete
 
     indexes: [
       {

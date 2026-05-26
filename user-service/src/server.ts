@@ -12,6 +12,19 @@ const startServer = async () => {
     try {
         await connectDB();
         await connectRabbitMQ();
+
+
+const { default: User } = await import("./models/user.model");
+const { default: Prescription } = await import("./models/prescription.model");
+const { default: PatientVitals } = await import("./models/patientVitals.model");
+const { default: Patient } = await import("./models/patient.model");
+
+
+
+await User.sync({ alter: true });
+await Patient.sync({ alter: true });
+await PatientVitals.sync({ alter: true });
+await Prescription.sync({ alter: true });
         
         // Start background blacklist cleanup job
         startCleanupJob();

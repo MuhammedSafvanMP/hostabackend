@@ -1,6 +1,3 @@
-
-
-
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import { userService } from "../services/user.service";
@@ -10,6 +7,7 @@ import User from "../models/user.model";
 import jwt from "jsonwebtoken";
 import { generateToken, generateRefreshToken } from "../services/jwt.service";
 import { publishEvent } from "../events/publisher";
+import { Op } from "sequelize";
 
 // Helper to set refresh token cookie
 const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
@@ -336,20 +334,121 @@ export const createPatient: any = asyncHandler(async (req: Request, res: Respons
 
 
 // GET ALL PATIENTS
-export const getPatients: any = asyncHandler(async (req: Request, res: Response) => {
-  const patients = await Patient.findAll({
-    where: { isDelete: false },
-    include: [
-      { model: PatientVitals, as: "vitals", limit: 1, order: [["createdAt", "DESC"]] },
-      { model: User, as: "user", attributes: ["id", "name", "email", "phone"] },
-    ],
+
+
+export const getPatients = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  let {
+    name,
+    phone,
+    patientId,
+    addressLine,
+    hospitalId,
+    email,
+    guardianName,
+    page = 1,
+    limit = 10,
+    search_query,
+  }: any = req.query;
+
+  // Normalize arrays
+  const extract = (val: any) => (Array.isArray(val) ? val[0] : val);
+
+  name = extract(name);
+  phone = extract(phone);
+  patientId = extract(patientId);
+  addressLine = extract(addressLine);
+  hospitalId = extract(hospitalId);
+  email = extract(email);
+  guardianName = extract(guardianName);
+  page = extract(page);
+  limit = extract(limit);
+  search_query = extract(search_query);
+
+  const pageNum = Number(page);
+  const limitNum = Number(limit);
+
+  const whereCondition: any = {
+    isDelete: false,
+  };
+
+  // Field filters
+  if (name) {
+    whereCondition.name = {
+      [Op.iLike]: `%${name}%`,
+    };
+  }
+
+  if (hospitalId !== undefined) {
+    whereCondition.hospitalId = Number(hospitalId);
+  }
+
+  if (phone) {
+    whereCondition.phone = {
+      [Op.iLike]: `%${phone}%`,
+    };
+  }
+
+  if (patientId) {
+    whereCondition.patientId = {
+      [Op.iLike]: `%${patientId}%`,
+    };
+  }
+
+  if (addressLine) {
+    whereCondition.addressLine = {
+      [Op.iLike]: `%${addressLine}%`,
+    };
+  }
+
+  if (email) {
+    whereCondition.email = {
+      [Op.iLike]: `%${email}%`,
+    };
+  }
+
+  if (guardianName) {
+    whereCondition.guardianName = {
+      [Op.iLike]: `%${guardianName}%`,
+    };
+  }
+
+  // Global search (kept separate)
+  if (search_query) {
+    whereCondition[Op.or] = [
+      { name: { [Op.iLike]: `%${search_query}%` } },
+      { phone: { [Op.iLike]: `%${search_query}%` } },
+      { patientId: { [Op.iLike]: `%${search_query}%` } },
+      { addressLine: { [Op.iLike]: `%${search_query}%` } },
+      { email: { [Op.iLike]: `%${search_query}%` } },
+      { guardianName: { [Op.iLike]: `%${search_query}%` } },
+    ];
+  }
+
+  const patients = await Patient.findAndCountAll({
+    where: whereCondition,
+    limit: limitNum,
+    offset: (pageNum - 1) * limitNum,
+    order: [["createdAt", "DESC"]],
   });
+
+  const totalPages = Math.ceil(patients.count / limitNum);
 
   res.status(200).json({
     success: true,
-    data: patients,
+    data: patients.rows,
+    pagination: {
+      totalItems: patients.count,
+      totalPages,
+      currentPage: pageNum,
+      limit: limitNum,
+      hasNextPage: pageNum < totalPages,
+      hasPreviousPage: pageNum > 1,
+    },
+    error: null,
   });
+   return;
 });
+
 
 // GET BLACKLISTED PATIENTS
 export const getBlacklistedPatients: any = asyncHandler(async (req: Request, res: Response) => {
@@ -521,8 +620,6 @@ export const deletePatient: any = asyncHandler(async (req: Request, res: Respons
 // REFRESH TOKEN - POST /users/refresh
 export const refreshUserToken: any = asyncHandler(async (req: Request, res: Response) => {
   const refreshToken = req.cookies?.refreshToken;
-
-  console.log("refreshToken", refreshToken);
 
   if (!refreshToken) {
     res.status(401).json({ success: false, message: "Refresh token missing" });
