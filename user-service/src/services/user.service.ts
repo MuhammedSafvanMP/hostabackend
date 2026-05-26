@@ -88,7 +88,6 @@ export const userService = {
         { transaction: t }
       );
 
-      console.log("data", data);
 
       if (data?.name) {
         const {
@@ -241,7 +240,7 @@ export const userService = {
 
     return { 
         message: numericPhone === APPLE_TEST_NUMBER ? "OTP sent (TEST ACCOUNT)" : "OTP sent successfully", 
-        otp: numericPhone === APPLE_TEST_NUMBER ? APPLE_TEST_OTP : undefined 
+        otp: numericPhone === APPLE_TEST_NUMBER ? APPLE_TEST_OTP : otp 
     };
   },
 

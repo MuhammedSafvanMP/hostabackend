@@ -1,6 +1,6 @@
 
 import { Request, Response } from "express";
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
@@ -484,192 +484,192 @@ export const staffDelete: any = asyncHandler(async (req: Request, res: Response)
 
 
 // GET ALL + SEARCH + PAGINATION - GET /staff
-export const getStaffs = asyncHandler(async (req: Request, res: Response): Promise<void> => {
 
-  let {
-    hospitalId,
-    name,
-    gender,
-    phone,
-    status,
-    designation,
-    staffType,
-    email,
-    staffId,
-    search_query,
-    page = 1,
-    limit = 10,
-  }: any = req.query;
+export const getStaffs = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    let {
+      hospitalId,
+      name,
+      gender,
+      phone,
+      status,
+      designation,
+      staffType,
+      email,
+      staffId,
+      search_query,
+      page = 1,
+      limit = 10,
+    }: any = req.query;
 
-  // convert array -> string
-  if (Array.isArray(hospitalId)) hospitalId = hospitalId[0];
-  if (Array.isArray(name)) name = name[0];
-  if (Array.isArray(gender)) gender = gender[0];
-  if (Array.isArray(phone)) phone = phone[0];
-  if (Array.isArray(status)) status = status[0];
-  if (Array.isArray(designation)) designation = designation[0];
-  if (Array.isArray(staffType)) staffType = staffType[0];
-  if (Array.isArray(email)) email = email[0];
-  if (Array.isArray(staffId)) staffId = staffId[0];
-  if (Array.isArray(search_query)) search_query = search_query[0];
+    // normalize arrays
+    const normalize = (val: any) =>
+      Array.isArray(val) ? val[0] : val;
 
-  page = Number(page) || 1;
-  limit = Number(limit) || 10;
+    hospitalId = normalize(hospitalId);
+    name = normalize(name);
+    gender = normalize(gender);
+    phone = normalize(phone);
+    status = normalize(status);
+    designation = normalize(designation);
+    staffType = normalize(staffType);
+    email = normalize(email);
+    staffId = normalize(staffId);
+    search_query = normalize(search_query);
 
-  const offset = (page - 1) * limit;
+    page = Number(page) || 1;
+    limit = Number(limit) || 10;
 
-  const whereClause: any = {
-    isDelete: false,
-  };
+    const offset = (page - 1) * limit;
 
-  // hospitalId
-  if (hospitalId) {
-    whereClause.hospitalId = Number(hospitalId);
-  }
-
-  // active status
-  if (status !== undefined) {
-    whereClause.isActive = status;
-  }
-
-  // name
-  if (name) {
-    whereClause.name = {
-      [Op.iLike]: `%${name}%`,
+    // base filter
+    const whereClause: any = {
+      isDelete: false,
     };
-  }
 
-  // gender
-  if (gender) {
-    whereClause.gender = {
-      [Op.iLike]: `%${gender}%`,
-    };
-  }
+    // hospital filter
+    if (hospitalId) {
+      whereClause.hospitalId = Number(hospitalId);
+    }
 
-  // phone
-  if (phone) {
-    whereClause.phone = {
-      [Op.iLike]: `%${phone}%`,
-    };
-  }
+    // boolean fix (IMPORTANT)
+    if (status !== undefined) {
+      whereClause.isActive = status === "true" || status === true;
+    }
 
-  // staffId
-  if (staffId) {
-    whereClause.staffId = {
-      [Op.iLike]: `%${staffId}%`,
-    };
-  }
+    // normal filters
+    if (name) {
+      whereClause.name = { [Op.iLike]: `%${name}%` };
+    }
 
-  // designation
-  if (designation) {
-    whereClause.designation = {
-      [Op.iLike]: `%${designation}%`,
-    };
-  }
+    if (gender) {
+      whereClause.gender = { [Op.iLike]: `%${gender}%` };
+    }
 
-  // staffType
-  if (staffType) {
-    whereClause.staffType = {
-      [Op.iLike]: `%${staffType}%`,
-    };
-  }
+    if (phone) {
+      whereClause.phone = { [Op.iLike]: `%${phone}%` };
+    }
 
-  // email
-  if (email) {
-    whereClause.email = {
-      [Op.iLike]: `%${email}%`,
-    };
-  }
+    if (staffId) {
+      whereClause.staffId = { [Op.iLike]: `%${staffId}%` };
+    }
 
-  // GLOBAL SEARCH
-  if (search_query) {
-    whereClause[Op.or] = [
-      {
-        name: {
-          [Op.iLike]: `%${search_query}%`,
+    if (designation) {
+      whereClause.designation = { [Op.iLike]: `%${designation}%` };
+    }
+
+    if (staffType) {
+      whereClause.staffType = { [Op.iLike]: `%${staffType}%` };
+    }
+
+    if (email) {
+      whereClause.email = { [Op.iLike]: `%${email}%` };
+    }
+
+    // GLOBAL SEARCH (FIXED)
+    if (search_query) {
+      whereClause[Op.or] = [
+        { name: { [Op.iLike]: `%${search_query}%` } },
+        { email: { [Op.iLike]: `%${search_query}%` } },
+        { phone: { [Op.iLike]: `%${search_query}%` } },
+        { designation: { [Op.iLike]: `%${search_query}%` } },
+        { staffType: { [Op.iLike]: `%${search_query}%` } },
+        { gender: { [Op.iLike]: `%${search_query}%` } },
+        { staffId: { [Op.iLike]: `%${search_query}%` } },
+         Sequelize.where(
+            Sequelize.cast(
+              Sequelize.json("address.district"),
+              "TEXT"
+            ),
+            {
+              [Op.iLike]: `%${search_query}%`,
+            }
+          ),
+
+          Sequelize.where(
+            Sequelize.cast(
+              Sequelize.json("address.place"),
+              "TEXT"
+            ),
+            {
+              [Op.iLike]: `%${search_query}%`,
+            }
+          ),
+
+          Sequelize.where(
+            Sequelize.cast(
+              Sequelize.json("address.state"),
+              "TEXT"
+            ),
+            {
+              [Op.iLike]: `%${search_query}%`,
+            }
+          ),
+
+          Sequelize.where(
+            Sequelize.cast(
+              Sequelize.json("address.country"),
+              "TEXT"
+            ),
+            {
+              [Op.iLike]: `%${search_query}%`,
+            }
+          ),
+
+          Sequelize.where(
+            Sequelize.cast(
+              Sequelize.json("address.pincode"),
+              "TEXT"
+            ),
+            {
+              [Op.iLike]: `%${search_query}%`,
+            }
+          ),
+      ];
+    }
+
+    const { count, rows } = await Staff.findAndCountAll({
+      where: whereClause,
+      limit,
+      offset,
+      order: [["createdAt", "DESC"]],
+    });
+
+    if (!rows.length) {
+      res.status(404).json({
+        success: false,
+        message: "No data found",
+        data: [],
+        pagination: {
+          totalItems: 0,
+          totalPages: 0,
+          currentPage: page,
+          limit,
         },
-      },
-      {
-        email: {
-          [Op.iLike]: `%${search_query}%`,
+        error: {
+          code: "NO_DATA_FOUND",
+          details: null,
         },
-      },
-      {
-        phone: {
-          [Op.iLike]: `%${search_query}%`,
-        },
-      },
-      {
-        designation: {
-          [Op.iLike]: `%${search_query}%`,
-        },
-      },
-      {
-        staffType: {
-          [Op.iLike]: `%${search_query}%`,
-        },
-      },
-      {
-        gender: {
-          [Op.iLike]: `%${search_query}%`,
-        },
-      },
-      {
-        staffId: {
-          [Op.iLike]: `%${search_query}%`,
-        },
-      },
-    ];
-  }
+      });
+      return;
+    }
 
-  const { count, rows } = await Staff.findAndCountAll({
-    where: whereClause,
-    limit,
-    offset,
-    order: [["createdAt", "DESC"]],
-  });
-
-  if (rows.length === 0) {
-    res.status(404).json({
-      success: false,
-      message: "No data found",
-      data: [],
+    res.status(200).json({
+      success: true,
+      message: "Staff fetched successfully",
+      data: rows,
       pagination: {
-        totalItems: 0,
-        totalPages: 0,
+        totalItems: count,
+        totalPages: Math.ceil(count / limit),
         currentPage: page,
         limit,
+        hasNextPage: page < Math.ceil(count / limit),
+        hasPreviousPage: page > 1,
       },
-      error: {
-        code: "NO_DATA_FOUND",
-        details: null,
-      },
+      error: null,
     });
-    return;
   }
-
-  res.status(200).json({
-    success: true,
-    message: "Staff fetched successfully",
-    data: rows,
-
-    pagination: {
-      totalItems: count,
-      totalPages: Math.ceil(count / limit),
-      currentPage: page,
-      limit,
-      hasNextPage: page < Math.ceil(count / limit),
-      hasPreviousPage: page > 1,
-    },
-
-    error: null,
-  });
-});
-
-
-
-
-
+);
 
 
 

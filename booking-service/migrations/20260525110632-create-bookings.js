@@ -1,10 +1,10 @@
-'use strict';
+"use strict";
 
 /** @type {import('sequelize-cli').Migration} */
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('bookings', {
+    await queryInterface.createTable("bookings", {
       id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
@@ -38,7 +38,7 @@ module.exports = {
       },
 
       patient_gender: {
-        type: Sequelize.ENUM('Male', 'Female', 'Other'),
+        type: Sequelize.ENUM("Male", "Female", "Other"),
         allowNull: true,
       },
 
@@ -84,23 +84,20 @@ module.exports = {
 
       status: {
         type: Sequelize.ENUM(
-          'pending',
-          'accepted',
-          'declined',
-          'completed',
-          'cancel'
+          "pending",
+          "accepted",
+          "declined",
+          "completed",
+          "cancel",
         ),
         allowNull: false,
-        defaultValue: 'pending',
+        defaultValue: "pending",
       },
 
       booking_status: {
-        type: Sequelize.ENUM(
-          'user booking',
-          'hospital booking'
-        ),
+        type: Sequelize.ENUM("user booking", "hospital booking"),
         allowNull: false,
-        defaultValue: 'user booking',
+        defaultValue: "user booking",
       },
 
       isActive: {
@@ -112,68 +109,42 @@ module.exports = {
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
       },
 
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
       },
     });
 
-    // =========================
-    // INDEXES (important for performance)
-    // =========================
+    const existingIndexes = await queryInterface.sequelize.query(
+      "SELECT indexname FROM pg_indexes WHERE schemaname = 'public' AND tablename = 'bookings'",
+      { type: Sequelize.QueryTypes.SELECT },
+    );
 
-    // await queryInterface.addIndex('bookings', ['doctorId']);
-    // await queryInterface.addIndex('bookings', ['hospitalId']);
-    // await queryInterface.addIndex('bookings', ['userId']);
-    // await queryInterface.addIndex('bookings', ['booking_date']);
-    // await queryInterface.addIndex('bookings', ['status']);
+    const existingIndexNames = new Set(
+      existingIndexes.map((row) => row.indexname),
+    );
 
-    await queryInterface.addIndex(
-  'bookings',
-  ['doctorId'],
-  {
-    name: 'idx_bookings_doctorId',
-  }
-);
+    const addIndexIfMissing = async (fields, indexName) => {
+      if (existingIndexNames.has(indexName)) {
+        return;
+      }
 
-await queryInterface.addIndex(
-  'bookings',
-  ['hospitalId'],
-  {
-    name: 'idx_bookings_hospitalId',
-  }
-);
+      await queryInterface.addIndex("bookings", fields, { name: indexName });
+      existingIndexNames.add(indexName);
+    };
 
-await queryInterface.addIndex(
-  'bookings',
-  ['userId'],
-  {
-    name: 'idx_bookings_userId',
-  }
-);
-
-await queryInterface.addIndex(
-  'bookings',
-  ['booking_date'],
-  {
-    name: 'idx_bookings_booking_date',
-  }
-);
-
-await queryInterface.addIndex(
-  'bookings',
-  ['status'],
-  {
-    name: 'idx_bookings_status',
-  }
-);
+    await addIndexIfMissing(["doctorId"], "bookings_doctor_id");
+    await addIndexIfMissing(["hospitalId"], "bookings_hospital_id");
+    await addIndexIfMissing(["userId"], "bookings_user_id");
+    await addIndexIfMissing(["booking_date"], "bookings_booking_date");
+    await addIndexIfMissing(["status"], "bookings_status");
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('bookings');
+    await queryInterface.dropTable("bookings");
   },
 };

@@ -15,7 +15,7 @@ const startServer = async () => {
         await connectRabbitMQ();
         // Ensure tables are in sync
         const { default: Hospital } = await import("./models/hospital.model");
-        // await Hospital.sync({ alter: true });
+        await Hospital.sync({ alter: true });
         
         // Start background cleanup for blacklisted hospitals
         startCleanupJob();

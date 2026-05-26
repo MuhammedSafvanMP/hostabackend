@@ -13,7 +13,7 @@ import { checkPermission } from "../middleware/role.middleware";
 const router = Router();
 
 
-router.post("/medicinremainder", authenticate, checkPermission("medicinremainder", "create"), Registeration);
+router.post("/medicinremainder",  Registeration);
 
 
 // CRUD

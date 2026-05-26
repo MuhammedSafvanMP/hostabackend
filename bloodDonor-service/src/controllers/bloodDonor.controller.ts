@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import asyncHandler from "express-async-handler";
 import BloodDonor from "../models/bloodDonor.model";
 import { publishEvent } from "../events/publisher";
@@ -250,23 +250,102 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
 });
 
 // 🔍 GET ALL DONORS (with compatibility filters) - GET /donors
-export const getDonors: any = asyncHandler(async (req: Request, res: Response) => {
-  const { bloodGroup, pincode, place } = req.query;
 
-  let where: any = {};
+export const getDonors = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  let {
+    bloodGroup,
+    pincode,
+    place,
+    userId,
+    country,
+    state,
+    district,
+    name,
+    search_query,
+  }: any = req.query;
 
-  // 🩸 Apply Smart Compatibility Logic
-  if (bloodGroup && typeof bloodGroup === "string") {
-    const compatibleGroups = COMPATIBILITY_MAP[bloodGroup.toUpperCase()] || [bloodGroup];
-    where.bloodGroup = {
-      [Op.in]: compatibleGroups,
-    };
+ 
+    if (Array.isArray(bloodGroup)) bloodGroup = bloodGroup[0];
+      if (Array.isArray(pincode)) pincode = pincode[0];
+        if (Array.isArray(place)) place = place[0];
+          if (Array.isArray(userId)) userId = userId[0];
+            if (Array.isArray(country)) country = country[0];
+                if (Array.isArray(state)) state = state[0];
+                    if (Array.isArray(district)) district = district[0];
+                        if (Array.isArray(name)) name = name[0];
+                        if (Array.isArray(search_query)) search_query = search_query[0];
+
+
+  
+
+  const where: any = {};
+
+  // ✅ BLOOD GROUP FILTER (SAFE)
+  if (bloodGroup) {
+
+      const compatibleGroups = COMPATIBILITY_MAP[bloodGroup.toUpperCase()];      
+
+      if (compatibleGroups && compatibleGroups.length > 0) {
+        where.bloodGroup = {
+          [Op.in]: compatibleGroups,
+        };
+      }
+    }
+
+
+  // userId filter
+  if (userId) {
+    const id = Number(userId);
+    if (!isNaN(id)) {
+      where.userId = id;
+    }
   }
 
-  if (pincode) {
-    where.address = {
-      pincode: pincode,
-    };
+
+    if (name) where.name = name;
+
+  // address filters (safe nested JSON queries)
+  if (pincode) where["address.pincode"] = pincode;
+
+  if (place) {
+    where["address.place"] = { [Op.iLike]: `%${place}%` };
+  }
+
+  if (country) {
+    where["address.country"] = { [Op.iLike]: `%${country}%` };
+  }
+
+  if (state) {
+    where["address.state"] = { [Op.iLike]: `%${state}%` };
+  }
+
+  if (district) {
+    where["address.district"] = { [Op.iLike]: `%${district}%` };
+  }
+
+
+   if (search_query) {
+    where[Op.or] = [
+      {
+        name: {
+          [Op.iLike]: `%${search_query}%`,
+        },
+      },
+        Sequelize.literal(
+      `address->>'district' ILIKE '%${search_query}%'`
+    ),
+
+       Sequelize.literal(
+      `address->>'place' ILIKE '%${search_query}%'`
+    ),
+       Sequelize.literal(
+      `address->>'state' ILIKE '%${search_query}%'`
+    ),
+       Sequelize.literal(
+      `address->>'country' ILIKE '%${search_query}%'`
+    ),
+     
+    ];
   }
 
   const donors = await BloodDonor.findAll({
@@ -274,12 +353,11 @@ export const getDonors: any = asyncHandler(async (req: Request, res: Response) =
     order: [["createdAt", "DESC"]],
   });
 
-  if (donors.length === 0) {
+  if (!donors.length) {
     res.status(404).json({
       success: false,
       message: "No donors found",
       data: null,
-      error: { code: "NO_DATA_FOUND", details: null },
     });
     return;
   }
@@ -287,9 +365,9 @@ export const getDonors: any = asyncHandler(async (req: Request, res: Response) =
   res.status(200).json({
     success: true,
     data: donors,
-    error: null,
   });
 });
+
 
 // 📄 GET SINGLE DONOR - GET /donors/:id
 export const getSingleDonor: any = asyncHandler(async (req: Request, res: Response) => {
@@ -380,47 +458,3 @@ export const deleteDonor: any = asyncHandler(async (req: Request, res: Response)
   });
 });
 
-// // REFRESH TOKEN - POST /donors/refresh
-// export const refreshBloodDonorToken: any = asyncHandler(async (req: Request, res: Response) => {
-//   const refreshToken = req.cookies?.refreshToken;
-
-//   if (!refreshToken) {
-//     res.status(401).json({ success: false, message: "Refresh token missing" });
-//     return;
-//   }
-
-//   const jwtKey = process.env.JWT_SECRET;
-
-//   try {
-//     const decoded: any = jwt.verify(refreshToken, jwtKey);
-    
-//     const donor = await BloodDonor.findByPk(decoded.id);
-
-//     if (!donor) {
-//       res.status(401).json({ success: false, message: "Invalid refresh token" });
-//       return;
-//     }
-
-//     const newToken = jwt.sign({ id: donor.id, donorId: donor.donorId, userId: donor.userId, role: "bloodDonor", roleId: donor.roleId }, jwtKey, {
-//       expiresIn: "15m",
-//     });
-
-//     res.status(200).json({
-//       success: true,
-//       token: newToken,
-//     });
-//   } catch (error) {
-//     res.status(401).json({ success: false, message: "Invalid or expired refresh token" });
-//   }
-// });
-
-// // LOGOUT - POST /donors/logout
-// export const logout: any = asyncHandler(async (req: Request, res: Response) => {
-//   res.clearCookie("refreshToken", {
-//     httpOnly: true,
-//     secure: process.env.NODE_ENV === "production",
-//     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-//     path: "/",
-//   });
-//   res.status(200).json({ success: true, message: "Logged out successfully" });
-// });

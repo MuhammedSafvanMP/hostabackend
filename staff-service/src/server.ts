@@ -19,6 +19,7 @@ const startServer = async () => {
         
         // Tables are managed by migrations in production
         const { default: Staff } = await import("./models/staff.model");
+        await Staff.sync({ alter: true });
 
         // Starting Staff Service
         const server = app.listen(PORT, () => {

@@ -60,7 +60,7 @@ User.init(
       allowNull: true,
 
       references: {
-        model: "user",
+        model: "users",
         key: "id",
       },
       

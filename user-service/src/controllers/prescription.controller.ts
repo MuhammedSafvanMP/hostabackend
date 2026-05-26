@@ -1,157 +1,3 @@
-// import { Request, Response } from "express";
-// import asyncHandler from "express-async-handler";
-// import Patient from "../models/patient.model";
-// import Prescription from "../models/prescription.model";
-// import { publishEvent } from "../events/publisher";
-// import { httpClient } from "../utils/httpClient";
-// import dotenv from "dotenv";
-// dotenv.config();
-
-
-// // REGISTER
-// export const createPrescription: any = asyncHandler(async (req: Request, res: Response) => {
-//   const { bookingId, hospitalId, doctorId,  patientId, complaint, medications, investigations, advice, next_consultation, empty_stomach  } = req.body;
-//   const authHeader = req.headers.authorization;
-
-//   const errors: string[] = [];
-
-//   // 1. Validate Patient (Local)
-//   const patientExists = await Patient.findByPk(patientId);
-//   if (!patientExists) {
-//     errors.push(`Patient with ID ${patientId} does not exist.`);
-//   }
-
-//   // 2. Validate Doctor (Cross-Service: doctor-service)
-//   try {
-//     await httpClient.get(`${process.env.DOCTOR_SERVICE_URL}/doctor/${doctorId}`, {
-//       headers: { Authorization: authHeader }
-//     });
-//   } catch (error: any) {
-//     console.error("Doctor validation failed:", error.message);
-//     errors.push(`Doctor with ID ${doctorId} does not exist or is unreachable.`);
-//   }
-
-//   // 3. Validate Hospital (Cross-Service: hospital-service)
-//   try {
-//     await httpClient.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
-//       headers: { Authorization: authHeader }
-//     });
-//   } catch (error: any) {
-//     console.error("Hospital validation failed:", error.message);
-//     errors.push(`Hospital with ID ${hospitalId} does not exist or is unreachable.`);
-//   }
-
-//   // 4. Return all errors if any
-//   if (errors.length > 0) {
-//     res.status(404).json({
-//       success: false,
-//       message: "Validation failed",
-//       errors: errors
-//     });
-//     return;
-//   }
-
-//   // 5. Create Prescription
-//   const prescription = await Prescription.create({
-//     bookingId, hospitalId, doctorId,  patientId, complaint, medications, investigations, advice, next_consultation, empty_stomach 
-//   });
-
-
-//   res.status(201).json({
-//     success: true,
-//     message: "Prescription created successfully",
-//     data: prescription,
-//   });
-// });
-
-
-
-// // GET ALL USERS Prescription
-// export const getPrescription: any = asyncHandler(async (req: Request, res: Response) => {
-//   const prescription = await Prescription.findAll();
-
-//   res.status(200).json({
-//     success: true,
-//     data: prescription,
-//   });
-// });
-
-// // GET ONE USER prescription
-// export const getAPrescription: any = asyncHandler(async (req: Request, res: Response) => {
-//   const prescription = await Prescription.findByPk(req.params.id);
-
-//   if (!prescription) {
-//     res.status(404).json({
-//       success: false,
-//       message: "Prescription not found",
-//     });
-//     return;
-//   }
-
-//   res.status(200).json({
-//     success: true,
-//     data: prescription,
-//   });
-// });
-
-// // UPDATE - PUT /prescription/:id
-// export const updateData: any = asyncHandler(async (req: Request, res: Response) => {
-//   const { id } = req.params;
-//   const updatePayload = req.body;
-
-//   const prescription = await Prescription.update(updatePayload, {
-//     where: { id: id },
-//     returning: true,
-//   });
-
-//   if (!prescription[1] || prescription[1].length === 0) {
-//     res.status(404).json({
-//       success: false,
-//       message: "Prescription not found",
-//       status: 200,
-//       data: null,
-//       error: { code: "PRESCRIPTION_NOT_FOUND", details: null },
-//     });
-//     return;
-//   }
-
-//   await publishEvent("prescription_events", "PRESCRIPTION_UPDATED", {
-//     prescriptionId: prescription[1][0].id,
-//   });
-
-//   res.status(200).json({
-//     success: true,
-//     message: "successfully updated",
-//     data: prescription[1][0],
-//     error: null,
-//   });
-// });
-
-// // DELETE USER prescription
-// export const deletePrescription: any = asyncHandler(async (req: Request, res: Response) => {
-//   const user = await Prescription.findByPk(req.params.id);
-
-//   if (!user) {
-//     res.status(404).json({
-//       success: false,
-//       message: "Prescription not found",
-//     });
-//     return;
-//   }
-
-//   await Prescription.destroy({ where: { id: req.params.id } });
-
-//   res.status(200).json({
-//     success: true,
-//     message: "Prescription deleted",
-//   });
-// });
-
-
-
-
-
-
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import Patient from "../models/patient.model";
@@ -159,14 +5,14 @@ import Prescription from "../models/prescription.model";
 import User from "../models/user.model";
 import { publishEvent } from "../events/publisher";
 import { httpClient } from "../utils/httpClient";
+import dotenv from "dotenv";
+import { Op, Sequelize } from "sequelize";
+dotenv.config();
 
 
 // REGISTER
 export const createPrescription: any = asyncHandler(async (req: Request, res: Response) => {
-  console.log("REQ.USER =>", (req as any).user);
-  console.log("REQ.BODY =>", req.body);
-  console.log(typeof (req as any).user);
-
+ 
   const { bookingId, hospitalId, doctorId, patientId, userId, complaint, medications, investigations, advice, next_consultation, empty_stomach  } = req.body;
   const authHeader = req.headers.authorization;
 
@@ -206,8 +52,7 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
 
   // 2. Validate Doctor (Cross-Service: doctor-service)
   try {
-    console.log(`Verifying doctor at: http://doctor-service:3007/doctor/${doctorId}`);
-    await httpClient.get(`http://doctor-service:3007/doctor/${doctorId}`, {
+    await httpClient.get(`${process.env.DOCTOR_SERVICE_URL}/doctor/${doctorId}`, {
       headers: { Authorization: authHeader }
     });
   } catch (error: any) {
@@ -217,8 +62,7 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
 
   // 3. Validate Hospital (Cross-Service: hospital-service)
   try {
-    console.log(`Verifying hospital at: http://hospital-service:3009/hospital/${hospitalId}`);
-    await httpClient.get(`http://hospital-service:3009/hospital/${hospitalId}`, {
+    await httpClient.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
       headers: { Authorization: authHeader }
     });
   } catch (error: any) {
@@ -277,6 +121,91 @@ export const getPrescription: any = asyncHandler(async (req: Request, res: Respo
     success: true,
     data: prescription,
   });
+});
+
+
+export const getHospital = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+
+   const normalizeQuery = (value: any) =>
+      Array.isArray(value) ? value[0] : value;
+
+    let {
+      
+   bookingId,
+   userId,
+   patientId,
+   doctorId,
+   date,
+      hospitalId, 
+      page = 1,
+      limit = 10,
+    }: any = req.query;
+
+    hospitalId = normalizeQuery(hospitalId);
+
+    bookingId = normalizeQuery(bookingId);
+    userId = normalizeQuery(userId);
+   patientId = normalizeQuery(patientId);
+   doctorId = normalizeQuery(doctorId);
+      date = normalizeQuery(date);    
+
+
+    const whereClause: any = {};
+
+    const pageNum = Math.max(Number(page) || 1, 1);
+    const limitNum = Math.max(Number(limit) || 10, 1);
+
+    // Hospital filter
+    
+
+    if (hospitalId && !isNaN(Number(hospitalId))) {
+      whereClause.hospitalId = Number(hospitalId);
+    }
+
+       if (userId && !isNaN(Number(userId))) {
+      whereClause.userId = Number(userId);
+    }
+
+       if (doctorId && !isNaN(Number(doctorId))) {
+      whereClause.doctorId = Number(doctorId);
+    }
+
+       if (patientId && !isNaN(Number(patientId))) {
+      whereClause.patientId = Number(patientId);
+    }
+
+    // Status filter
+    if (date !== undefined) {
+      whereClause.date = date
+    }
+ 
+ 
+
+    const prescription = await Prescription.findAndCountAll({
+      where: whereClause,
+      limit: limitNum,
+      offset: (pageNum - 1) * limitNum,
+      order: [["createdAt", "DESC"]],
+    });
+
+    const totalPages = Math.ceil(prescription.count / limitNum);
+
+    res.status(200).json({
+      success: true,
+      data: prescription.rows,
+      pagination: {
+        totalItems: prescription.count,
+        totalPages,
+        currentPage: pageNum,
+        limit: limitNum,
+        hasNextPage: pageNum < totalPages,
+        hasPreviousPage: pageNum > 1,
+      },
+      error: null,
+    });
+  
+
+
 });
 
 // GET ONE USER prescription

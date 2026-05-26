@@ -12,6 +12,10 @@ const startServer = async () => {
     await connectDB();
     await connectRabbitMQ();
 
+    // Use migrations as the single source of truth for schema changes.
+    // Runtime sync is intentionally skipped to avoid conflicts with the
+    // migration runner during container startup.
+
     // Starting Booking Service
     const server = app.listen(PORT, () => {
       logger.info(`🚀 Booking Service is running on port ${PORT}`);
