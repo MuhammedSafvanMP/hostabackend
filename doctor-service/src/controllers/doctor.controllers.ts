@@ -563,6 +563,9 @@ search_query = normalizeQuery(search_query)
 
 
 
+
+
+
 // GET BLACKLISTED - GET /doctor/blacklist
 export const getBlacklistedDoctors: any = asyncHandler(async (req: Request, res: Response) => {
   const doctor = await Doctor.findAll({

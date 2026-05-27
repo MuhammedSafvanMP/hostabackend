@@ -20,6 +20,7 @@ interface IBooking {
   patient_gender?: string;
 
   userId?: number;
+  patientId?: number;
 
   doctorId: number;
   hospitalId: number;
@@ -53,6 +54,7 @@ type BookingCreationAttributes = Optional<
   IBooking,
   | "id"
   | "userId"
+  | "patientId"
   | "patient_place"
   | "patient_dob"
   | "patient_gender"
@@ -80,6 +82,7 @@ class Booking
   public patient_gender?: string;
 
   public userId?: number;
+  public patientId?: number;
 
   public doctorId!: number;
   public hospitalId!: number;
@@ -162,6 +165,11 @@ Booking.init(
     },
 
     userId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+
+    patientId: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },

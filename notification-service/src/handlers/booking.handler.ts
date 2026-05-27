@@ -52,7 +52,7 @@ export const handleBookingEvent = async (routingKey: string, content: any) => {
     }
   }
 
-  if (routingKey === "BOOKING_UPDATED") {
+  if (routingKey === "BOOKING_UPDATED" || routingKey === "BOOKING_ACCEPTED" || routingKey === "BOOKING_COMPLETED") {
     let msg = "";
     if (content.status === "accepted" || content.status === "declined") {
       msg = `Your booking (ID: ${content.bookingId}) has been ${content.status} by the staff.`;

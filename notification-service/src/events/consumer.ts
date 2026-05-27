@@ -105,6 +105,8 @@ export const startConsumer = async () => {
         await channel.bindQueue(queue, "booking_events", "BOOKING_REGISTERED");
         await channel.bindQueue(queue, "booking_events", "BOOKING_UPDATED");
         await channel.bindQueue(queue, "booking_events", "BOOKING_CANCELLED");
+        await channel.bindQueue(queue, "booking_events", "BOOKING_ACCEPTED");
+        await channel.bindQueue(queue, "booking_events", "BOOKING_COMPLETED");
 
         // 3. Doctor
         await channel.assertExchange("doctor_events", "direct", { durable: true });

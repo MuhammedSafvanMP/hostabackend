@@ -157,6 +157,7 @@ asyncHandler(
        CREATE RATING
     ========================== */
 
+    console.log("REQUEST BODY BEFORE CREATE:", req.body);
     const newRating =
       await Rating.create({
         userId,

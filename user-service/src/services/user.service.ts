@@ -89,38 +89,7 @@ export const userService = {
       );
 
 
-      if (data?.name) {
-        const {
-          name, bloodGroup, gender, maritalStatus,
-          patientType, age, dob, mobileNumber, emergencyNumber,
-          guardianName, addressLine, location, email, password, hospitalId
-        } = data;
-
-        await Patient.create({
-          name,
-          bloodGroup: bloodGroup || "O+",
-          gender: gender || "Male",
-          maritalStatus,
-          patientType: patientType || "Outpatient",
-          age: age || 0,
-          dob: dob || new Date(),
-          mobileNumber: mobileNumber || data.phone || "N/A",
-          emergencyNumber,
-          guardianName,
-          addressLine: addressLine || data.addressLine1 || "N/A",
-          location: location || {
-            country: data.country || "India",
-            state: data.state || "N/A",
-            district: data.district || "N/A",
-            place: data.place || data.city || "N/A",
-            pincode: Number(data.pincode || data.pinCode) || 0
-          },
-          email,
-          password,
-          hospitalId: hospitalId || 1,
-          userId: user.id,
-        }, { transaction: t });
-      }
+      // Note: Patient auto-creation logic removed as per requirements.
 
       await t.commit();
 
@@ -134,13 +103,7 @@ export const userService = {
           name: data?.name
         });
 
-        if (data?.name) {
-          await publishEvent("patient_events", "PATIENT_REGISTERED", {
-            userId: user.id,
-            patientName: data.name,
-            phone: data.mobileNumber
-          });
-        }
+
       } catch (err) {
         logger.error("Failed to publish user/patient registered events", err);
       }

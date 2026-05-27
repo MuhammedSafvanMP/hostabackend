@@ -70,6 +70,8 @@
 
 import { Router } from "express";
 
+import { authenticate } from "../middleware/authenticate";
+
 import {
 
   createNotification,
@@ -129,7 +131,7 @@ router.get(
 
 router.get(
 
-  "/notification/:id",
+  "/notification/:id",authenticate,
 
   getanNotification
 
@@ -144,7 +146,7 @@ router.get(
 
 router.get(
 
-  "/notification/:role/:id",
+  "/notification/:role/:id",authenticate,
 
   validateParams(getByRoleParamsSchema),
 
@@ -165,6 +167,8 @@ router.get(
 router.put(
 
   "/notification/read/:role/:userId/:notificationId",
+
+  authenticate,
 
   markAsRead
 

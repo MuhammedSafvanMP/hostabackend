@@ -224,11 +224,18 @@ app.use(
         next: NextFunction
     ) => {
 
-        logger.error("Server error", {
-            requestId: req.id,
-            message: err.message,
-            stack: err.stack,
-        });
+        console.log("FULL ERROR:", err);
+
+        if (err.errors) {
+            err.errors.forEach((e: any) => {
+                console.log({
+                    field: e.path,
+                    message: e.message,
+                    value: e.value,
+                    type: e.type,
+                });
+            });
+        }
 
         res.status(err.status || 500).json({
             success: false,

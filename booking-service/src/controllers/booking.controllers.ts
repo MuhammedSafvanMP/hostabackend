@@ -20,6 +20,7 @@ export const Registeration: any = asyncHandler(
       patient_place,
       patient_phone,
       userId,
+      patientId,
       hospitalId,
       doctorId,
       department,
@@ -28,6 +29,7 @@ export const Registeration: any = asyncHandler(
       consulting_time,
       booking_status,
       status,
+      token
     } = req.body;
     
     const errors: string[] = [];
@@ -35,13 +37,16 @@ export const Registeration: any = asyncHandler(
     // ==============================
     // 2. VALIDATE USER
     // ==============================
-    try {
-      await httpClient.get(
-        `${process.env.USER_SERVICE_URL}/users/${userId}`,
-        { headers: { Authorization: req.headers.authorization } }
-      );
-    } catch {
-      errors.push("User not found");
+    // Only validate user if userId is provided (staff bookings may not have userId)
+    if (userId) {
+      try {
+        await httpClient.get(
+          `${process.env.USER_SERVICE_URL}/users/${userId}`,
+          { headers: { Authorization: req.headers.authorization } }
+        );
+      } catch {
+        errors.push("User not found");
+      }
     }
 
     // ==============================
@@ -101,6 +106,7 @@ export const Registeration: any = asyncHandler(
       patient_place,
       patient_phone,
       userId,
+      patientId,
       hospitalId,
       doctorId,
       booking_date,
@@ -108,7 +114,8 @@ export const Registeration: any = asyncHandler(
       doctor_department: department,
       consulting_time,
       booking_status: booking_status || "user booking",
-      status
+      status,
+      token
     });
 
     // ==============================
