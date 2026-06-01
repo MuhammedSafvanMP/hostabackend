@@ -6,6 +6,7 @@ import User from "../models/user.model";
 import { publishEvent } from "../events/publisher";
 import { httpClient } from "../utils/httpClient";
 import dotenv from "dotenv";
+import PatientVitals from "../models/patientVitals.model";
 import { Op, Sequelize } from "sequelize";
 dotenv.config();
 
@@ -13,8 +14,11 @@ dotenv.config();
 // REGISTER
 export const createPrescription: any = asyncHandler(async (req: Request, res: Response) => {
  
-  const { bookingId, hospitalId, doctorId, patientId, userId, complaint, medications, investigations, advice, next_consultation, empty_stomach  } = req.body;
-  const authHeader = req.headers.authorization;
+  const { bookingId, hospitalId, doctorId, patientId, userId, complaint, medications, investigations, advice, next_consultation, empty_stomach, prescribedBy  } = req.body;
+
+      const {
+      temperature, pulse, respiratoryRate, spo2, height, weight, waist
+    } = req.body;
 
   const errors: string[] = [];
 
@@ -53,7 +57,7 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
   // 2. Validate Doctor (Cross-Service: doctor-service)
   try {
     await httpClient.get(`${process.env.DOCTOR_SERVICE_URL}/doctor/${doctorId}`, {
-      headers: { Authorization: authHeader }
+      headers: { Authorization: req.headers.authorization }
     });
   } catch (error: any) {
     console.error("Doctor validation failed:", error.message);
@@ -63,7 +67,7 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
   // 3. Validate Hospital (Cross-Service: hospital-service)
   try {
     await httpClient.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
-      headers: { Authorization: authHeader }
+      headers: { Authorization: req.headers.authorization }
     });
   } catch (error: any) {
     console.error("Hospital validation failed:", error.message);
@@ -84,8 +88,30 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
 
   // 5. Create Prescription
   const prescription = await Prescription.create({
-    bookingId, hospitalId, doctorId, patientId: finalPatientId, userId: finalUserId, complaint, medications, investigations, advice, next_consultation, empty_stomach 
+    bookingId, hospitalId, doctorId, patientId: finalPatientId, userId: finalUserId, complaint, medications, investigations, advice, next_consultation, empty_stomach, prescribedBy 
   });
+
+
+     // 4. If any vitals field is provided, create a vitals record
+    if (temperature || pulse || respiratoryRate || spo2 || height || weight || waist) {
+      // We'll calculate BMI/BSA here or let the service handle it.
+      // Since addVitals in patientVitalsService handles calculation, let's use a helper or just do it here to keep things in one transaction.
+      
+      let bmi, bsa;
+      if (height && weight) {
+        const hInM = height / 100;
+        bmi = parseFloat((weight / (hInM * hInM)).toFixed(2));
+        bsa = parseFloat((0.007184 * Math.pow(height, 0.725) * Math.pow(weight, 0.425)).toFixed(4));
+      }
+
+      await PatientVitals.create({
+        prescriptionId: prescription.id,
+        patientId: patientId,
+        temperature, pulse, respiratoryRate, spo2,
+        height, weight, waist, bmi, bsa
+      });
+    }
+
 
   await publishEvent(
     "prescription_events",
@@ -101,7 +127,6 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
   );
 
 
-
   res.status(201).json({
     success: true,
     message: "Prescription created successfully",
@@ -112,74 +137,73 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
 
 
 // GET ALL USERS Prescription
-export const getPrescription: any = asyncHandler(async (req: Request, res: Response) => {
-  const prescription = await Prescription.findAll({
-    where: { isDelete: false }
-  });
 
-  res.status(200).json({
-    success: true,
-    data: prescription,
-  });
-});
+export const getPrescription = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
 
-
-export const getHospital = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-
-   const normalizeQuery = (value: any) =>
+    const normalizeQuery = (value: any) =>
       Array.isArray(value) ? value[0] : value;
 
     let {
-      
-   bookingId,
-   userId,
-   patientId,
-   doctorId,
-   date,
-      hospitalId, 
+      bookingId,
+      userId,
+      patientId,
+      doctorId,
+      date,
+      hospitalId,
+      prescribedBy,
+      search_query,
       page = 1,
       limit = 10,
     }: any = req.query;
 
-    hospitalId = normalizeQuery(hospitalId);
-
     bookingId = normalizeQuery(bookingId);
     userId = normalizeQuery(userId);
-   patientId = normalizeQuery(patientId);
-   doctorId = normalizeQuery(doctorId);
-      date = normalizeQuery(date);    
-
+    patientId = normalizeQuery(patientId);
+    doctorId = normalizeQuery(doctorId);
+    date = normalizeQuery(date);
+    hospitalId = normalizeQuery(hospitalId);
+    prescribedBy = normalizeQuery(prescribedBy);
+    search_query = normalizeQuery(search_query);
 
     const whereClause: any = {};
+    const andConditions: any[] = [];
 
     const pageNum = Math.max(Number(page) || 1, 1);
     const limitNum = Math.max(Number(limit) || 10, 1);
 
-    // Hospital filter
-    
+    if (hospitalId) whereClause.hospitalId = Number(hospitalId);
 
-    if (hospitalId && !isNaN(Number(hospitalId))) {
-      whereClause.hospitalId = Number(hospitalId);
+    if (bookingId) whereClause.bookingId = Number(bookingId);
+
+    if (userId) whereClause.userId = Number(userId);
+
+    if (doctorId) whereClause.doctorId = Number(doctorId);
+
+    if (patientId) whereClause.patientId = Number(patientId);
+
+    if (date) whereClause.date = date;
+
+    if (search_query?.trim()) {
+      andConditions.push({
+        [Op.or]: [
+          Sequelize.where(
+            Sequelize.fn(
+              "COALESCE",
+              Sequelize.col("prescribedBy"),
+              ""
+            ),
+            {
+              [Op.iLike]: `%${search_query.trim()}%`,
+            }
+          ),
+        ],
+      });
     }
 
-       if (userId && !isNaN(Number(userId))) {
-      whereClause.userId = Number(userId);
+    if (andConditions.length) {
+      whereClause[Op.and] = andConditions;
     }
-
-       if (doctorId && !isNaN(Number(doctorId))) {
-      whereClause.doctorId = Number(doctorId);
-    }
-
-       if (patientId && !isNaN(Number(patientId))) {
-      whereClause.patientId = Number(patientId);
-    }
-
-    // Status filter
-    if (date !== undefined) {
-      whereClause.date = date
-    }
- 
- 
 
     const prescription = await Prescription.findAndCountAll({
       where: whereClause,
@@ -188,25 +212,20 @@ export const getHospital = asyncHandler(async (req: Request, res: Response): Pro
       order: [["createdAt", "DESC"]],
     });
 
-    const totalPages = Math.ceil(prescription.count / limitNum);
-
     res.status(200).json({
       success: true,
       data: prescription.rows,
       pagination: {
         totalItems: prescription.count,
-        totalPages,
+        totalPages: Math.ceil(prescription.count / limitNum),
         currentPage: pageNum,
         limit: limitNum,
-        hasNextPage: pageNum < totalPages,
-        hasPreviousPage: pageNum > 1,
       },
       error: null,
     });
-  
+  }
+);
 
-
-});
 
 // GET ONE USER prescription
 export const getAPrescription: any = asyncHandler(async (req: Request, res: Response) => {
@@ -231,10 +250,32 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
   const { id } = req.params;
   const updatePayload = req.body;
 
-  const prescription = await Prescription.update(updatePayload, {
+  const prescription : any = await Prescription.update(updatePayload, {
     where: { id: id, isDelete: false },
     returning: true,
   });
+
+   // 2. Check for NEW Vitals in the same request
+    const {
+      temperature, pulse, respiratoryRate, spo2, height, weight, waist, patientId
+    } = req.body;
+
+    if (temperature || pulse || respiratoryRate || spo2 || height || weight || waist) {
+      let bmi, bsa;
+      if (height && weight) {
+        const hInM = height / 100;
+        bmi = parseFloat((weight / (hInM * hInM)).toFixed(2));
+        bsa = parseFloat((0.007184 * Math.pow(height, 0.725) * Math.pow(weight, 0.425)).toFixed(4));
+      }
+
+      await PatientVitals.create({
+        prescriptionId: prescription.id,
+        patientId,
+        temperature, pulse, respiratoryRate, spo2,
+        height, weight, waist, bmi, bsa
+      });
+    }
+
 
   if (!prescription[1] || prescription[1].length === 0) {
     res.status(404).json({
