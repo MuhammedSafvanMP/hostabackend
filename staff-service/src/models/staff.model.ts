@@ -38,6 +38,7 @@ interface IStaff {
   otpExpiry?: Date;
   roleId: number; 
   imageUrl: string;
+  
 }
 
 /* =======================

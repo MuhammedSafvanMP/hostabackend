@@ -5,138 +5,42 @@ on:
     branches:
       - production
     paths:
-      - 'ads-service/**'
-      - 'ambulance-service/**'
-      - 'api-gateway/**'
-      - 'blood-bank-service/**'
-      - 'bloodDonor-service/**'
-      - 'booking-service/**'
-      - 'bulmq-service/**'
-      - 'doctor-service/**'
-      - 'hospital-service/**'
-      - 'lab-service/**'
-      - 'medicinremainder-service/**'
-      - 'notification-service/**'
-      - 'pharmacy-service/**'
-      - 'review-service/**'
-      - 'role-service/**'
-      - 's3-service/**'
-      - 'socketio-service/**'
-      - 'speciality-service/**'
-      - 'staff-service/**'
-      - 'user-service/**'
-      - 'docker-compose.prod.yml'
+      - '**'
 
 jobs:
-  # ==========================================
-  # CHANGE DETECTION
-  # ==========================================
-  detect-changes:
-    runs-on: ubuntu-latest
-    outputs:
-      services: ${{ steps.filter.outputs.changes }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v2
-        id: filter
-        with:
-          filters: |
-            ads: 'ads-service/**'
-            ambulance: 'ambulance-service/**'
-            gateway: 'api-gateway/**'
-            blood-bank: 'blood-bank-service/**'
-            blood-donor: 'bloodDonor-service/**'
-            booking: 'booking-service/**'
-            bulmq: 'bulmq-service/**'
-            doctor: 'doctor-service/**'
-            hospital: 'hospital-service/**'
-            lab: 'lab-service/**'
-            medicine-reminder: 'medicinremainder-service/**'
-            notification: 'notification-service/**'
-            pharmacy: 'pharmacy-service/**'
-            review: 'review-service/**'
-            role: 'role-service/**'
-            s3: 's3-service/**'
-            socketio: 'socketio-service/**'
-            speciality: 'speciality-service/**'
-            staff: 'staff-service/**'
-            user: 'user-service/**'
 
   # ==========================================
-  # BUILD & PUSH (Matrix)
+  # BUILD & PUSH DOCKER IMAGES
   # ==========================================
   build:
-    needs: detect-changes
-    if: ${{ needs.detect-changes.outputs.services != '[]' && needs.detect-changes.outputs.services != '' }}
     runs-on: ubuntu-latest
+
     strategy:
-      fail-fast: false
       matrix:
-        service: ${{ fromJSON(needs.detect-changes.outputs.services) }}
-        include:
-          - service: ads
-            dir: ads-service
-            image: hosta-ads-service
-          - service: ambulance
-            dir: ambulance-service
-            image: hosta-ambulance-service
-          - service: gateway
-            dir: api-gateway
-            image: hosta-api-gateway
-          - service: blood-bank
-            dir: blood-bank-service
-            image: hosta-blood-bank-service
-          - service: blood-donor
-            dir: bloodDonor-service
-            image: hosta-blood-donor-service
-          - service: booking
-            dir: booking-service
-            image: hosta-booking-service
-          - service: bulmq
-            dir: bulmq-service
-            image: hosta-bulmq-service
-          - service: doctor
-            dir: doctor-service
-            image: hosta-doctor-service
-          - service: hospital
-            dir: hospital-service
-            image: hosta-hospital-service
-          - service: lab
-            dir: lab-service
-            image: hosta-lab-service
-          - service: medicine-reminder
-            dir: medicinremainder-service
-            image: hosta-medicine-reminder-service
-          - service: notification
-            dir: notification-service
-            image: hosta-notification-service
-          - service: pharmacy
-            dir: pharmacy-service
-            image: hosta-pharmacy-service
-          - service: review
-            dir: review-service
-            image: hosta-review-service
-          - service: role
-            dir: role-service
-            image: hosta-role-service
-          - service: s3
-            dir: s3-service
-            image: hosta-s3-service
-          - service: socketio
-            dir: socketio-service
-            image: hosta-socketio-service
-          - service: speciality
-            dir: speciality-service
-            image: hosta-speciality-service
-          - service: staff
-            dir: staff-service
-            image: hosta-staff-service
-          - service: user
-            dir: user-service
-            image: hosta-user-service
+        service:
+          - ads-service
+          - ambulance-service
+          - api-gateway
+          - blood-bank-service
+          - bloodDonor-service
+          - booking-service
+          - bulmq-service
+          - doctor-service
+          - hospital-service
+          - lab-service
+          - medicinremainder-service
+          - notification-service
+          - pharmacy-service
+          - review-service
+          - role-service
+          - s3-service
+          - socketio-service
+          - speciality-service
+          - staff-service
+          - user-service
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Login to Docker Hub
@@ -145,69 +49,71 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and Push
+      - name: Build & Push
         uses: docker/build-push-action@v5
         with:
-          context: ./${{ matrix.dir }}
+          context: ./${{ matrix.service }}
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/${{ matrix.image }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: ${{ secrets.DOCKER_USERNAME }}/hosta-${{ matrix.service }}:latest
+
 
   # ==========================================
   # DEPLOY TO EC2
   # ==========================================
   deploy:
-    needs: [detect-changes, build]
-    # Run even if build was skipped (e.g. only compose file changed)
-    if: always() && needs.detect-changes.result == 'success'
+    needs: build
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Sync Docker Compose
+      - name: Copy docker-compose to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "docker-compose.prod.yml"
           target: "/home/ubuntu/app"
 
-      - name: Update Environment File
+      - name: Create .env file on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             mkdir -p /home/ubuntu/app
-            echo "${{ secrets.ENV_FILE }}" > /home/ubuntu/app/.env
 
-      - name: Remote Deployment
+            cat > /home/ubuntu/app/.env << 'EOF'
+            ${{ secrets.ENV_FILE }}
+            EOF
+
+      - name: Deploy containers
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ubuntu/app
-            
-            # Export Docker Username for Compose to use
+
             export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
-            
-            # Login to pull private images if needed
+
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-            
-            # Pull latest images
+
             docker compose -f docker-compose.prod.yml pull
-            
-            # Restart containers
             docker compose -f docker-compose.prod.yml up -d
-            
-            # Cleanup old images
+
             docker image prune -af
+
+
+
+
+
+
+
+
+
+
