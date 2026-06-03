@@ -167,11 +167,14 @@ export const rolepermissionDelete: any = asyncHandler(async (req: Request, res: 
 export const getRolepermission: any = asyncHandler(async (req: Request, res: Response) => {
 
 
-   let { hospitalId, labId, pharmacyId }: any = req.query;
+   let { hospitalId, labId, pharmacyId, roleId }: any = req.query;
+   
 
     if (Array.isArray(hospitalId)) hospitalId = hospitalId[0];
         if (Array.isArray(labId)) labId = labId[0];
     if (Array.isArray(pharmacyId)) pharmacyId = pharmacyId[0];
+        if (Array.isArray(roleId)) roleId = roleId[0];
+
 
 
       const whereClause: any = {};
@@ -189,11 +192,15 @@ export const getRolepermission: any = asyncHandler(async (req: Request, res: Res
     whereClause.pharmacyId = Number(pharmacyId);
   }
 
+    if (roleId !== undefined) {
+    whereClause.roleId = Number(roleId);
+  }
+
   const rolepermission = await Rolepermission.findAll({
     where: whereClause,
-  });
+  });  
 
-
+  
 
   if (rolepermission.length === 0) {
     res.status(404).json({

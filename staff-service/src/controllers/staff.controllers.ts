@@ -86,22 +86,8 @@ import { httpClient } from "../utils/httpClient";
 // REGISTER - POST /staff/register                             
 export const Registeration: any = asyncHandler(async (req: any, res: Response) => {
   
-  const { hospitalId: bodyHospitalId, name, phone, email, password,  designation, joiningDate, jobType, staffType,  dob, gender, knowLanguages, qualification, address } = req.body;
+  const { hospitalId, name, phone, email, password,  designation, joiningDate, jobType, staffType,  dob, gender, knowLanguages, qualification, address } = req.body;
 
-  const tokenHospitalId = req.user?.id;
-  const authHeader = req.headers.authorization;
-
-  // 1. Security Check: If hospitalId is provided in body, it must match the token ID
-  if (bodyHospitalId && Number(bodyHospitalId) !== Number(tokenHospitalId)) {
-    res.status(403).json({
-      success: false,
-      message: "Security violation: The provided hospitalId does not match your authenticated account.",
-      error: { code: "HOSPITAL_ID_MISMATCH" }
-    });
-    return;
-  }
-
-  const hospitalId = tokenHospitalId; // Source of truth
 
   if (!hospitalId) {
     res.status(400).json({ success: false, message: "Hospital ID is required" });
@@ -112,7 +98,7 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
   try {
 
     const hospitalResponse = await httpClient.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
-      headers: { Authorization: authHeader }
+      headers: { Authorization: req.headers.authorization }
     });
     if (!hospitalResponse.data || !hospitalResponse.data.success) {
       res.status(400).json({ success: false, message: "Invalid hospital ID" });
@@ -180,7 +166,7 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
 
 // LOGIN - POST /staff/login
 export const login: any = asyncHandler(async (req: Request, res: Response) => {
-  const { email, phone, password } = req.body;
+  const { email, phone, password, fcmToken } = req.body;
 
   if (!email && !phone) {
     res.status(400).json({
@@ -207,6 +193,17 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     });
     return;
   }
+
+    if (fcmToken) {
+  await Staff.update(
+    { fcmToken },
+    {
+      where: {
+        email,
+      },
+    }
+  );
+}
 
   const checkPassword = await bcrypt.compare(password, staff.password || "");
   if (!checkPassword) {
@@ -245,6 +242,31 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
 
   setRefreshTokenCookie(res, refreshToken);
 
+
+
+
+let authPermission = [];
+
+if (staff.roleId) {
+  try {
+    const res = await axios.get(
+      `${process.env.ROLE_SERVICE_URL}/rolepermission`,
+      {
+        params: {
+          roleId: staff.roleId,
+          hospitalId: staff.hospitalId,
+        },
+      }
+    );
+
+    authPermission = res.data;
+  } catch (err: any) {
+    console.error("Role service failed:", err.response?.status);
+    authPermission = [];
+  }
+}
+
+
   res.status(200).json({
     success: true,
     message: "Logged in successfully",
@@ -252,6 +274,8 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     token, // Show token in response as requested
     data: staff,
     error: null,
+     authDefaultPermission: 1,
+    authPermission
   });
 });
 

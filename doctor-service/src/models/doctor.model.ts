@@ -43,7 +43,6 @@ interface IOutDoorConsulting {
 
 interface IDoctor {
   id: number;
-  
   firstName: string;
   lastName: string;
   department?: string;
@@ -77,6 +76,7 @@ interface IDoctor {
   regNo?: string;
   autoDecline?: number;
   appointmentCount?: number;
+  fcmToken: string;
 }
 
 /* =======================
@@ -128,6 +128,7 @@ class Doctor
   public autoDecline?: number;
   public appointmentCount?: number;
   public hospitalName: string;
+  public fcmToken: string;
 
 }
 
@@ -194,15 +195,19 @@ Doctor.init(
     phone: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
       validate: {
         notEmpty: true,
       },
     },
 
+    
+        fcmToken: {
+      type: DataTypes.STRING,
+    },
+
+
     email: {
       type: DataTypes.STRING,
-      unique: true,
       allowNull: true,
       validate: {
         isEmail: true,
@@ -312,16 +317,16 @@ Doctor.init(
       },
     },
 
-    indexes: [
-      {
-        unique: true,
-        fields: ["phone"],
-      },
-      {
-        unique: true,
-        fields: ["email"],
-      },
-    ],
+indexes: [
+  {
+    unique: true,
+    fields: ["hospitalId", "phone"],
+  },
+  {
+    unique: true,
+    fields: ["hospitalId", "email"],
+  },
+],
   }
 );
 

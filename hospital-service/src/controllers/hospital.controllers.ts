@@ -122,6 +122,7 @@ export const Registeration: any = asyncHandler(async (req: Request, res: Respons
 // LOGIN - POST /hospital/login
 export const login: any = asyncHandler(async (req: Request, res: Response) => {
   const { email, phone, password, fcmToken } = req.body;
+  
 
   if ((!email && !phone) || !password) {
     res.status(400).json({
@@ -130,6 +131,7 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     });
     return;
   }
+
 
   // Find hospital by email OR phone
   const hospital = await Hospital.scope("withPassword").findOne({
@@ -154,6 +156,7 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     return;
   }
 
+  
   if (fcmToken) {
   await Hospital.update(
     { fcmToken },
@@ -192,14 +195,30 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
 
   setRefreshTokenCookie(res, refreshToken);
 
-  res.status(200).json({
-    success: true,
-    message: "Logged in successfully",
-    status: 200,
-    token, // Return token for API Gateway forwarding
-    data: safeHospital,
-    error: null,
-  });
+
+  const authPermissionRes = await axios.get(
+  `${process.env.ROLE_SERVICE_URL}/rolepermission`,
+  {
+    params: {
+      roleId: hospital.roleId,
+    },
+  }
+);
+
+const authPermission = authPermissionRes.data;
+
+
+res.status(200).json({
+  success: true,
+  message: "Logged in successfully",
+  status: 200,
+  token,
+  data: safeHospital,
+  error: null,
+  authDefaultPermission: 1,
+  authPermission, 
+});
+
 });
 
 // LOGIN WITH PHONE (OTP REQUEST) - POST /hospital/login/phone
@@ -952,6 +971,46 @@ export const logout: any = asyncHandler(async (req: Request, res: Response) => {
 
 
 
+ export const roleBaseLogin : any = asyncHandler (async (req: Request, res: Response): Promise<void> => {
+  
+  const payload = req.body;
+  
+
+  const services = [
+    `${process.env.HOSPITAL_SERVICE_URL}/hospital/login`,
+    `${process.env.DOCTOR_SERVICE_URL}/doctor/login`,
+    `${process.env.STAFF_SERVICE_URL}/staff/login`,
+  ];
 
 
+  for (const url of services) {
+    try {
+      const response = await axios.post(url, payload);
 
+      
+
+      // IMPORTANT: check service success
+      if (response.data?.success) {
+         res.status(200).json({
+          success: true,
+          roleDetected: url,
+          token: response.data.token,
+          data: response.data.data,
+           error: null,
+           authDefaultPermission: 1,
+           authPermission: response.data.authPermission,
+           hospitals: response.data.hospitals
+        });
+        return;
+      }
+    } catch (err) {
+      // ignore and try next service
+    }
+  }
+
+  res.status(404).json({
+    success: false,
+    message: "User not found",
+  });
+  return;
+});
