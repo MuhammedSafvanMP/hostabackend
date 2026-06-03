@@ -43,7 +43,7 @@ interface IOutDoorConsulting {
 
 interface IDoctor {
   id: number;
-  
+  hospitalName: string;
   firstName: string;
   lastName: string;
   department?: string;
@@ -70,6 +70,7 @@ interface IDoctor {
   deleteDate?: Date;
   otp?: string;
   otpExpiry?: Date;
+  fcmToken?: string;
   hospitalId?: number;
   imageUrl?: string; 
   experience?: string;
@@ -96,6 +97,7 @@ class Doctor
   implements IDoctor
 {
   public id!: number;
+  public hospitalName!: string;
   public firstName!: string;
   public lastName!: string;
   public department?: string;
@@ -126,6 +128,7 @@ class Doctor
   public regNo?: string;
   public autoDecline?: number;
   public appointmentCount?: number;
+  public fcmToken?: string;
 
 }
 
@@ -142,6 +145,10 @@ Doctor.init(
     },
     hospitalId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    hospitalName: {
+      type: DataTypes.STRING,
       allowNull: false,
     },
 
@@ -187,7 +194,6 @@ Doctor.init(
     phone: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
       validate: {
         notEmpty: true,
       },
@@ -195,16 +201,24 @@ Doctor.init(
 
     email: {
       type: DataTypes.STRING,
-      unique: true,
       allowNull: true,
       validate: {
         isEmail: true,
       },
     },
 
+
+    
+
+
       imageUrl: {
       type: DataTypes.STRING, // 🔥 store imageUrl + public_id
       allowNull: true
+    },
+
+    fcmToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     password: {
       type: DataTypes.STRING,
@@ -285,6 +299,9 @@ Doctor.init(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    
+    
+
 
 
   },
@@ -305,16 +322,16 @@ Doctor.init(
       },
     },
 
-    indexes: [
-      {
-        unique: true,
-        fields: ["phone"],
-      },
-      {
-        unique: true,
-        fields: ["email"],
-      },
-    ],
+  indexes: [
+  {
+    unique: true,
+    fields: ["hospitalId", "phone"],
+  },
+  {
+    unique: true,
+    fields: ["hospitalId", "email"],
+  },
+],
   }
 );
 

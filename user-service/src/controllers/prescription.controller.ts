@@ -10,10 +10,19 @@ import { Op, Sequelize } from "sequelize";
 dotenv.config();
 
 
+import PatientVitals from "../models/patientVitals.model"
+
+
+
 // REGISTER
 export const createPrescription: any = asyncHandler(async (req: Request, res: Response) => {
  
-  const { bookingId, hospitalId, doctorId, patientId, userId, complaint, medications, investigations, advice, next_consultation, empty_stomach  } = req.body;
+
+
+  const { bookingId, hospitalId, doctorId, patientId, userId, complaint, medications, investigations, advice, next_consultation, empty_stomach ,prescribedBy, vitals } = req.body;
+
+
+
   const authHeader = req.headers.authorization;
 
   const errors: string[] = [];
@@ -86,6 +95,21 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
   const prescription = await Prescription.create({
     bookingId, hospitalId, doctorId, patientId: finalPatientId, userId: finalUserId, complaint, medications, investigations, advice, next_consultation, empty_stomach 
   });
+
+
+
+
+
+  // 6. Save Vitals if provided
+  if (vitals && typeof vitals === 'object') {
+    await PatientVitals.create({
+      ...vitals,
+      patientId: finalPatientId,
+      prescriptionId: prescription.id
+    });
+  }
+
+
 
   await publishEvent(
     "prescription_events",
@@ -229,7 +253,7 @@ export const getAPrescription: any = asyncHandler(async (req: Request, res: Resp
 // UPDATE - PUT /prescription/:id
 export const updateData: any = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const updatePayload = req.body;
+  const { vitals, ...updatePayload } = req.body;
 
   const prescription = await Prescription.update(updatePayload, {
     where: { id: id, isDelete: false },
@@ -247,6 +271,29 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
     return;
   }
 
+
+
+
+
+  // 🔄 Save/Update Vitals if provided
+  if (vitals && typeof vitals === 'object') {
+    const existingVitals = await PatientVitals.findOne({ where: { prescriptionId: id } });
+    
+    if (existingVitals) {
+      await existingVitals.update(vitals);
+    } else {
+      await PatientVitals.create({
+        ...vitals,
+        patientId: prescription[1][0].patientId,
+        prescriptionId: id
+      });
+    }
+  }
+
+
+
+
+
   const patient = await Patient.findOne({ where: { id: prescription[1][0].patientId, isDelete: false } });
   await publishEvent("prescription_events", "PRESCRIPTION_UPDATED", {
     prescriptionId: prescription[1][0].id,
@@ -254,10 +301,28 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
     hospitalId: prescription[1][0].hospitalId,
   });
 
+
+
+
+  // Re-fetch to optionally include vitals
+  const updatedPrescription = prescription[1][0].toJSON();
+  if (vitals) {
+    (updatedPrescription as any).vitals = vitals;
+  }
+
+
+
+
+
   res.status(200).json({
     success: true,
     message: "successfully updated",
-    data: prescription[1][0],
+
+
+    
+    data: updatedPrescription,
+
+
     error: null,
   });
 });

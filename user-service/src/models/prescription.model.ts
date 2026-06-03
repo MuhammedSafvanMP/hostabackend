@@ -44,6 +44,7 @@ interface IPrescription {
   deleteDate?: Date;
   isActive?: boolean;
   isDelete?: boolean;
+  prescribedBy?: string;
 
 }
 
@@ -63,7 +64,7 @@ type PrescriptionCreationAttributes =
     | "deleteDate"
     | "isActive"
     | "isDelete"
-    
+    | "prescribedBy"
   >;
 
 /* =======================
@@ -102,6 +103,7 @@ class Prescription
   public deleteDate?: Date;
   public isActive?: boolean;
   public isDelete?: boolean;
+  public prescribedBy?: string;
 
 } 
 
@@ -188,7 +190,11 @@ Prescription.init(
     isDelete: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
-    }
+    },
+    prescribedBy: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
 
   },
 
