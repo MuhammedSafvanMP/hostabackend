@@ -36,8 +36,10 @@ interface IStaff {
   deleteDate?: Date;
   otp?: string;
   otpExpiry?: Date;
+  fcmToken?: string;
   roleId: number; 
   imageUrl: string;
+  
 }
 
 /* =======================
@@ -95,6 +97,7 @@ class Staff
   public deleteDate?: Date;
   public otp?: string;
   public otpExpiry?: Date;
+  public fcmToken?: string;
   public roleId!: number;   
   public imageUrl: string;
 
@@ -154,6 +157,11 @@ Staff.init(
       imageUrl: {
       type: DataTypes.STRING, // 🔥 store imageUrl + public_id
       allowNull: true
+    },
+
+    fcmToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
 
     jobType: {

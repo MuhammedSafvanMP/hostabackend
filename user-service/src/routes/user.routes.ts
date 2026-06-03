@@ -23,7 +23,7 @@ import {
   getBlacklistedPatients,
   refreshUserToken,
   logout,
-  getBlacklistedUsers
+  getBlacklistedUsers,
 } from "../controllers/user.controller";
 
 import {

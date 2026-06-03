@@ -68,7 +68,7 @@ export const sendDoctorOtpEmail = async (email: string, otp: string, doctorName:
 
 // REGISTER - POST /doctor/register
 export const Registeration: any = asyncHandler(async (req: any, res: Response) => {
-  const { hospitalId, firstName, lastName, phone, joiningDate, email, password, fees, department, specialist, dob, gender, knowLanguages,   consultingTwo,
+  const { hospitalId, hospitalName, firstName, lastName, phone, joiningDate, email, password, fees, department, specialist, dob, gender, knowLanguages,   consultingTwo,
   consultingOne, bookingOpen, qualification, address, displayName, outDoorConsulting ,experience, appointmentCount, regNo} = req.body;
  
 
@@ -108,6 +108,7 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
   }
 
   const newDoctor = await Doctor.create({
+    hospitalName,
    firstName, 
    lastName, 
    phone: numericPhone, 
@@ -150,7 +151,7 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
 
 // LOGIN - POST /doctor/login
 export const login: any = asyncHandler(async (req: Request, res: Response) => {
-  const { email, phone, password } = req.body;
+  const { email, phone, password, fcmToken } = req.body;
 
   if ((!email && !phone) || !password) {
     res.status(400).json({
@@ -197,6 +198,16 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     expiresIn: "15m",
   });
 
+  // Persist FCM token if provided
+  if (fcmToken) {
+    try {
+      await doctor.update({ fcmToken });
+    } catch (err) {
+      // non-fatal: log and continue
+      console.warn("Failed to save doctor fcmToken", err);
+    }
+  }
+
   // Remove password and OTP fields from response
   const { password: _, otp: __, otpExpiry: ___, ...safeDoctor } = doctor.get();
 
@@ -213,6 +224,7 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     message: "Logged in successfully",
     status: 200,
     token, // Return token for API Gateway forwarding
+    fcmToken: fcmToken || doctor.fcmToken, // Return latest FCM token for client use
     data: safeDoctor,
     error: null,
   });
@@ -264,7 +276,7 @@ export const loginWithPhone: any = asyncHandler(async (req: Request, res: Respon
 
 // VERIFY OTP - POST /doctor/otp
 export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) => {
-  const { phone, otp } = req.body;
+  const { phone, otp, fcmToken } = req.body;
 
   let numericPhone = phone.replace(/\D/g, "").slice(-10);
   const doctor = await Doctor.scope("withPassword").findOne({ where: { phone: numericPhone } });
@@ -277,8 +289,12 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
     return;
   }
 
-  // Clear OTP fields after verification
-  await doctor.update({ otp: null, otpExpiry: null });
+  // Persist FCM token if provided, then clear OTPs
+  if (fcmToken) {
+    await doctor.update({ fcmToken, otp: null, otpExpiry: null });
+  } else {
+    await doctor.update({ otp: null, otpExpiry: null });
+  }
 
   const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
   const token = jwt.sign({ id: doctor.id, name: `${doctor.firstName} ${doctor.lastName}`, role: "doctor", roleId: doctor.roleId, isRefresh: false }, jwtKey, {
@@ -804,4 +820,38 @@ export const logout: any = asyncHandler(async (req: Request, res: Response) => {
     path: "/",
   });
   res.status(200).json({ success: true, message: "Logged out successfully" });
+});
+
+// SAVE FCM TOKEN - POST /doctor/:id/fcm-token
+export const saveFcmToken: any = asyncHandler(async (req: Request, res: Response) => {
+  const { fcmToken } = req.body;
+  const { id } = req.params;
+
+  if (!fcmToken) {
+    res.status(400).json({
+      success: false,
+      message: "FCM token is required",
+      error: { code: "MISSING_FCM_TOKEN", details: null },
+    });
+    return;
+  }
+
+  const doctor = await Doctor.findByPk(id);
+  if (!doctor) {
+    res.status(404).json({
+      success: false,
+      message: "Doctor not found",
+      error: { code: "DOCTOR_NOT_FOUND", details: null },
+    });
+    return;
+  }
+
+  await doctor.update({ fcmToken });
+
+  res.status(200).json({
+    success: true,
+    message: "FCM token saved successfully",
+    data: { id: doctor.id, fcmToken: doctor.fcmToken },
+    error: null,
+  });
 });
