@@ -18,57 +18,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - service: ads-service
-            image: hosta-ads-service
-          - service: ambulance-service
-            image: hosta-ambulance-service
-          - service: api-gateway
-            image: hosta-api-gateway
-          - service: blood-bank-service
-            image: hosta-blood-bank-service
-          - service: bloodDonor-service
-            image: hosta-blooddonor-service
-          - service: booking-service
-            image: hosta-booking-service
-          - service: bulmq-service
-            image: hosta-bulmq-service
-          - service: doctor-service
-            image: hosta-doctor-service
-          - service: hospital-service
-            image: hosta-hospital-service
-          - service: lab-service
-            image: hosta-lab-service
-          - service: medicinremainder-service
-            image: hosta-medicinremainder-service
-          - service: notification-service
-            image: hosta-notification-service
-          - service: pharmacy-service
-            image: hosta-pharmacy-service
-          - service: review-service
-            image: hosta-review-service
-          - service: role-service
-            image: hosta-role-service
-          - service: s3-service
-            image: hosta-s3-service
-          - service: socketio-service
-            image: hosta-socketio-service
-          - service: speciality-service
-            image: hosta-speciality-service
-          - service: staff-service
-            image: hosta-staff-service
-          - service: user-service
-            image: hosta-user-service
+        service:
+          - ads-service
+          - ambulance-service
+          - api-gateway
+          - blood-bank-service
+          - bloodDonor-service
+          - booking-service
+          - bulmq-service
+          - doctor-service
+          - hospital-service
+          - lab-service
+          - medicinremainder-service
+          - notification-service
+          - pharmacy-service
+          - review-service
+          - role-service
+          - s3-service
+          - socketio-service
+          - speciality-service
+          - staff-service
+          - user-service
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -77,11 +51,17 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build & Push
-        uses: docker/build-push-action@v5
-        with:
-          context: ./${{ matrix.service }}
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/${{ matrix.image }}:latest
+        shell: bash
+        run: |
+          SERVICE="${{ matrix.service }}"
+          IMAGE_NAME=$(echo "$SERVICE" | tr '[:upper:]' '[:lower:]')
+          
+          docker build \
+            -t ${{ secrets.DOCKER_USERNAME }}/hosta-$IMAGE_NAME:latest \
+            ./$SERVICE
+            
+          docker push \
+            ${{ secrets.DOCKER_USERNAME }}/hosta-$IMAGE_NAME:latest
 
 
   # ==========================================
