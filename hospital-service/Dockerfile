@@ -179,3 +179,5 @@ CMD node -e "require('http').get('http://localhost:3009/health',(res)=>process.e
 
 # Start app
 CMD ["node", "dist/server.js"]
+
+

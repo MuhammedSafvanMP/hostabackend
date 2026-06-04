@@ -80,6 +80,9 @@ jobs:
             mkdir -p /home/ubuntu/app
             cd /home/ubuntu/app
             
+            # Implementation of Option 2B
+            export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+            
             # Sync docker-compose.prod.yml
             cat > docker-compose.prod.yml << 'EOF'
             ${{ secrets.DOCKER_COMPOSE_PROD }}
@@ -89,7 +92,7 @@ jobs:
             echo "${{ secrets.ENV_FILE }}" > .env
             
             # Login and Deploy
-            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "$DOCKER_USERNAME" --password-stdin
             
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d

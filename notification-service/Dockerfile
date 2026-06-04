@@ -1,5 +1,5 @@
 # # # -------- BUILD STAGE --------
-# # FROM node:20 AS builder
+# # FROM public.ecr.aws/docker/library/node:20 AS builder
 # # WORKDIR /app
 # # COPY package*.json ./
 # # RUN npm install
@@ -7,7 +7,7 @@
 # # RUN npm run build
 
 # # # -------- PRODUCTION STAGE --------
-# # FROM node:20-slim
+# # FROM public.ecr.aws/docker/library/node:20-slim
 # # WORKDIR /app
 # # COPY package*.json ./
 # # RUN npm install --omit=dev
@@ -30,7 +30,7 @@
 
 
 # # -------- BUILD STAGE --------
-# FROM node:20 AS builder
+# FROM public.ecr.aws/docker/library/node:20 AS builder
 # WORKDIR /app
 # COPY package*.json ./
 # RUN npm install
@@ -38,7 +38,7 @@
 # RUN npm run build
 
 # # -------- PRODUCTION STAGE --------
-# FROM node:20-slim
+# FROM public.ecr.aws/docker/library/node:20-slim
 # WORKDIR /app
 # COPY package*.json ./
 # RUN npm install --omit=dev --legacy-peer-deps
@@ -108,3 +108,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3005/health', (res) => res.statusCode === 200 ? process.exit(0) : process.exit(1)).on('error', () => process.exit(1))"
 
 CMD ["sh", "-c", "npx sequelize-cli db:migrate && node dist/server.js"]
+
+
