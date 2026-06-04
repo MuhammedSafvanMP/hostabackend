@@ -45,7 +45,7 @@
 
 
 
-FROM node:18-slim
+FROM public.ecr.aws/docker/library/node:18-slim
 
 WORKDIR /app
 
@@ -64,3 +64,4 @@ HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
   CMD curl -f http://localhost:3019/health || exit 1
 
 CMD ["npm", "start"]
+

@@ -1,4 +1,4 @@
-# FROM node:18-slim
+# FROM public.ecr.aws/docker/library/node:18-slim
 
 # WORKDIR /app
 
@@ -17,7 +17,7 @@
 
 
 
-FROM node:18-slim
+FROM public.ecr.aws/docker/library/node:18-slim
 
 WORKDIR /app
 
@@ -32,3 +32,4 @@ RUN npm run build
 EXPOSE 3018
 
 CMD ["node", "dist/server.js"]
+

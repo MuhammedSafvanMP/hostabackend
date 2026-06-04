@@ -59,3 +59,4 @@ HEALTHCHECK --interval=30s --timeout=3s \
   CMD node -e 'require("http").get("http://localhost:3013/health", (res) => res.statusCode === 200 ? process.exit(0) : process.exit(1))'
 
 CMD ["sh", "-c", "npx sequelize-cli db:migrate && node dist/server.js"]
+

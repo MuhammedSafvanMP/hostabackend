@@ -132,3 +132,4 @@ USER node
 EXPOSE 3002
 
 CMD ["sh", "-c", "npx sequelize-cli db:migrate && node dist/server.js"]
+
