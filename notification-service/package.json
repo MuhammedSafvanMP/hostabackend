@@ -1,7 +1,7 @@
 {
-  "name": "medicinremainder-service",
+  "name": "notification-service",
   "version": "1.0.0",
-  "description": "Medicinremainder microservice for Hosta project",
+  "description": "Notification microservice for Hosta project",
   "main": "dist/server.js",
   "scripts": {
     "start": "node dist/server.js",
@@ -32,6 +32,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/amqplib": "^0.10.6",
     "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.25",
