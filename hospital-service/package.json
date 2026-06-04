@@ -24,7 +24,6 @@
     "firebase-admin": "^13.9.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
-    "logger": "^0.0.1",
     "morgan": "^1.10.0",
     "nodemailer": "^8.0.5",
     "pg": "^8.20.0",
@@ -35,7 +34,7 @@
     "winston": "^3.19.0",
     "zod": "^4.3.6"
   },
-  "devDependencies": {
+  "devDependencies": {`n    "@types/amqplib": "^0.10.6",
     "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.25",
@@ -50,3 +49,5 @@
     "typescript": "^5.9.3"
   }
 }
+
+

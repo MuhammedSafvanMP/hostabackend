@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false # Extremely important for microservices
+      max-parallel: 5
       matrix:
         service:
           - ads-service
