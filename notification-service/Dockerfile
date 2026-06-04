@@ -10,7 +10,7 @@
 # # FROM node:20-slim
 # # WORKDIR /app
 # # COPY package*.json ./
-# # RUN npm ci --omit=dev
+# # RUN npm install --omit=dev
 # # COPY --from=builder /app/dist ./dist
 # # COPY --from=builder /app/config ./config
 # # COPY --from=builder /app/migrations ./migrations
@@ -41,7 +41,7 @@
 # FROM node:20-slim
 # WORKDIR /app
 # COPY package*.json ./
-# RUN npm ci --omit=dev --legacy-peer-deps
+# RUN npm install --omit=dev --legacy-peer-deps
 # COPY --from=builder /app/dist ./dist
 # COPY --from=builder /app/config ./config
 # COPY --from=builder /app/migrations ./migrations
@@ -73,7 +73,7 @@ RUN apk add --no-cache python3 make g++
 
 COPY package*.json .npmrc* ./
 
-RUN npm ci --include=dev --legacy-peer-deps
+RUN npm install --include=dev --legacy-peer-deps
 
 COPY . .
 
@@ -90,7 +90,7 @@ ENV NODE_ENV=production
 COPY package*.json .npmrc* ./
 
 # Install only production dependencies
-RUN npm ci --omit=dev --legacy-peer-deps && rm -f .npmrc
+RUN npm install --omit=dev --legacy-peer-deps && rm -f .npmrc
 
 # Copy compiled code
 COPY --from=builder /app/dist ./dist
