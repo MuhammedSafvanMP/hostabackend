@@ -16,7 +16,7 @@ jobs:
           - ambulance-service
           - api-gateway
           - blood-bank-service
-          - bloodDonor-service
+          - blooddonor-service
           - booking-service
           - bulmq-service
           - doctor-service
