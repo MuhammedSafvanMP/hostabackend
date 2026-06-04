@@ -22,7 +22,7 @@ jobs:
           - ambulance-service
           - api-gateway
           - blood-bank-service
-          - blooddonor-service
+          - bloodDonor-service
           - booking-service
           - bulmq-service
           - doctor-service
@@ -50,12 +50,17 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build & Push
+        shell: bash
         run: |
-          # Lowercase the service name for the image tag
-          IMAGE_NAME=$(echo '${{ matrix.service }}' | tr '[:upper:]' '[:lower:]')
+          SERVICE="${{ matrix.service }}"
+          IMAGE_NAME=$(echo "$SERVICE" | tr '[:upper:]' '[:lower:]')
           
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/hosta-$IMAGE_NAME:latest ./${{ matrix.service }}
-          docker push ${{ secrets.DOCKER_USERNAME }}/hosta-$IMAGE_NAME:latest
+          docker build \
+            -t ${{ secrets.DOCKER_USERNAME }}/hosta-$IMAGE_NAME:latest \
+            ./$SERVICE
+            
+          docker push \
+            ${{ secrets.DOCKER_USERNAME }}/hosta-$IMAGE_NAME:latest
 
 
   # ==========================================
