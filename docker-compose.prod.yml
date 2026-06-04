@@ -1,6 +1,6 @@
 services:
   api-gateway:
-    image: ${DOCKER_USERNAME}/hosta-api-gateway:latest
+    image: safvanmp/hosta-api-gateway:latest
     container_name: api-gateway
     restart: always
     ports:
@@ -10,7 +10,7 @@ services:
       - hosta-network
 
   user-service:
-    image: ${DOCKER_USERNAME}/hosta-user-service:latest
+    image: safvanmp/hosta-user-service:latest
     container_name: user-service
     restart: always
     env_file: .env
@@ -18,7 +18,7 @@ services:
       - hosta-network
 
   ambulance-service:
-    image: ${DOCKER_USERNAME}/hosta-ambulance-service:latest
+    image: safvanmp/hosta-ambulance-service:latest
     container_name: ambulance-service
     restart: always
     env_file: .env
@@ -26,7 +26,7 @@ services:
       - hosta-network
 
   blood-service:
-    image: ${DOCKER_USERNAME}/hosta-blooddonor-service:latest
+    image: safvanmp/hosta-blooddonor-service:latest
     container_name: blood-donor-service
     restart: always
     env_file: .env
@@ -34,7 +34,7 @@ services:
       - hosta-network
 
   blood-bank-service:
-    image: ${DOCKER_USERNAME}/hosta-blood-bank-service:latest
+    image: safvanmp/hosta-blood-bank-service:latest
     container_name: blood-bank-service
     restart: always
     env_file: .env
@@ -42,7 +42,7 @@ services:
       - hosta-network
 
   pharmacy-service:
-    image: ${DOCKER_USERNAME}/hosta-pharmacy-service:latest
+    image: safvanmp/hosta-pharmacy-service:latest
     container_name: pharmacy-service
     restart: always
     env_file: .env
@@ -50,7 +50,7 @@ services:
       - hosta-network
 
   staff-service:
-    image: ${DOCKER_USERNAME}/hosta-staff-service:latest
+    image: safvanmp/hosta-staff-service:latest
     container_name: staff-service
     restart: always
     env_file: .env
@@ -58,7 +58,7 @@ services:
       - hosta-network
 
   doctor-service:
-    image: ${DOCKER_USERNAME}/hosta-doctor-service:latest
+    image: safvanmp/hosta-doctor-service:latest
     container_name: doctor-service
     restart: always
     env_file: .env
@@ -66,7 +66,7 @@ services:
       - hosta-network
 
   speciality-service:
-    image: ${DOCKER_USERNAME}/hosta-speciality-service:latest
+    image: safvanmp/hosta-speciality-service:latest
     container_name: speciality-service
     restart: always
     env_file: .env
@@ -74,7 +74,7 @@ services:
       - hosta-network
 
   hospital-service:
-    image: ${DOCKER_USERNAME}/hosta-hospital-service:latest
+    image: safvanmp/hosta-hospital-service:latest
     container_name: hospital-service
     restart: always
     env_file: .env
@@ -82,7 +82,7 @@ services:
       - hosta-network
 
   booking-service:
-    image: ${DOCKER_USERNAME}/hosta-booking-service:latest
+    image: safvanmp/hosta-booking-service:latest
     container_name: booking-service
     restart: always
     env_file: .env
@@ -90,7 +90,7 @@ services:
       - hosta-network
 
   medicine-reminder-service:
-    image: ${DOCKER_USERNAME}/hosta-medicinremainder-service:latest
+    image: safvanmp/hosta-medicinremainder-service:latest
     container_name: medicine-reminder-service
     restart: always
     env_file: .env
@@ -98,7 +98,7 @@ services:
       - hosta-network
 
   notification-service:
-    image: ${DOCKER_USERNAME}/hosta-notification-service:latest
+    image: safvanmp/hosta-notification-service:latest
     container_name: notification-service
     restart: always
     env_file: .env
@@ -106,7 +106,7 @@ services:
       - hosta-network
 
   review-service:
-    image: ${DOCKER_USERNAME}/hosta-review-service:latest
+    image: safvanmp/hosta-review-service:latest
     container_name: review-service
     restart: always
     env_file: .env
@@ -114,7 +114,7 @@ services:
       - hosta-network
 
   lab-service:
-    image: ${DOCKER_USERNAME}/hosta-lab-service:latest
+    image: safvanmp/hosta-lab-service:latest
     container_name: lab-service
     restart: always
     env_file: .env
@@ -122,7 +122,7 @@ services:
       - hosta-network
 
   ads-service:
-    image: ${DOCKER_USERNAME}/hosta-ads-service:latest
+    image: safvanmp/hosta-ads-service:latest
     container_name: ads-service
     restart: always
     env_file: .env
@@ -130,7 +130,7 @@ services:
       - hosta-network
 
   role-service:
-    image: ${DOCKER_USERNAME}/hosta-role-service:latest
+    image: safvanmp/hosta-role-service:latest
     container_name: role-service
     restart: always
     env_file: .env
@@ -138,7 +138,7 @@ services:
       - hosta-network
 
   s3-service:
-    image: ${DOCKER_USERNAME}/hosta-s3-service:latest
+    image: safvanmp/hosta-s3-service:latest
     container_name: s3-service
     restart: always
     env_file: .env
@@ -146,7 +146,7 @@ services:
       - hosta-network
 
   bulmq-service:
-    image: ${DOCKER_USERNAME}/hosta-bulmq-service:latest
+    image: safvanmp/hosta-bulmq-service:latest
     container_name: bulmq-service
     restart: always
     env_file: .env
@@ -154,7 +154,7 @@ services:
       - hosta-network
 
   socketio-service:
-    image: ${DOCKER_USERNAME}/hosta-socketio-service:latest
+    image: safvanmp/hosta-socketio-service:latest
     container_name: socketio-service
     restart: always
     env_file: .env
