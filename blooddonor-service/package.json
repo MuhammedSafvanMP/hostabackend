@@ -1,5 +1,5 @@
 {
-  "name": "blood-service",
+  "name": "blooddonor-service",
   "version": "1.0.0",
   "description": "Blood microservice for Hosta project",
   "main": "dist/server.js",
