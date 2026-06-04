@@ -11,7 +11,7 @@ import { handleAdEvent } from "../handlers/ad.handler";
 import { handleAmbulanceEvent } from "../handlers/ambulance.handler";
 import { handleBloodEvent } from "../handlers/blood.handler";
 
-let connection: amqp.Connection;
+let connection: any;
 let channel: amqp.Channel;
 let isReconnecting = false;
 

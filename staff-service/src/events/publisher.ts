@@ -3,7 +3,7 @@ import amqp from 'amqplib';
 import { env } from '../config/env';
 
 let channel: amqp.Channel;
-let connection: amqp.Connection;
+let connection: any;
 
 export const connectRabbitMQ = async () => {
     try {
