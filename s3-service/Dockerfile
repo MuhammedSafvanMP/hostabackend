@@ -8,7 +8,7 @@
 
 # COPY package*.json .npmrc* ./
 
-# RUN npm install --include=dev
+# RUN npm ci --include=dev --legacy-peer-deps
 
 # COPY . .
 

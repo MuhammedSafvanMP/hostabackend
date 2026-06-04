@@ -8,7 +8,7 @@ RUN apk add --no-cache python3 make g++
 
 COPY package*.json .npmrc* ./
 
-RUN npm install --include=dev
+RUN npm ci --include=dev --legacy-peer-deps
 
 COPY . .
 
@@ -25,7 +25,7 @@ ENV NODE_ENV=production
 COPY package*.json .npmrc* ./
 
 # Install only production dependencies
-RUN npm install --omit=dev && rm -f .npmrc
+RUN npm ci --omit=dev --legacy-peer-deps && rm -f .npmrc
 
 # Copy compiled code
 COPY --from=builder /app/dist ./dist
