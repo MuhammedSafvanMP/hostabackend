@@ -8,7 +8,7 @@
 
 # COPY package*.json .npmrc* ./
 
-# RUN npm install --include=dev
+# RUN npm install --include=dev --legacy-peer-deps
 
 # COPY . .
 
@@ -25,7 +25,7 @@
 # COPY package*.json .npmrc* ./
 
 # # Install only production dependencies
-# RUN npm ci --omit=dev && rm -f .npmrc
+# RUN npm install --omit=dev && rm -f .npmrc
 
 # # Copy compiled code
 # COPY --from=builder /app/dist ./dist
