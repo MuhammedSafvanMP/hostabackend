@@ -44,3 +44,4 @@ HEALTHCHECK --interval=30s --timeout=3s \
 
 CMD ["sh", "-c", "npx sequelize-cli db:migrate && node dist/server.js"]
 
+
