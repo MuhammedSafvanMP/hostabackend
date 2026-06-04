@@ -70,6 +70,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Copy docker-compose to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "docker-compose.prod.yml"
+          target: "/home/ubuntu/app"
+
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -80,20 +89,13 @@ jobs:
             mkdir -p /home/ubuntu/app
             cd /home/ubuntu/app
             
-            # Implementation of Option 2B
-            export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
-            
-            # Sync docker-compose.prod.yml
-            cat > docker-compose.prod.yml << 'EOF'
-            ${{ secrets.DOCKER_COMPOSE_PROD }}
-            EOF
-            
             # Sync .env
             echo "${{ secrets.ENV_FILE }}" > .env
             
             # Login and Deploy
-            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "$DOCKER_USERNAME" --password-stdin
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             
+            docker compose -f docker-compose.prod.yml down --remove-orphans
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
             docker image prune -af
