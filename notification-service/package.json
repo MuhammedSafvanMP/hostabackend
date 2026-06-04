@@ -1,7 +1,7 @@
 {
-  "name": "medicinremainder-service",
+  "name": "notification-service",
   "version": "1.0.0",
-  "description": "Medicinremainder microservice for Hosta project",
+  "description": "Notification microservice for Hosta project",
   "main": "dist/server.js",
   "scripts": {
     "start": "node dist/server.js",
