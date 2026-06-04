@@ -4,19 +4,12 @@ on:
   push:
     branches:
       - production
-    paths:
-      - '**'
 
 jobs:
-
-  # ==========================================
-  # BUILD & PUSH DOCKER IMAGES
-  # ==========================================
   build:
     runs-on: ubuntu-latest
-
     strategy:
-      fail-fast: false
+      fail-fast: false # Extremely important for microservices
       matrix:
         service:
           - ads-service
@@ -44,47 +37,39 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build & Push
-        shell: bash
+      - name: Prepare Image Name
+        id: prep
         run: |
-          SERVICE="${{ matrix.service }}"
-          IMAGE_NAME=$(echo "$SERVICE" | tr '[:upper:]' '[:lower:]')
-          
-          docker build \
-            -t ${{ secrets.DOCKER_USERNAME }}/hosta-$IMAGE_NAME:latest \
-            ./$SERVICE
-            
-          docker push \
-            ${{ secrets.DOCKER_USERNAME }}/hosta-$IMAGE_NAME:latest
+          # Safely lowercase the image name
+          LOW_NAME=$(echo "${{ matrix.service }}" | tr '[:upper:]' '[:lower:]')
+          echo "image_tag=${{ secrets.DOCKER_USERNAME }}/hosta-${LOW_NAME}:latest" >> $GITHUB_OUTPUT
 
+      - name: Build & Push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.service }}
+          push: true
+          tags: ${{ steps.prep.outputs.image_tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-  # ==========================================
-  # DEPLOY TO EC2
-  # ==========================================
   deploy:
     needs: build
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Copy docker-compose to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "docker-compose.prod.yml"
-          target: "/home/ubuntu/app"
-
-      - name: Create .env file on EC2
+      - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -92,25 +77,19 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             mkdir -p /home/ubuntu/app
-
-            cat > /home/ubuntu/app/.env << 'EOF'
-            ${{ secrets.ENV_FILE }}
-            EOF
-
-      - name: Deploy containers
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
             cd /home/ubuntu/app
-
-            export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
-
+            
+            # Sync docker-compose.prod.yml
+            cat > docker-compose.prod.yml << 'EOF'
+            ${{ secrets.DOCKER_COMPOSE_PROD }}
+            EOF
+            
+            # Sync .env
+            echo "${{ secrets.ENV_FILE }}" > .env
+            
+            # Login and Deploy
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
+            
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
-
             docker image prune -af
