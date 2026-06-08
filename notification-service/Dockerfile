@@ -101,7 +101,7 @@ COPY --from=builder /app/.sequelizerc* ./
 # Security: run as non-root user
 USER node
 
-EXPOSE 3005
+EXPOSE 3012
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
