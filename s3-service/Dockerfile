@@ -61,7 +61,7 @@ RUN npm run build
 EXPOSE 3017
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD curl -f http://localhost:3019/health || exit 1
+  CMD curl -f http://localhost:3017/health || exit 1
 
 CMD ["npm", "start"]
 
