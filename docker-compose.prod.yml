@@ -4,8 +4,8 @@ services:
     container_name: api-gateway
     restart: always
     ports:
-      - "80:3018"
-    env_file: .env
+      - "80:3000"
+    env_file: .env.api-gateway
     networks:
       - hosta-network
 
@@ -13,7 +13,7 @@ services:
     image: safvanmp/hosta-user-service:latest
     container_name: user-service
     restart: always
-    env_file: .env
+    env_file: .env.user-service
     networks:
       - hosta-network
 
@@ -21,7 +21,7 @@ services:
     image: safvanmp/hosta-ambulance-service:latest
     container_name: ambulance-service
     restart: always
-    env_file: .env
+    env_file: .env.ambulance-service
     networks:
       - hosta-network
 
@@ -29,7 +29,7 @@ services:
     image: safvanmp/hosta-blooddonor-service:latest
     container_name: blood-donor-service
     restart: always
-    env_file: .env
+    env_file: .env.blood-service
     networks:
       - hosta-network
 
@@ -37,7 +37,7 @@ services:
     image: safvanmp/hosta-blood-bank-service:latest
     container_name: blood-bank-service
     restart: always
-    env_file: .env
+    env_file: .env.blood-bank-service
     networks:
       - hosta-network
 
@@ -45,7 +45,7 @@ services:
     image: safvanmp/hosta-pharmacy-service:latest
     container_name: pharmacy-service
     restart: always
-    env_file: .env
+    env_file: .env.pharmacy-service
     networks:
       - hosta-network
 
@@ -53,7 +53,7 @@ services:
     image: safvanmp/hosta-staff-service:latest
     container_name: staff-service
     restart: always
-    env_file: .env
+    env_file: .env.staff-service
     networks:
       - hosta-network
 
@@ -61,7 +61,7 @@ services:
     image: safvanmp/hosta-doctor-service:latest
     container_name: doctor-service
     restart: always
-    env_file: .env
+    env_file: .env.doctor-service
     networks:
       - hosta-network
 
@@ -69,7 +69,7 @@ services:
     image: safvanmp/hosta-speciality-service:latest
     container_name: speciality-service
     restart: always
-    env_file: .env
+    env_file: .env.speciality-service
     networks:
       - hosta-network
 
@@ -77,7 +77,7 @@ services:
     image: safvanmp/hosta-hospital-service:latest
     container_name: hospital-service
     restart: always
-    env_file: .env
+    env_file: .env.hospital-service
     networks:
       - hosta-network
 
@@ -85,7 +85,7 @@ services:
     image: safvanmp/hosta-booking-service:latest
     container_name: booking-service
     restart: always
-    env_file: .env
+    env_file: .env.booking-service
     networks:
       - hosta-network
 
@@ -93,7 +93,7 @@ services:
     image: safvanmp/hosta-medicinremainder-service:latest
     container_name: medicine-reminder-service
     restart: always
-    env_file: .env
+    env_file: .env.medicine-reminder-service
     networks:
       - hosta-network
 
@@ -101,7 +101,7 @@ services:
     image: safvanmp/hosta-notification-service:latest
     container_name: notification-service
     restart: always
-    env_file: .env
+    env_file: .env.notification-service
     networks:
       - hosta-network
 
@@ -109,7 +109,7 @@ services:
     image: safvanmp/hosta-review-service:latest
     container_name: review-service
     restart: always
-    env_file: .env
+    env_file: .env.review-service
     networks:
       - hosta-network
 
@@ -117,7 +117,7 @@ services:
     image: safvanmp/hosta-lab-service:latest
     container_name: lab-service
     restart: always
-    env_file: .env
+    env_file: .env.lab-service
     networks:
       - hosta-network
 
@@ -125,7 +125,7 @@ services:
     image: safvanmp/hosta-ads-service:latest
     container_name: ads-service
     restart: always
-    env_file: .env
+    env_file: .env.ads-service
     networks:
       - hosta-network
 
@@ -133,7 +133,7 @@ services:
     image: safvanmp/hosta-role-service:latest
     container_name: role-service
     restart: always
-    env_file: .env
+    env_file: .env.role-service
     networks:
       - hosta-network
 
@@ -141,7 +141,7 @@ services:
     image: safvanmp/hosta-s3-service:latest
     container_name: s3-service
     restart: always
-    env_file: .env
+    env_file: .env.s3-service
     networks:
       - hosta-network
 
@@ -149,7 +149,7 @@ services:
     image: safvanmp/hosta-bulmq-service:latest
     container_name: bulmq-service
     restart: always
-    env_file: .env
+    env_file: .env.bulmq-service
     networks:
       - hosta-network
 
@@ -157,7 +157,7 @@ services:
     image: safvanmp/hosta-socketio-service:latest
     container_name: socketio-service
     restart: always
-    env_file: .env
+    env_file: .env.socketio-service
     networks:
       - hosta-network
 
