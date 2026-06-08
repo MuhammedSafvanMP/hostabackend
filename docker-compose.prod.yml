@@ -41,13 +41,13 @@ services:
     networks:
       - hosta-network
 
-  pharmacy-service:
-    image: safvanmp/hosta-pharmacy-service:latest
-    container_name: pharmacy-service
-    restart: always
-    env_file: .env.pharmacy-service
-    networks:
-      - hosta-network
+#  pharmacy-service:
+#    image: safvanmp/hosta-pharmacy-service:latest
+#    container_name: pharmacy-service
+#    restart: always
+#    env_file: .env.pharmacy-service
+#    networks:
+#      - hosta-network
 
   staff-service:
     image: safvanmp/hosta-staff-service:latest
@@ -89,13 +89,13 @@ services:
     networks:
       - hosta-network
 
-  medicine-reminder-service:
-    image: safvanmp/hosta-medicinremainder-service:latest
-    container_name: medicine-reminder-service
-    restart: always
-    env_file: .env.medicine-reminder-service
-    networks:
-      - hosta-network
+#  medicine-reminder-service:
+#    image: safvanmp/hosta-medicinremainder-service:latest
+#    container_name: medicine-reminder-service
+#    restart: always
+#    env_file: .env.medicine-reminder-service
+#    networks:
+#      - hosta-network
 
   notification-service:
     image: safvanmp/hosta-notification-service:latest
@@ -113,13 +113,13 @@ services:
     networks:
       - hosta-network
 
-  lab-service:
-    image: safvanmp/hosta-lab-service:latest
-    container_name: lab-service
-    restart: always
-    env_file: .env.lab-service
-    networks:
-      - hosta-network
+#  lab-service:
+#    image: safvanmp/hosta-lab-service:latest
+#    container_name: lab-service
+#    restart: always
+#    env_file: .env.lab-service
+#    networks:
+#      - hosta-network
 
   ads-service:
     image: safvanmp/hosta-ads-service:latest
@@ -158,6 +158,16 @@ services:
     container_name: socketio-service
     restart: always
     env_file: .env.socketio-service
+    networks:
+      - hosta-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
     networks:
       - hosta-network
 
