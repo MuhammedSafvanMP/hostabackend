@@ -144,6 +144,8 @@ services:
     container_name: s3-service
     restart: always
     env_file: .env.s3-service
+    ports:
+      - "3017:3017"
     networks:
       - hosta-network
 
