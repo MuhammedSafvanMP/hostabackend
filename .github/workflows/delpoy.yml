@@ -89,8 +89,27 @@ jobs:
             mkdir -p /home/ubuntu/app
             cd /home/ubuntu/app
             
-            # Sync .env
-            echo "${{ secrets.ENV_FILE }}" > .env
+            # Sync .env by combining all service secrets
+            echo "${{ secrets.APIGATEWAY_SERVICE_ENV }}" > .env
+            echo "${{ secrets.USER_SERVICE_ENV }}" >> .env
+            echo "${{ secrets.AMBULANCE_SERVICE_ENV }}" >> .env
+            echo "${{ secrets.BLOODDONOR_SERVICE_ENV }}" >> .env
+            echo "${{ secrets.BLOODBANK_SERVICE_ENV }}" >> .env
+            echo "${{ secrets.PHARMACY_SERVICE_ENV }}" >> .env
+            echo "${{ secrets.STAFF_SERVICE_ENV }}" >> .env
+            echo "${{ secrets.DOCTOR_SERVICE_ENV }}" >> .env
+            echo "${{ secrets.SPECIALITY_SERVICE_ENV }}" >> .env
+            echo "${{ secrets.HOSPITAL_SERVICE_ENV }}" >> .env
+            echo "${{ secrets.MEDICINREMINDER_SERVICE_ENV }}" >> .env
+            echo "${{ secrets.BOOKING_SERVICE_ENV }}" >> .env
+            echo "${{ secrets.NOTIFICATION_SERVICE_ENV }}" >> .env
+            echo "${{ secrets.REVIEW_SERVICE_ENV }}" >> .env
+            echo "${{ secrets.LAB_SERVICE_ENV }}" >> .env
+            echo "${{ secrets.ADS_SERVICE_ENV }}" >> .env
+            echo "${{ secrets.ROLE_SERVICE_ENV }}" >> .env
+            echo "${{ secrets.S3_SERVICE_ENV }}" >> .env
+            echo "${{ secrets.BULMQ_SERVICE_ENV }}" >> .env
+            echo "${{ secrets.SOCKETIO_SERVICE_ENV }}" >> .env
             
             # Login and Deploy
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
