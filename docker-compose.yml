@@ -144,6 +144,8 @@ services:
     environment:
       - NODE_OPTIONS=--dns-result-order=ipv4first
     env_file: ./notification-service/.env
+    ports:
+      - "3012:3012"
     networks:
       - hosta-network
 
@@ -192,6 +194,8 @@ services:
     environment:
       - NODE_OPTIONS=--dns-result-order=ipv4first
     env_file: ./s3-service/.env
+    ports:
+      - "3017:3017"
     networks:
       - hosta-network  
 
