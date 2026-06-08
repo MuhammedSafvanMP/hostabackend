@@ -161,6 +161,16 @@ services:
     networks:
       - hosta-network
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    networks:
+      - hosta-network
+
 networks:
   hosta-network:
     name: hosta-network
