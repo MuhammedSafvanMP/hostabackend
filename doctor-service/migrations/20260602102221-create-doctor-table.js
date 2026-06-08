@@ -123,16 +123,24 @@ module.exports = {
     });
 
     // ✅ ONLY ONE UNIQUE RULE (CORRECT ONE)
-    await queryInterface.addIndex("doctor", ["hospitalId", "phone"], {
-      unique: true,
-      name: "doctor_hospital_phone_unique",
-    });
+    // Wrap in try-catch to prevent crashing if relation already exists
+    try {
+      await queryInterface.addIndex("doctor", ["hospitalId", "phone"], {
+        unique: true,
+        name: "doctor_hospital_phone_unique",
+      });
+    } catch (e) {
+      console.log("Index doctor_hospital_phone_unique already exists, skipping...");
+    }
 
-    // optional (only if you really want email unique per hospital)
-    await queryInterface.addIndex("doctor", ["hospitalId", "email"], {
-      unique: true,
-      name: "doctor_hospital_email_unique",
-    });
+    try {
+      await queryInterface.addIndex("doctor", ["hospitalId", "email"], {
+        unique: true,
+        name: "doctor_hospital_email_unique",
+      });
+    } catch (e) {
+      console.log("Index doctor_hospital_email_unique already exists, skipping...");
+    }
   },
 
   async down(queryInterface, Sequelize) {

@@ -22,10 +22,7 @@ jobs:
           - bulmq-service
           - doctor-service
           - hospital-service
-          - lab-service
-          - medicinremainder-service
           - notification-service
-          - pharmacy-service
           - review-service
           - role-service
           - s3-service
@@ -95,23 +92,22 @@ jobs:
             echo "${{ secrets.AMBULANCE_SERVICE_ENV }}" > .env.ambulance-service
             echo "${{ secrets.BLOODDONOR_SERVICE_ENV }}" > .env.blood-service
             echo "${{ secrets.BLOODBANK_SERVICE_ENV }}" > .env.blood-bank-service
-            echo "${{ secrets.PHARMACY_SERVICE_ENV }}" > .env.pharmacy-service
+            # echo "${{ secrets.PHARMACY_SERVICE_ENV }}" > .env.pharmacy-service
             echo "${{ secrets.STAFF_SERVICE_ENV }}" > .env.staff-service
             echo "${{ secrets.DOCTOR_SERVICE_ENV }}" > .env.doctor-service
             echo "${{ secrets.SPECIALITY_SERVICE_ENV }}" > .env.speciality-service
             echo "${{ secrets.HOSPITAL_SERVICE_ENV }}" > .env.hospital-service
-            echo "${{ secrets.MEDICINREMINDER_SERVICE_ENV }}" > .env.medicine-reminder-service
+            # echo "${{ secrets.MEDICINREMINDER_SERVICE_ENV }}" > .env.medicine-reminder-service
             echo "${{ secrets.BOOKING_SERVICE_ENV }}" > .env.booking-service
             echo "${{ secrets.NOTIFICATION_SERVICE_ENV }}" > .env.notification-service
             echo "${{ secrets.REVIEW_SERVICE_ENV }}" > .env.review-service
-            echo "${{ secrets.LAB_SERVICE_ENV }}" > .env.lab-service
+            # echo "${{ secrets.LAB_SERVICE_ENV }}" > .env.lab-service
             echo "${{ secrets.ADS_SERVICE_ENV }}" > .env.ads-service
             echo "${{ secrets.ROLE_SERVICE_ENV }}" > .env.role-service
             echo "${{ secrets.S3_SERVICE_ENV }}" > .env.s3-service
             echo "${{ secrets.BULMQ_SERVICE_ENV }}" > .env.bulmq-service
             echo "${{ secrets.SOCKETIO_SERVICE_ENV }}" > .env.socketio-service
-            
-            # Login and Deploy
+                        # Login and Deploy
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             
             docker compose -f docker-compose.prod.yml down --remove-orphans
