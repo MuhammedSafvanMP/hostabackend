@@ -16,6 +16,11 @@ services:
     env_file: .env.user-service
     networks:
       - hosta-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   ambulance-service:
     image: safvanmp/hosta-ambulance-service:latest
@@ -152,6 +157,11 @@ services:
     env_file: .env.bulmq-service
     networks:
       - hosta-network
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:3018/health"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
 
   socketio-service:
     image: safvanmp/hosta-socketio-service:latest
@@ -160,6 +170,11 @@ services:
     env_file: .env.socketio-service
     networks:
       - hosta-network
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:3019/health"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -170,6 +185,11 @@ services:
       - RABBITMQ_DEFAULT_PASS=guest
     networks:
       - hosta-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   hosta-network:
