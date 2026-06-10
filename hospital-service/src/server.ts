@@ -13,8 +13,13 @@ const startServer = async () => {
     try {
         await connectDB();
         await connectRabbitMQ();
-        
+        // Ensure tables are in sync
+        const { default: Hospital } = await import("./models/hospital.model");
+         const { default: TemplateItem } = await import("./models/prescription.model");
 
+        await Hospital.sync({ alter: true });
+        await TemplateItem.sync({ alter: true });
+        
         // Start background cleanup for blacklisted hospitals
         startCleanupJob();
         

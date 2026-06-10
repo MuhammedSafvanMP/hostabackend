@@ -43,7 +43,6 @@ interface IOutDoorConsulting {
 
 interface IDoctor {
   id: number;
-  hospitalName: string;
   firstName: string;
   lastName: string;
   department?: string;
@@ -54,6 +53,7 @@ interface IDoctor {
   password?: string;
   fees?: number;
   dob?: Date;
+  hospitalName: string;
   gender?: string;
   knowLanguages?: string[];
   qualification?: string;
@@ -128,7 +128,8 @@ class Doctor
   public regNo?: string;
   public autoDecline?: number;
   public appointmentCount?: number;
-  public fcmToken?: string;
+  public fcmToken: string;
+
 
 }
 
@@ -167,6 +168,7 @@ Doctor.init(
       allowNull: false,
     },
 
+
     department: {
       type: DataTypes.STRING,
     },
@@ -199,6 +201,12 @@ Doctor.init(
       },
     },
 
+    
+        fcmToken: {
+      type: DataTypes.STRING,
+    },
+
+
     email: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -207,19 +215,11 @@ Doctor.init(
       },
     },
 
-
-    
-
-
       imageUrl: {
       type: DataTypes.STRING, // 🔥 store imageUrl + public_id
       allowNull: true
     },
 
-    fcmToken: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
     password: {
       type: DataTypes.STRING,
     },
@@ -322,7 +322,9 @@ Doctor.init(
       },
     },
 
-  indexes: [
+
+indexes: [
+
   {
     unique: true,
     fields: ["hospitalId", "phone"],

@@ -91,6 +91,9 @@ import routes from "./routes";
 import { errorHandler } from "./middleware/error.middleware";
 import { env } from "./config/env";
 import { requestLogger } from "./middleware/logger.middleware";
+import axios from "axios";
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
 
@@ -206,6 +209,9 @@ app.use("/api/doctor/login", loginLimiter);
 app.use("/api/staff/login", loginLimiter);
 
 app.use("/api/hospital/login", loginLimiter);
+
+
+
 
 /**
  * CORS

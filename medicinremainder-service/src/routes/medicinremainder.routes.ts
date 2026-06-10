@@ -12,6 +12,7 @@ import { checkPermission } from "../middleware/role.middleware";
 
 const router = Router();
 
+router.use(authenticate);
 
 router.post("/medicinremainder",  Registeration);
 

@@ -29,7 +29,9 @@ export const Registeration: any = asyncHandler(
       consulting_time,
       booking_status,
       status,
-      token
+      token,
+      
+
     } = req.body;
     
     const errors: string[] = [];
@@ -115,7 +117,8 @@ export const Registeration: any = asyncHandler(
       consulting_time,
       booking_status: booking_status || "user booking",
       status,
-      token
+      token,
+
     });
 
     // ==============================
