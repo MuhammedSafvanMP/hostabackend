@@ -15,15 +15,145 @@ import PatientVitals from "../models/patientVitals.model"
 
 
 // REGISTER
-export const createPrescription: any = asyncHandler(async (req: Request, res: Response) => {
+// export const createPrescription: any = asyncHandler(async (req: Request, res: Response) => {
  
 
 
-  const { bookingId, hospitalId, doctorId, patientId, userId, complaint, medications, investigations, advice, next_consultation, empty_stomach ,prescribedBy, vitals } = req.body;
+//   const { bookingId, hospitalId, doctorId, patientId, userId, complaint, medications, investigations, advice, next_consultation, empty_stomach ,prescribedBy, vitals, type, content, x, y, width, height, fontSize, fontWeight, textAlign, textColor, bgColor } = req.body;
 
 
 
-  const authHeader = req.headers.authorization;
+//   const authHeader = req.headers.authorization;
+
+//   const errors: string[] = [];
+
+//   // 1. Validate / Auto-Create Patient
+//   let finalPatientId = patientId;
+//   let patientExists = null;
+
+//   if (finalPatientId) {
+//     patientExists = await Patient.findOne({ where: { id: finalPatientId, isDelete: false } });
+//   }
+
+//   // Auto Create Patient if not found but we have a userId
+//   if (!patientExists && userId) {
+//     const user = await User.findOne({ where: { id: userId, isDelete: false } });
+    
+//     if (user) {
+//       patientExists = await Patient.create({
+//         userId: user.id,
+//         hospitalId: hospitalId,
+//         name: user.name,
+//         gender: "Other",
+//         age: 0,
+//         dob: new Date(),
+//         mobileNumber: user.phone || "N/A",
+//         addressLine: "N/A",
+//         location: { place: "N/A", pincode: 0 },
+//       });
+//       finalPatientId = patientExists.id;
+//     } else {
+//       errors.push(`User with ID ${userId} does not exist. Cannot auto-create patient.`);
+//     }
+//   } else if (!patientExists) {
+//     errors.push(`Patient with ID ${patientId} does not exist and no userId provided to auto-create.`);
+//   }
+
+//   // 2. Validate Doctor (Cross-Service: doctor-service)
+//   try {
+//     await httpClient.get(`${process.env.DOCTOR_SERVICE_URL}/doctor/${doctorId}`, {
+//       headers: { Authorization: authHeader }
+//     });
+//   } catch (error: any) {
+//     console.error("Doctor validation failed:", error.message);
+//     errors.push(`Doctor with ID ${doctorId} does not exist or is unreachable.`);
+//   }
+
+//   // 3. Validate Hospital (Cross-Service: hospital-service)
+//   try {
+//     await httpClient.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
+//       headers: { Authorization: authHeader }
+//     });
+//   } catch (error: any) {
+//     console.error("Hospital validation failed:", error.message);
+//     errors.push(`Hospital with ID ${hospitalId} does not exist or is unreachable.`);
+//   }
+
+//   // 4. Return all errors if any
+//   if (errors.length > 0) {
+//     res.status(404).json({
+//       success: false,
+//       message: "Validation failed",
+//       errors: errors
+//     });
+//     return;
+//   }
+
+//   const finalUserId = patientExists ? patientExists.userId : userId;
+
+//   // 5. Create Prescription
+//   const prescription = await Prescription.create({
+//     bookingId, hospitalId, doctorId, patientId: finalPatientId, userId: finalUserId, complaint, medications, investigations, advice, next_consultation, empty_stomach 
+//   });
+
+
+
+
+
+//   // 6. Save Vitals if provided
+//   if (vitals && typeof vitals === 'object') {
+//     await PatientVitals.create({
+//       ...vitals,
+//       patientId: finalPatientId,
+//       prescriptionId: prescription.id
+//     });
+//   }
+
+
+
+//   await publishEvent(
+//     "prescription_events",
+//     "PRESCRIPTION_CREATED",
+//     {
+//       prescriptionId: prescription.id,
+//       bookingId,
+//       doctorId,
+//       patientId: finalPatientId,
+//       userId: finalUserId,
+//       hospitalId: prescription.hospitalId,
+//     }
+//   );
+
+
+
+//   res.status(201).json({
+//     success: true,
+//     message: "Prescription created successfully",
+//     data: prescription,
+//   });
+// });
+
+export const createPrescription: any = asyncHandler(async (req: Request, res: Response) => {
+ 
+  const { bookingId, hospitalId, doctorId, patientId, userId, complaint, medications, investigations, advice, next_consultation, empty_stomach, prescribedBy,
+     type,
+  content,
+  x,
+  y,
+  width,
+  templateHeight,
+  fontSize,
+  fontWeight,
+  textAlign,
+  textColor,
+  bgColor,
+    } = req.body;
+
+      const {
+      temperature, pulse, respiratoryRate, spo2, height, weight, waist
+    } = req.body;
+
+  
 
   const errors: string[] = [];
 
@@ -31,27 +161,62 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
   let finalPatientId = patientId;
   let patientExists = null;
 
+  
+
   if (finalPatientId) {
     patientExists = await Patient.findOne({ where: { id: finalPatientId, isDelete: false } });
+    
   }
+
+  
 
   // Auto Create Patient if not found but we have a userId
   if (!patientExists && userId) {
+    
     const user = await User.findOne({ where: { id: userId, isDelete: false } });
+
+
+        let booking: any;
+
+try {
+  booking = await httpClient.get(
+    `${process.env.BOOKING_SERVICE_URL}/booking/${bookingId}`,
+    {
+      headers: { Authorization: req.headers.authorization }
+    }
+  );
+} catch (error: any) {
+
+   res.status(error.response?.status || 500).json({
+    success: false,
+    message:
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      "Booking service error",
+    error: error.response?.data,
+  });
+  return
+}
+
+
+    
     
     if (user) {
       patientExists = await Patient.create({
         userId: user.id,
         hospitalId: hospitalId,
-        name: user.name,
-        gender: "Other",
-        age: 0,
-        dob: new Date(),
-        mobileNumber: user.phone || "N/A",
-        addressLine: "N/A",
-        location: { place: "N/A", pincode: 0 },
+        name: booking?.data?.data?.patient_name,
+        gender: booking?.data?.data?.patient_gender,
+        age: booking?.data?.data?.patient_age,
+        dob: booking?.data?.data?.patient_dob,
+        mobileNumber:  booking?.data?.data?.patient_phone,
+        addressLine: booking?.data?.data?.patient_place,
+        location: { place: booking?.data?.data?.patient_place, pincode: 0 },
       });
+      
       finalPatientId = patientExists.id;
+
+      
     } else {
       errors.push(`User with ID ${userId} does not exist. Cannot auto-create patient.`);
     }
@@ -62,8 +227,9 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
   // 2. Validate Doctor (Cross-Service: doctor-service)
   try {
     await httpClient.get(`${process.env.DOCTOR_SERVICE_URL}/doctor/${doctorId}`, {
-      headers: { Authorization: authHeader }
+      headers: { Authorization: req.headers.authorization }
     });
+    
   } catch (error: any) {
     console.error("Doctor validation failed:", error.message);
     errors.push(`Doctor with ID ${doctorId} does not exist or is unreachable.`);
@@ -72,8 +238,10 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
   // 3. Validate Hospital (Cross-Service: hospital-service)
   try {
     await httpClient.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
-      headers: { Authorization: authHeader }
+      headers: { Authorization: req.headers.authorization }
     });
+
+    
   } catch (error: any) {
     console.error("Hospital validation failed:", error.message);
     errors.push(`Hospital with ID ${hospitalId} does not exist or is unreachable.`);
@@ -93,22 +261,41 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
 
   // 5. Create Prescription
   const prescription = await Prescription.create({
-    bookingId, hospitalId, doctorId, patientId: finalPatientId, userId: finalUserId, complaint, medications, investigations, advice, next_consultation, empty_stomach 
+    bookingId, hospitalId, doctorId, patientId: finalPatientId, userId: finalUserId, complaint, medications, investigations, advice, next_consultation, empty_stomach, prescribedBy, 
+    type,
+  content,
+  x,
+  y,
+  width,
+  height: templateHeight,
+  fontSize,
+  fontWeight,
+  textAlign,
+  textColor,
+  bgColor,
   });
 
 
+     // 4. If any vitals field is provided, create a vitals record
+    if (temperature || pulse || respiratoryRate || spo2 || height || weight || waist) {
+      // We'll calculate BMI/BSA here or let the service handle it.
+      // Since addVitals in patientVitalsService handles calculation, let's use a helper or just do it here to keep things in one transaction.
+      
+      let bmi, bsa;
+      if (height && weight) {
+        const hInM = height / 100;
+        bmi = parseFloat((weight / (hInM * hInM)).toFixed(2));
+        bsa = parseFloat((0.007184 * Math.pow(height, 0.725) * Math.pow(weight, 0.425)).toFixed(4));
+      }
+      
 
-
-
-  // 6. Save Vitals if provided
-  if (vitals && typeof vitals === 'object') {
-    await PatientVitals.create({
-      ...vitals,
-      patientId: finalPatientId,
-      prescriptionId: prescription.id
-    });
-  }
-
+      await PatientVitals.create({
+        prescriptionId: prescription.id,
+        patientId: patientExists?.id,
+        temperature, pulse, respiratoryRate, spo2,
+        height, weight, waist, bmi, bsa
+      });
+    }
 
 
   await publishEvent(
@@ -124,6 +311,7 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
     }
   );
 
+  
 
 
   res.status(201).json({

@@ -1,54 +1,127 @@
 #!/bin/bash
-
+set -o pipefail   # Fail if ANY command in a pipe fails (e.g. pg_dump fails → whole pipe fails)
 # ==============================================================================
 # HOSTA MICROSERVICES - AUTOMATIC BACKUP SCRIPT
 # ==============================================================================
-# This script dumps the Postgres databases and uploads them to S3.
+# Streams pg_dump directly to S3 (no EC2 disk usage).
+# Logs results per service with timestamps.
+# Sends summary report at the end.
 # ==============================================================================
 
+# ------------------------------------------------------------------------------
 # 1. SETTINGS
-BACKUP_DIR="/home/ubuntu/app/backups"
+# ------------------------------------------------------------------------------
 TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
-S3_BUCKET="hosta-backups-storage" # UPDATE THIS TO YOUR ACTUAL BUCKET
-RETENTION_DAYS=7
+LOG_DIR="/home/ubuntu/app/backups/logs"
+LOG_FILE="$LOG_DIR/backup_$TIMESTAMP.log"
+S3_BUCKET="hosta-backups-storage"
+LOG_RETENTION_DAYS=30   # keep logs for 30 days
+FAILED_SERVICES=()
+SUCCESS_SERVICES=()
 
-# 2. CREATE FOLDER
-mkdir -p $BACKUP_DIR
+# ------------------------------------------------------------------------------
+# 2. SETUP LOG DIR
+# ------------------------------------------------------------------------------
+mkdir -p "$LOG_DIR"
 
-echo "Starting backup at $TIMESTAMP..."
+# All output (stdout + stderr) goes to log file AND terminal
+exec > >(tee -a "$LOG_FILE") 2>&1
 
-# 3. LIST OF SERVICES TO BACKUP
-# Add/Remove folder names here
-SERVICES=("user-service" "doctor-service" "staff-service" "hospital-service" "booking-service" "notification-service" "ads-service")
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
+}
 
+log "======================================================"
+log " HOSTA BACKUP STARTED"
+log "======================================================"
+
+# ------------------------------------------------------------------------------
+# 3. SERVICES TO BACKUP
+# Add/Remove service names here
+# ------------------------------------------------------------------------------
+SERVICES=(
+    "user-service"
+    "doctor-service"
+    "staff-service"
+    "hospital-service"
+    "booking-service"
+    "notification-service"
+    "ads-service"
+    "ambulance-service"
+    "blood-bank-service"
+    "blood-service"
+    "review-service"
+    "role-service"
+    "speciality-service"
+)
+
+# ------------------------------------------------------------------------------
+# 4. BACKUP LOOP
+# ------------------------------------------------------------------------------
 for SERVICE in "${SERVICES[@]}"
 do
-    echo "Processing $SERVICE..."
-    
-    # Extract DATABASE_URL from the service's .env file
+    log "------------------------------------------------------"
+    log "Processing: $SERVICE"
+
     ENV_FILE="/home/ubuntu/app/.env.$SERVICE"
-    if [ -f "$ENV_FILE" ]; then
-        DB_URL=$(grep DATABASE_URL "$ENV_FILE" | cut -d'=' -f2-)
-        
-        if [ ! -z "$DB_URL" ]; then
-            FILENAME="$BACKUP_DIR/${SERVICE}_$TIMESTAMP.sql.gz"
-            
-            # Run pg_dump (using the one inside the app if needed, or host pg_dump)
-            pg_dump "$DB_URL" | gzip > "$FILENAME"
-            
-            echo "Successfully dumped $SERVICE to $FILENAME"
-            
-            # 4. UPLOAD TO S3 (Requires aws-cli installed and configured)
-            # aws s3 cp "$FILENAME" "s3://$S3_BUCKET/$SERVICE/"
-        else
-            echo "Error: No DATABASE_URL found for $SERVICE"
-        fi
+
+    # Check env file exists
+    if [ ! -f "$ENV_FILE" ]; then
+        log "ERROR: Env file not found → $ENV_FILE"
+        FAILED_SERVICES+=("$SERVICE (no env file)")
+        continue
+    fi
+
+    # Extract DATABASE_URL
+    DB_URL=$(grep "^DATABASE_URL=" "$ENV_FILE" | cut -d'=' -f2-)
+
+    if [ -z "$DB_URL" ]; then
+        log "ERROR: No DATABASE_URL found in $ENV_FILE"
+        FAILED_SERVICES+=("$SERVICE (no DATABASE_URL)")
+        continue
+    fi
+
+    S3_PATH="s3://$S3_BUCKET/$SERVICE/${SERVICE}_$TIMESTAMP.sql.gz"
+
+    log "Streaming dump → $S3_PATH"
+
+    # Stream pg_dump directly to S3 (zero EC2 disk usage)
+    if pg_dump "$DB_URL" | gzip | aws s3 cp - "$S3_PATH"; then
+        log "SUCCESS: $SERVICE backed up to S3"
+        SUCCESS_SERVICES+=("$SERVICE")
     else
-        echo "Error: Env file $ENV_FILE not found"
+        log "ERROR: Backup FAILED for $SERVICE"
+        FAILED_SERVICES+=("$SERVICE (pg_dump/S3 error)")
     fi
 done
 
-# 5. CLEANUP OLD LOCAL BACKUPS
-find $BACKUP_DIR -type f -mtime +$RETENTION_DAYS -delete
+# ------------------------------------------------------------------------------
+# 5. CLEANUP OLD LOG FILES (keep last 30 days)
+# ------------------------------------------------------------------------------
+log "------------------------------------------------------"
+log "Cleaning up log files older than $LOG_RETENTION_DAYS days..."
+find "$LOG_DIR" -type f -name "*.log" -mtime +$LOG_RETENTION_DAYS -delete
 
-echo "Backup process finished!"
+# ------------------------------------------------------------------------------
+# 6. SUMMARY REPORT
+# ------------------------------------------------------------------------------
+log "======================================================"
+log " BACKUP SUMMARY"
+log "======================================================"
+log "Timestamp : $TIMESTAMP"
+log "Succeeded : ${#SUCCESS_SERVICES[@]} service(s)"
+for s in "${SUCCESS_SERVICES[@]}"; do log "  ✔ $s"; done
+
+log "Failed    : ${#FAILED_SERVICES[@]} service(s)"
+for f in "${FAILED_SERVICES[@]}"; do log "  ✘ $f"; done
+
+if [ ${#FAILED_SERVICES[@]} -eq 0 ]; then
+    log "STATUS: ALL BACKUPS COMPLETED SUCCESSFULLY ✔"
+else
+    log "STATUS: BACKUP COMPLETED WITH ${#FAILED_SERVICES[@]} FAILURE(S) ✘"
+fi
+
+log "Log saved : $LOG_FILE"
+log "======================================================"
+log " HOSTA BACKUP FINISHED"
+log "======================================================"
