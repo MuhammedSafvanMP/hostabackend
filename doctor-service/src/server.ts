@@ -17,9 +17,6 @@ const startServer = async () => {
         // Start background blacklist cleanup job
         startCleanupJob();
         
-        // Ensure tables are in sync
-        const { default: Doctor } = await import("./models/doctor.model");
-        await Doctor.sync({ alter: true });
 
         // Starting Doctor Service
         const server = app.listen(PORT, () => {
