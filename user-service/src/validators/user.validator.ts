@@ -5,11 +5,13 @@ export const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   phone: z.string().regex(/^[0-9]{10}$/),
+  fcmToken: z.string().optional(),
 });
 
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
+  fcmToken: z.string().optional(),
 });
 
 export const idParamSchema = z.object({
@@ -23,7 +25,7 @@ export const loginWithPhoneSchema = z.object({
 export const verifyOtpSchema = z.object({
     phone: z.string().regex(/^[0-9]{10}$/, "Phone must be a 10-digit number"),
     otp: z.string().length(6, "OTP must be exactly 6 digits"),
-    FcmToken: z.string().optional(),
+    fcmToken: z.string().optional(),
 });
 
 export const updateUserSchema = z.object({
@@ -44,8 +46,6 @@ export const verifyOtpEmailSchema = z.object({
 });
 
 export const resetPasswordEmailSchema = z.object({
-    email: z.string().email(),
-    otp: z.string().length(6, "OTP must be exactly 6 digits"),
     newPassword: z.string().min(8, "Password must be at least 8 characters long"),
     confirmPassword: z.string().min(8, "Confirm password must be at least 8 characters long"),
 }).refine((data) => data.newPassword === data.confirmPassword, {

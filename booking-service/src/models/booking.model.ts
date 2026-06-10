@@ -1,7 +1,3 @@
-
-
-
-
 import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../config/db";
 
@@ -20,6 +16,7 @@ interface IBooking {
   patient_gender?: string;
 
   userId?: number;
+  patientId?: number;
 
   doctorId: number;
   hospitalId: number;
@@ -30,7 +27,6 @@ interface IBooking {
 
   doctor_name: string;
   doctor_department: string;
-  patientId: number;
 
   token?: number;
 
@@ -54,6 +50,7 @@ type BookingCreationAttributes = Optional<
   IBooking,
   | "id"
   | "userId"
+  | "patientId"
   | "patient_place"
   | "patient_dob"
   | "patient_gender"
@@ -81,6 +78,7 @@ class Booking
   public patient_gender?: string;
 
   public userId?: number;
+  public patientId?: number;
 
   public doctorId!: number;
   public hospitalId!: number;
@@ -93,7 +91,6 @@ class Booking
   public doctor_department!: string;
 
   public token?: number;
-  public patientId: number;
 
   public status!:
     | "pending"
@@ -168,6 +165,11 @@ Booking.init(
       allowNull: true,
     },
 
+    patientId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+
     token: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -178,10 +180,7 @@ Booking.init(
       allowNull: false,
     },
 
-      patientId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
+   
     doctor_name: {
       type: DataTypes.STRING(120),
       allowNull: false,

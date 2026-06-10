@@ -61,6 +61,7 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
       success: true,
       message: "OTP verified successfully",
       token,
+      fchmToken: user.fcmToken,
       userDetails: user,
       status: 200,
     });
@@ -139,13 +140,23 @@ export const verifyOtpEmail: any = asyncHandler(async (req: Request, res: Respon
   }
 });
 
-export const resetPasswordEmail: any = asyncHandler(async (req: Request, res: Response) => {
-  try {
-    const result = await userService.resetPasswordWithEmail(req.body);
-    res.status(200).json(result);
-  } catch (error: any) {
-    res.status(error.status || 500).json({ success: false, message: error.message });
-  }
+// export const resetPasswordEmail: any = asyncHandler(async (req: Request, res: Response) => {
+//   try {
+//     const result = await userService.resetPasswordWithEmail(req.body);
+//     res.status(200).json(result);
+//   } catch (error: any) {
+//     res.status(error.status || 500).json({ success: false, message: error.message });
+//   }
+// });
+
+
+export const resetPasswordEmail: any = asyncHandler(async (req: any, res: Response) => {
+  const result = await userService.resetPasswordWithEmail(
+    req.user.id,
+    req.body
+  );
+
+  res.json(result);
 });
 
 export const changePassword: any = asyncHandler(async (req: any, res: Response) => {
@@ -250,7 +261,6 @@ export const createPatient: any = asyncHandler(async (req: Request, res: Respons
       patientType, age, dob, mobileNumber, emergencyNumber,
       guardianName, addressLine, location, email, password, userId: finalUserId, hospitalId
     }, { transaction: t });
-
 
 
     await t.commit();
@@ -512,7 +522,6 @@ export const updatePatient: any = asyncHandler(async (req: Request, res: Respons
       guardianName, addressLine, location, email, password, userId, hospitalId
     }, { transaction: t });
 
-   
     await t.commit();
 
     // 3. Return updated patient with fresh vitals + user
@@ -618,5 +627,39 @@ export const logout: any = asyncHandler(async (req: Request, res: Response) => {
     path: "/",
   });
   res.status(200).json({ success: true, message: "Logged out successfully" });
+});
+
+// SAVE FCM TOKEN - POST /users/:id/fcm-token
+export const saveFcmToken: any = asyncHandler(async (req: Request, res: Response) => {
+  const { fcmToken } = req.body;
+  const { id } = req.params;
+
+  if (!fcmToken) {
+    res.status(400).json({
+      success: false,
+      message: "FCM token is required",
+      error: { code: "MISSING_FCM_TOKEN", details: null },
+    });
+    return;
+  }
+
+  const user = await User.findByPk(id);
+  if (!user) {
+    res.status(404).json({
+      success: false,
+      message: "User not found",
+      error: { code: "USER_NOT_FOUND", details: null },
+    });
+    return;
+  }
+
+  await user.update({ fcmToken });
+
+  res.status(200).json({
+    success: true,
+    message: "FCM token saved successfully",
+    data: { id: user.id, fcmToken: user.fcmToken },
+    error: null,
+  });
 });
 

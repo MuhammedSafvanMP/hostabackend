@@ -74,7 +74,7 @@ export const createRolepermission = asyncHandler(
 
 
 // GET ONE - GET /Rolepermission/:id
-export const getanRolepermission : any = asyncHandler(async (req: Request, res: Response) => {
+export const getanRolepermission: any = asyncHandler(async (req: Request, res: Response) => {
   const rolepermission = await Rolepermission.findByPk(req.params.id);
   if (!rolepermission) {
     res.status(404).json({
@@ -115,6 +115,41 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
     });
     return;
   }
+
+// export const updateData: any = asyncHandler(async (req: Request, res: Response) => {
+//   const { id } = req.params;
+//   const updatePayload = req.body;
+
+//   const rolepermission = await Rolepermission.update(updatePayload, {
+//     where: { id: id },
+//     returning: true,
+//   });
+
+//   // rolepermission[0] => affected rows count
+//   // rolepermission[1] => updated rows array
+
+//   if (!rolepermission[1] || rolepermission[1].length === 0) {
+//     res.status(404).json({
+//       success: false,
+//       message: "Rolepermission not found",
+//       data: null,
+//     });
+//     return;
+//   }
+
+//   // ✅ FIXED
+//   const updatedRolepermission = rolepermission[1][0];
+
+//   await publishEvent("rolepermission_events", "ROLEPERMISSION_UPDATED", {
+//     RolepermissionId: updatedRolepermission.id,
+//   });
+
+//   res.status(200).json({
+//     success: true,
+//     message: "Successfully updated",
+//     data: updatedRolepermission,
+//   });
+// });
 
   // ✅ Get updated booking object
   const updatedRolepermission = Rolepermission[1][0];
@@ -177,18 +212,18 @@ export const getRolepermission: any = asyncHandler(async (req: Request, res: Res
 
 
 
-      const whereClause: any = {};
+  const whereClause: any = {};
 
 
   if (hospitalId !== undefined) {
     whereClause.hospitalId = Number(hospitalId);
   }
 
-    if (labId !== undefined) {
+  if (labId !== undefined) {
     whereClause.labId = Number(labId);
   }
 
-    if (pharmacyId !== undefined) {
+  if (pharmacyId !== undefined) {
     whereClause.pharmacyId = Number(pharmacyId);
   }
 

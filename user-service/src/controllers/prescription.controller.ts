@@ -11,14 +11,28 @@ import { Op, Sequelize } from "sequelize";
 dotenv.config();
 
 
-// REGISTER
+
 export const createPrescription: any = asyncHandler(async (req: Request, res: Response) => {
  
-  const { bookingId, hospitalId, doctorId, patientId, userId, complaint, medications, investigations, advice, next_consultation, empty_stomach, prescribedBy  } = req.body;
+
+  const { bookingId, hospitalId, doctorId, patientId, userId, complaint, medications, investigations, advice, next_consultation, empty_stomach, prescribedBy,
+     type,
+  content,
+  x,
+  y,
+  width,
+  templateHeight,
+  fontSize,
+  fontWeight,
+  textAlign,
+  textColor,
+  bgColor,
+    } = req.body;
 
       const {
       temperature, pulse, respiratoryRate, spo2, height, weight, waist
     } = req.body;
+
 
   const errors: string[] = [];
 
@@ -26,27 +40,62 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
   let finalPatientId = patientId;
   let patientExists = null;
 
+  
+
   if (finalPatientId) {
     patientExists = await Patient.findOne({ where: { id: finalPatientId, isDelete: false } });
+    
   }
+
+  
 
   // Auto Create Patient if not found but we have a userId
   if (!patientExists && userId) {
+    
     const user = await User.findOne({ where: { id: userId, isDelete: false } });
+
+
+        let booking: any;
+
+try {
+  booking = await httpClient.get(
+    `${process.env.BOOKING_SERVICE_URL}/booking/${bookingId}`,
+    {
+      headers: { Authorization: req.headers.authorization }
+    }
+  );
+} catch (error: any) {
+
+   res.status(error.response?.status || 500).json({
+    success: false,
+    message:
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      "Booking service error",
+    error: error.response?.data,
+  });
+  return
+}
+
+
+    
     
     if (user) {
       patientExists = await Patient.create({
         userId: user.id,
         hospitalId: hospitalId,
-        name: user.name,
-        gender: "Other",
-        age: 0,
-        dob: new Date(),
-        mobileNumber: user.phone || "N/A",
-        addressLine: "N/A",
-        location: { place: "N/A", pincode: 0 },
+        name: booking?.data?.data?.patient_name,
+        gender: booking?.data?.data?.patient_gender,
+        age: booking?.data?.data?.patient_age,
+        dob: booking?.data?.data?.patient_dob,
+        mobileNumber:  booking?.data?.data?.patient_phone,
+        addressLine: booking?.data?.data?.patient_place,
+        location: { place: booking?.data?.data?.patient_place, pincode: 0 },
       });
+      
       finalPatientId = patientExists.id;
+
+      
     } else {
       errors.push(`User with ID ${userId} does not exist. Cannot auto-create patient.`);
     }
@@ -59,6 +108,7 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
     await httpClient.get(`${process.env.DOCTOR_SERVICE_URL}/doctor/${doctorId}`, {
       headers: { Authorization: req.headers.authorization }
     });
+    
   } catch (error: any) {
     console.error("Doctor validation failed:", error.message);
     errors.push(`Doctor with ID ${doctorId} does not exist or is unreachable.`);
@@ -69,6 +119,8 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
     await httpClient.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
       headers: { Authorization: req.headers.authorization }
     });
+
+    
   } catch (error: any) {
     console.error("Hospital validation failed:", error.message);
     errors.push(`Hospital with ID ${hospitalId} does not exist or is unreachable.`);
@@ -88,7 +140,19 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
 
   // 5. Create Prescription
   const prescription = await Prescription.create({
-    bookingId, hospitalId, doctorId, patientId: finalPatientId, userId: finalUserId, complaint, medications, investigations, advice, next_consultation, empty_stomach, prescribedBy 
+
+    bookingId, hospitalId, doctorId, patientId: finalPatientId, userId: finalUserId, complaint, medications, investigations, advice, next_consultation, empty_stomach, prescribedBy, 
+    type,
+  content,
+  x,
+  y,
+  width,
+  height: templateHeight,
+  fontSize,
+  fontWeight,
+  textAlign,
+  textColor,
+  bgColor,
   });
 
 
@@ -107,6 +171,7 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
       await PatientVitals.create({
         prescriptionId: prescription.id,
         patientId: patientId,
+
         temperature, pulse, respiratoryRate, spo2,
         height, weight, waist, bmi, bsa
       });
@@ -126,6 +191,7 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
     }
   );
 
+  
 
   res.status(201).json({
     success: true,
@@ -248,7 +314,7 @@ export const getAPrescription: any = asyncHandler(async (req: Request, res: Resp
 // UPDATE - PUT /prescription/:id
 export const updateData: any = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const updatePayload = req.body;
+  const { vitals, ...updatePayload } = req.body;
 
   const prescription : any = await Prescription.update(updatePayload, {
     where: { id: id, isDelete: false },
@@ -288,6 +354,29 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
     return;
   }
 
+
+
+
+
+  // 🔄 Save/Update Vitals if provided
+  if (vitals && typeof vitals === 'object') {
+    const existingVitals = await PatientVitals.findOne({ where: { prescriptionId: id } });
+    
+    if (existingVitals) {
+      await existingVitals.update(vitals);
+    } else {
+      await PatientVitals.create({
+        ...vitals,
+        patientId: prescription[1][0].patientId,
+        prescriptionId: id
+      });
+    }
+  }
+
+
+
+
+
   const patient = await Patient.findOne({ where: { id: prescription[1][0].patientId, isDelete: false } });
   await publishEvent("prescription_events", "PRESCRIPTION_UPDATED", {
     prescriptionId: prescription[1][0].id,
@@ -295,10 +384,28 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
     hospitalId: prescription[1][0].hospitalId,
   });
 
+
+
+
+  // Re-fetch to optionally include vitals
+  const updatedPrescription = prescription[1][0].toJSON();
+  if (vitals) {
+    (updatedPrescription as any).vitals = vitals;
+  }
+
+
+
+
+
   res.status(200).json({
     success: true,
     message: "successfully updated",
-    data: prescription[1][0],
+
+
+    
+    data: updatedPrescription,
+
+
     error: null,
   });
 });

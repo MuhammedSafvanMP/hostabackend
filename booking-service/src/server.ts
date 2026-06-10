@@ -12,8 +12,9 @@ const startServer = async () => {
     await connectDB();
     await connectRabbitMQ();
 
-       const { default: Booking } = await import("./models/booking.model");
-        await Booking.sync({ alter: true });
+    // Use migrations as the single source of truth for schema changes.
+    // Runtime sync is intentionally skipped to avoid conflicts with the
+    // migration runner during container startup.
 
     // Starting Booking Service
     const server = app.listen(PORT, () => {

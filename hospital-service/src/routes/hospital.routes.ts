@@ -8,7 +8,7 @@ import {
   changePasswordSchema,
   loginWithEmailSchema,
   resetPasswordSchema,
-  sendCustomEmailSchema 
+  sendCustomEmailSchema,
 } from "../validators/hospital.validator";
 import { 
   Registeration,

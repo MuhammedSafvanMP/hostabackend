@@ -61,7 +61,6 @@ router.put("/staff/auth/change-password",authenticate, validate(changePasswordSc
 
 
 
-
 // CRUD
 
 router.get("/staff",authenticate,checkPermission("staff", "view"),getStaffs);

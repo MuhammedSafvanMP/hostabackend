@@ -20,6 +20,7 @@ export const Registeration: any = asyncHandler(
       patient_place,
       patient_phone,
       userId,
+      patientId,
       hospitalId,
       doctorId,
       department,
@@ -29,23 +30,25 @@ export const Registeration: any = asyncHandler(
       booking_status,
       status,
       token,
-      patientId
-    } = req.body;
-    
+      
 
+    } = req.body;
     
     const errors: string[] = [];
 
     // ==============================
     // 2. VALIDATE USER
     // ==============================
-    try {
-      await httpClient.get(
-        `${process.env.USER_SERVICE_URL}/users/${userId}`,
-        { headers: { Authorization: req.headers.authorization } }
-      );
-    } catch {
-      errors.push("User not found");
+    // Only validate user if userId is provided (staff bookings may not have userId)
+    if (userId) {
+      try {
+        await httpClient.get(
+          `${process.env.USER_SERVICE_URL}/users/${userId}`,
+          { headers: { Authorization: req.headers.authorization } }
+        );
+      } catch {
+        errors.push("User not found");
+      }
     }
 
     // ==============================
@@ -105,6 +108,7 @@ export const Registeration: any = asyncHandler(
       patient_place,
       patient_phone,
       userId,
+      patientId,
       hospitalId,
       doctorId,
       booking_date,
@@ -114,7 +118,7 @@ export const Registeration: any = asyncHandler(
       booking_status: booking_status || "user booking",
       status,
       token,
-      patientId
+
     });
 
     // ==============================
@@ -279,7 +283,7 @@ export const updateData: any = asyncHandler(
       
 
 
-      
+
       const eventPayload = {
         bookingId: updatedBooking.id,
         userId: updatedBooking.userId,

@@ -1,5 +1,5 @@
 # -------- BUILD STAGE --------
-FROM node:20-alpine AS builder
+FROM public.ecr.aws/docker/library/node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -8,14 +8,14 @@ RUN apk add --no-cache python3 make g++
 
 COPY package*.json .npmrc* ./
 
-RUN npm install --include=dev
+RUN npm install --include=dev --legacy-peer-deps
 
 COPY . .
 
 RUN npm run build
 
 # -------- PRODUCTION STAGE --------
-FROM node:20-alpine
+FROM public.ecr.aws/docker/library/node:20-alpine
 
 WORKDIR /app
 
@@ -25,7 +25,7 @@ ENV NODE_ENV=production
 COPY package*.json .npmrc* ./
 
 # Install only production dependencies
-RUN npm install --omit=dev && rm -f .npmrc
+RUN npm install --omit=dev --legacy-peer-deps && rm -f .npmrc
 
 # Copy compiled code
 COPY --from=builder /app/dist ./dist
@@ -43,3 +43,5 @@ HEALTHCHECK --interval=30s --timeout=3s \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3015/health || exit 1
 
 CMD ["sh", "-c", "npx sequelize-cli db:migrate && node dist/server.js"]
+
+

@@ -12,10 +12,8 @@ const startServer = async () => {
         await connectDB();
         await connectRabbitMQ();
         
-        // Ensure table exists safely
-        const { default: Ad } = await import("./models/ad.model");
-        await Ad.sync({ alter: true });
         
+
         // Starting blood Service
         app.listen(PORT, () => {
             logger.info(`🚀 Ad Service is running on port ${PORT}`);

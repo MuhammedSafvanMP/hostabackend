@@ -1,5 +1,5 @@
 # # -------- BUILD STAGE --------
-# FROM node:20-alpine AS builder
+# FROM public.ecr.aws/docker/library/node:20-alpine AS builder
 
 # WORKDIR /app
 
@@ -8,14 +8,14 @@
 
 # COPY package*.json .npmrc* ./
 
-# RUN npm install --include=dev
+# RUN npm install --include=dev --legacy-peer-deps
 
 # COPY . .
 
 # RUN npm run build
 
 # # -------- PRODUCTION STAGE --------
-# FROM node:20-alpine
+# FROM public.ecr.aws/docker/library/node:20-alpine
 
 # WORKDIR /app
 
@@ -25,7 +25,7 @@
 # COPY package*.json .npmrc* ./
 
 # # Install only production dependencies
-# RUN npm ci --omit=dev && rm -f .npmrc
+# RUN npm install --omit=dev && rm -f .npmrc
 
 # # Copy compiled code
 # COPY --from=builder /app/dist ./dist
@@ -45,7 +45,7 @@
 
 
 
-FROM node:18-slim
+FROM public.ecr.aws/docker/library/node:18-slim
 
 WORKDIR /app
 
@@ -58,9 +58,11 @@ COPY . .
 
 RUN npm run build
 
-EXPOSE 3019
+EXPOSE 3017
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD curl -f http://localhost:3019/health || exit 1
+  CMD curl -f http://localhost:3017/health || exit 1
 
 CMD ["npm", "start"]
+
+

@@ -12,10 +12,8 @@ const startServer = async () => {
         await connectDB();
         await connectRabbitMQ();
         
-        // Ensure table exists safely (optional: switch to migrations entirely in production)
-        const { default: MedicineSchedule } = await import("./models/medicinremainder.model");
-        await MedicineSchedule.sync({ alter: true });
         
+
         // Starting Medicine Remainder Service
         const server = app.listen(PORT, () => {
             logger.info(`🚀 Medicinremainder Service is running on port ${PORT}`);

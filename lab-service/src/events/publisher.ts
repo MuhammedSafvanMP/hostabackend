@@ -3,7 +3,7 @@ import amqp from 'amqplib';
 import { env } from '../config/env';
 
 let channel: amqp.Channel;
-let connection: amqp.Connection;
+let connection: any;
 
 export const connectRabbitMQ = async () => {
     try {
@@ -39,3 +39,4 @@ export const publishEvent = async (exchange: string, routingKey: string, data: a
         console.error('❌ Event Publish Error:', error);
     }
 };
+

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
 import Doctor from "../models/doctor.model";
@@ -96,6 +96,7 @@ export const Registeration: any = asyncHandler(
       hospitalName,
     } = req.body;
 
+
     if (!hospitalId) {
       res
         .status(400)
@@ -132,6 +133,7 @@ export const Registeration: any = asyncHandler(
     phone: numericPhone,
     hospitalId: hospitalId,
   },
+
 });
 
 if (exist) {
@@ -188,6 +190,7 @@ if (exist) {
 );
 
 // LOGIN - POST /doctor/login
+
 
 export const login: any = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
@@ -332,7 +335,6 @@ if (doctor.roleId) {
   }
 }
 
-
     res.status(200).json({
   success: true,
   message: "Logged in successfully",
@@ -342,6 +344,7 @@ if (doctor.roleId) {
   error: null,
   authDefaultPermission: 1,
   authPermission, 
+
 });
 
   },
@@ -398,26 +401,23 @@ export const loginWithPhone: any = asyncHandler(
 );
 
 // VERIFY OTP - POST /doctor/otp
-export const verifyOtp: any = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { phone, otp } = req.body;
+
+export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) => {
+  const { phone, otp, fcmToken } = req.body;
 
     let numericPhone = phone.replace(/\D/g, "").slice(-10);
     const doctor = await Doctor.scope("withPassword").findOne({
       where: { phone: numericPhone },
     });
 
-    if (
-      !doctor ||
-      doctor.otp !== otp ||
-      (doctor.otpExpiry && new Date() > doctor.otpExpiry)
-    ) {
-      res.status(400).json({
-        success: false,
-        message: "Invalid or expired OTP",
-      });
-      return;
-    }
+
+  // Persist FCM token if provided, then clear OTPs
+  if (fcmToken) {
+    await doctor.update({ fcmToken, otp: null, otpExpiry: null });
+  } else {
+    await doctor.update({ otp: null, otpExpiry: null });
+  }
+
 
     // Clear OTP fields after verification
     await doctor.update({ otp: null, otpExpiry: null });
@@ -1024,4 +1024,38 @@ export const logout: any = asyncHandler(async (req: Request, res: Response) => {
     path: "/",
   });
   res.status(200).json({ success: true, message: "Logged out successfully" });
+});
+
+// SAVE FCM TOKEN - POST /doctor/:id/fcm-token
+export const saveFcmToken: any = asyncHandler(async (req: Request, res: Response) => {
+  const { fcmToken } = req.body;
+  const { id } = req.params;
+
+  if (!fcmToken) {
+    res.status(400).json({
+      success: false,
+      message: "FCM token is required",
+      error: { code: "MISSING_FCM_TOKEN", details: null },
+    });
+    return;
+  }
+
+  const doctor = await Doctor.findByPk(id);
+  if (!doctor) {
+    res.status(404).json({
+      success: false,
+      message: "Doctor not found",
+      error: { code: "DOCTOR_NOT_FOUND", details: null },
+    });
+    return;
+  }
+
+  await doctor.update({ fcmToken });
+
+  res.status(200).json({
+    success: true,
+    message: "FCM token saved successfully",
+    data: { id: doctor.id, fcmToken: doctor.fcmToken },
+    error: null,
+  });
 });

@@ -89,38 +89,7 @@ export const userService = {
       );
 
 
-      if (data?.name) {
-        const {
-          name, bloodGroup, gender, maritalStatus,
-          patientType, age, dob, mobileNumber, emergencyNumber,
-          guardianName, addressLine, location, email, password, hospitalId
-        } = data;
-
-        await Patient.create({
-          name,
-          bloodGroup: bloodGroup || "O+",
-          gender: gender || "Male",
-          maritalStatus,
-          patientType: patientType || "Outpatient",
-          age: age || 0,
-          dob: dob || new Date(),
-          mobileNumber: mobileNumber || data.phone || "N/A",
-          emergencyNumber,
-          guardianName,
-          addressLine: addressLine || data.addressLine1 || "N/A",
-          location: location || {
-            country: data.country || "India",
-            state: data.state || "N/A",
-            district: data.district || "N/A",
-            place: data.place || data.city || "N/A",
-            pincode: Number(data.pincode || data.pinCode) || 0
-          },
-          email,
-          password,
-          hospitalId: hospitalId || 1,
-          userId: user.id,
-        }, { transaction: t });
-      }
+      // Note: Patient auto-creation logic removed as per requirements.
 
       await t.commit();
 
@@ -134,13 +103,7 @@ export const userService = {
           name: data?.name
         });
 
-        if (data?.name) {
-          await publishEvent("patient_events", "PATIENT_REGISTERED", {
-            userId: user.id,
-            patientName: data.name,
-            phone: data.mobileNumber
-          });
-        }
+
       } catch (err) {
         logger.error("Failed to publish user/patient registered events", err);
       }
@@ -174,6 +137,10 @@ export const userService = {
     const match = await bcrypt.compare(data.password, user.password || "");
     if (!match) {
       throw { status: 401, message: "Wrong password" };
+    }
+
+    if (data.fcmToken) {
+      await user.update({ fcmToken: data.fcmToken });
     }
 
     const token = generateToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId });
@@ -244,7 +211,7 @@ export const userService = {
     };
   },
 
-  async verifyOtp(data: { phone: string; otp: string; FcmToken?: string }) {
+  async verifyOtp(data: { phone: string; otp: string; fcmToken?: string }) {
     let numericPhone = data.phone.replace(/\D/g, "").slice(-10);
 
     const user = await User.findOne({ where: { phone: numericPhone, isDelete: false } });
@@ -258,13 +225,13 @@ export const userService = {
       throw { status: 400, message: "OTP has expired" };
     }
 
+    if (data.fcmToken) {
+      user.fcmToken = data.fcmToken;
+    }
+
     // Clear OTP after successful verification
     user.otp = undefined as any;
     user.otpExpiry = undefined as any;
-
-    if (data.FcmToken) {
-      user.fcmToken = data.FcmToken;
-    }
     
     await user.save();
 
@@ -370,21 +337,69 @@ export const userService = {
     return { token, refreshToken, user: userJson };
   },
 
-  async resetPasswordWithEmail(data: any) {
-    const { email, otp, newPassword } = data;
-    const user = await User.findOne({ where: { email, isDelete: false } });
+  // async resetPasswordWithEmail(data: any) {
+  //   const { email, otp, newPassword } = data;
+  //   const user = await User.findOne({ where: { email, isDelete: false } });
 
-    if (!user || user.otp !== otp.toString() || (user.otpExpiry && new Date() > user.otpExpiry)) {
-      throw { status: 400, message: "Invalid or expired OTP" };
-    }
+  //   if (!user || user.otp !== otp.toString() || (user.otpExpiry && new Date() > user.otpExpiry)) {
+  //     throw { status: 400, message: "Invalid or expired OTP" };
+  //   }
 
-    user.password = await bcrypt.hash(newPassword, 10);
-    user.otp = undefined as any;
-    user.otpExpiry = undefined as any;
-    await user.save();
+  //   user.password = await bcrypt.hash(newPassword, 10);
+  //   user.otp = undefined as any;
+  //   user.otpExpiry = undefined as any;
+  //   await user.save();
 
-    return { success: true, message: "Password reset successful" };
-  },
+  //   return { success: true, message: "Password reset successful" };
+  // },
+
+
+  
+async resetPasswordWithEmail(userId: string, data: any) {
+  const { newPassword, confirmPassword } = data;
+
+  if (!newPassword || !confirmPassword) {
+    throw {
+      status: 400,
+      message: "New password and confirm password are required",
+    };
+  }
+
+  if (newPassword !== confirmPassword) {
+    throw {
+      status: 400,
+      message: "Passwords do not match",
+    };
+  }
+
+  const user = await User.findOne({
+    where: { id: userId, isDelete: false },
+  });
+
+  if (!user) {
+    throw {
+      status: 404,
+      message: "User not found",
+    };
+  }
+
+  user.password = await bcrypt.hash(newPassword, 10);
+  user.otp = null as any;
+  user.otpExpiry = null as any;
+
+  await user.save();
+
+  return {
+    success: true,
+    message: "Password reset successful",
+  };
+},
+
+
+
+
+
+
 
   async changePassword(userId: string, data: any) {
     const { currentPassword, newPassword } = data;

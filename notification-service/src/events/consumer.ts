@@ -11,7 +11,7 @@ import { handleAdEvent } from "../handlers/ad.handler";
 import { handleAmbulanceEvent } from "../handlers/ambulance.handler";
 import { handleBloodEvent } from "../handlers/blood.handler";
 
-let connection: amqp.Connection;
+let connection: any;
 let channel: amqp.Channel;
 let isReconnecting = false;
 
@@ -105,6 +105,8 @@ export const startConsumer = async () => {
         await channel.bindQueue(queue, "booking_events", "BOOKING_REGISTERED");
         await channel.bindQueue(queue, "booking_events", "BOOKING_UPDATED");
         await channel.bindQueue(queue, "booking_events", "BOOKING_CANCELLED");
+        await channel.bindQueue(queue, "booking_events", "BOOKING_ACCEPTED");
+        await channel.bindQueue(queue, "booking_events", "BOOKING_COMPLETED");
 
         // 3. Doctor
         await channel.assertExchange("doctor_events", "direct", { durable: true });

@@ -1,5 +1,5 @@
 # # # # # -------- BUILD STAGE --------
-# # # # FROM node:20-alpine AS builder
+# # # # FROM public.ecr.aws/docker/library/node:20-alpine AS builder
 
 # # # # WORKDIR /app
 
@@ -8,14 +8,14 @@
 
 # # # # COPY package*.json .npmrc* ./
 
-# # # # RUN npm install --include=dev
+# # # # RUN npm install --include=dev --legacy-peer-deps
 
 # # # # COPY . .
 
 # # # # RUN npm run build
 
 # # # # # -------- PRODUCTION STAGE --------
-# # # # FROM node:20-alpine
+# # # # FROM public.ecr.aws/docker/library/node:20-alpine
 
 # # # # WORKDIR /app
 
@@ -25,7 +25,7 @@
 # # # # COPY package*.json .npmrc* ./
 
 # # # # # Install only production dependencies
-# # # # RUN npm ci --omit=dev && rm -f .npmrc
+# # # # RUN npm install --omit=dev && rm -f .npmrc
 
 # # # # # Copy compiled code
 # # # # COPY --from=builder /app/dist ./dist
@@ -47,7 +47,7 @@
 
 
 # # # # -------- BUILD STAGE --------
-# # # FROM node:20-alpine AS builder
+# # # FROM public.ecr.aws/docker/library/node:20-alpine AS builder
 
 # # # WORKDIR /app
 
@@ -55,7 +55,7 @@
 
 # # # COPY package*.json ./
 
-# # # RUN npm install --include=dev --legacy-peer-deps
+# # # RUN npm install --include=dev --legacy-peer-deps --legacy-peer-deps
 
 # # # COPY . .
 
@@ -63,7 +63,7 @@
 
 
 # # # # -------- PRODUCTION STAGE --------
-# # # FROM node:20-alpine
+# # # FROM public.ecr.aws/docker/library/node:20-alpine
 
 # # # WORKDIR /app
 
@@ -72,7 +72,7 @@
 # # # COPY package*.json ./
 
 # # # # ✅ SAFE INSTALL (fixes your error)
-# # # RUN npm install --omit=dev --legacy-peer-deps
+# # # RUN npm install --omit=dev --legacy-peer-deps --legacy-peer-deps
 
 # # # COPY --from=builder /app/dist ./dist
 # # # COPY --from=builder /app/config ./config
@@ -92,7 +92,7 @@
 
 
 # # # -------- BUILD STAGE --------
-# # FROM node:20-alpine AS builder
+# # FROM public.ecr.aws/docker/library/node:20-alpine AS builder
 
 # # WORKDIR /app
 
@@ -101,14 +101,14 @@
 
 # # COPY package*.json .npmrc* ./
 
-# # RUN npm install --include=dev
+# # RUN npm install --include=dev --legacy-peer-deps
 
 # # COPY . .
 
 # # RUN npm run build
 
 # # # -------- PRODUCTION STAGE --------
-# # FROM node:20-alpine
+# # FROM public.ecr.aws/docker/library/node:20-alpine
 
 # # WORKDIR /app
 
@@ -118,7 +118,7 @@
 # # COPY package*.json .npmrc* ./
 
 # # # Install only production dependencies
-# # RUN npm install --omit=dev && rm -f .npmrc
+# # RUN npm install --omit=dev --legacy-peer-deps && rm -f .npmrc
 
 # # # Copy compiled code
 # # COPY --from=builder /app/dist ./dist
@@ -142,7 +142,7 @@
 
 
 # # -------- BUILD STAGE --------
-# FROM node:20-alpine AS builder
+# FROM public.ecr.aws/docker/library/node:20-alpine AS builder
 
 # WORKDIR /app
 
@@ -151,14 +151,14 @@
 
 # COPY package*.json .npmrc* ./
 
-# RUN npm install --include=dev
+# RUN npm install --include=dev --legacy-peer-deps
 
 # COPY . .
 
 # RUN npm run build
 
 # # -------- PRODUCTION STAGE --------
-# FROM node:20-alpine
+# FROM public.ecr.aws/docker/library/node:20-alpine
 
 # WORKDIR /app
 
@@ -168,7 +168,7 @@
 # COPY package*.json .npmrc* ./
 
 # # Install only production dependencies
-# RUN npm install --omit=dev && rm -f .npmrc
+# RUN npm install --omit=dev --legacy-peer-deps && rm -f .npmrc
 
 # # Copy compiled code
 # COPY --from=builder /app/dist ./dist
@@ -192,7 +192,7 @@
 
 
 # -------- BUILD STAGE --------
-FROM node:20-alpine AS builder
+FROM public.ecr.aws/docker/library/node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -201,14 +201,14 @@ RUN apk add --no-cache python3 make g++
 
 COPY package*.json .npmrc* ./
 
-RUN npm install --include=dev
+RUN npm install --include=dev --legacy-peer-deps
 
 COPY . .
 
 RUN npm run build
 
 # -------- PRODUCTION STAGE --------
-FROM node:20-alpine
+FROM public.ecr.aws/docker/library/node:20-alpine
 
 WORKDIR /app
 
@@ -217,7 +217,7 @@ ENV NODE_ENV=production
 COPY package*.json .npmrc* ./
 
 # Install only production dependencies
-RUN npm install --omit=dev && rm -f .npmrc
+RUN npm install --omit=dev --legacy-peer-deps && rm -f .npmrc
 
 # Copy everything from builder
 COPY --from=builder /app ./
@@ -232,3 +232,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3011/health', (res) => res.statusCode === 200 ? process.exit(0) : process.exit(1)).on('error', () => process.exit(1))"
 
 CMD ["sh", "-c", "npx sequelize-cli db:migrate && node dist/server.js"]
+
+

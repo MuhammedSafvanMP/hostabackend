@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../config/db";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 /* =======================
    INTERFACES
@@ -70,13 +70,13 @@ interface IDoctor {
   deleteDate?: Date;
   otp?: string;
   otpExpiry?: Date;
+  fcmToken?: string;
   hospitalId?: number;
   imageUrl?: string; 
   experience?: string;
   regNo?: string;
   autoDecline?: number;
   appointmentCount?: number;
-  fcmToken: string;
 }
 
 /* =======================
@@ -97,6 +97,7 @@ class Doctor
   implements IDoctor
 {
   public id!: number;
+  public hospitalName!: string;
   public firstName!: string;
   public lastName!: string;
   public department?: string;
@@ -127,8 +128,8 @@ class Doctor
   public regNo?: string;
   public autoDecline?: number;
   public appointmentCount?: number;
-  public hospitalName: string;
   public fcmToken: string;
+
 
 }
 
@@ -147,6 +148,10 @@ Doctor.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    hospitalName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
 
     firstName: {
       type: DataTypes.STRING,
@@ -163,10 +168,6 @@ Doctor.init(
       allowNull: false,
     },
 
-      hospitalName: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
 
     department: {
       type: DataTypes.STRING,
@@ -218,6 +219,7 @@ Doctor.init(
       type: DataTypes.STRING, // 🔥 store imageUrl + public_id
       allowNull: true
     },
+
     password: {
       type: DataTypes.STRING,
     },
@@ -297,6 +299,9 @@ Doctor.init(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    
+    
+
 
 
   },
@@ -317,7 +322,9 @@ Doctor.init(
       },
     },
 
+
 indexes: [
+
   {
     unique: true,
     fields: ["hospitalId", "phone"],

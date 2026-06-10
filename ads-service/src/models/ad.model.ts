@@ -45,10 +45,8 @@ Ad.init(
 
     imageUrl: {
       type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        isUrl: true,
-      },
+      allowNull: true,
+     
     },
 
     startDate: {

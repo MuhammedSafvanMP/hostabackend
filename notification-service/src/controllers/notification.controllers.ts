@@ -406,6 +406,43 @@ import { Op } from "sequelize";
 import Notification from "../models/notification.model";
 import { publishEvent } from "../events/publisher";
 
+const authorizeSelfAccess = (
+  req: any,
+  role: string,
+  requestedId: string,
+  res: Response
+) => {
+  const tokenId = Number(req.user?.id);
+  const tokenRole = req.user?.role;
+  const numericRequestedId = Number(requestedId);
+
+  if (!req.user || Number.isNaN(tokenId) || Number.isNaN(numericRequestedId)) {
+    res.status(401).json({
+      success: false,
+      message: "Unauthorized",
+    });
+    return false;
+  }
+
+  if (tokenRole !== role && tokenRole !== "superadmin") {
+    res.status(403).json({
+      success: false,
+      message: "Forbidden: role mismatch",
+    });
+    return false;
+  }
+
+  if (tokenRole !== "superadmin" && tokenId !== numericRequestedId) {
+    res.status(403).json({
+      success: false,
+      message: "Forbidden: you can only access your own notifications",
+    });
+    return false;
+  }
+
+  return true;
+};
+
 /* =========================================================
    CREATE NOTIFICATION
    POST /notification
@@ -548,9 +585,13 @@ export const getNotification: any = asyncHandler(
 ========================================================= */
 
 export const getRoleNotifications: any = asyncHandler(
-  async (req: Request, res: Response) => {
+  async (req: any, res: Response) => {
 
     const { role, id } = req.params;
+
+    if (!authorizeSelfAccess(req, role, id, res)) {
+      return;
+    }
 
     const numericId = Number(id);
 
@@ -662,13 +703,17 @@ export const getRoleNotifications: any = asyncHandler(
 ========================================================= */
 
 export const markAsRead: any = asyncHandler(
-  async (req: Request, res: Response) => {
+  async (req: any, res: Response) => {
 
     const {
       notificationId,
       role,
       userId,
     } = req.params;
+
+    if (!authorizeSelfAccess(req, role, userId, res)) {
+      return;
+    }
 
     const notification =
       await Notification.findByPk(notificationId);

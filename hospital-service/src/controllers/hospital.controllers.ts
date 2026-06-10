@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
 import Hospital from "../models/hospital.model";
@@ -73,10 +73,25 @@ export const sendOtpEmail = async (email: string, otp: string, hospitalName: str
 
 // REGISTER - POST /hospital/register
 export const Registeration: any = asyncHandler(async (req: Request, res: Response) => {
-  const { name, type, address, phone, emergencyContact, email, password, latitude, longitude,  about,  working_hours_clinic, working_hours_general,  working_hours_clinic_nobreak, web } = req.body;
-  
+  const {
+    name,
+    type,
+    address,
+    phone,
+    emergencyContact,
+    email,
+    password,
+    latitude,
+    longitude,
+    about,
+    working_hours_clinic,
+    working_hours_general,
+    working_hours_clinic_nobreak,
+    web,
+    fcmToken,
+  } = req.body;
 
-  const exist = await Hospital.findOne({ where: { phone: phone } });
+  const exist = await Hospital.findOne({ where: { phone } });
   if (exist) {
     res.status(404).json({
       success: false,
@@ -88,20 +103,21 @@ export const Registeration: any = asyncHandler(async (req: Request, res: Respons
   }
 
   const newHospital = await Hospital.create({
-   name, 
-   phone, 
-   email, 
-   password, 
-   type,
-   emergencyContact,
-   latitude,
-   longitude,
-   about,
-   working_hours_clinic,
-   working_hours_general, 
-   address, 
-   working_hours_clinic_nobreak,
-   web
+    name,
+    phone,
+    email,
+    password,
+    type,
+    emergencyContact,
+    latitude,
+    longitude,
+    about,
+    working_hours_clinic,
+    working_hours_general,
+    address,
+    working_hours_clinic_nobreak,
+    web,
+    fcmToken,
   });
 
   await publishEvent("hospital_events", "HOSPITAL_REGISTERED", {
@@ -122,7 +138,7 @@ export const Registeration: any = asyncHandler(async (req: Request, res: Respons
 // LOGIN - POST /hospital/login
 export const login: any = asyncHandler(async (req: Request, res: Response) => {
   const { email, phone, password, fcmToken } = req.body;
-  
+
 
   if ((!email && !phone) || !password) {
     res.status(400).json({
@@ -179,6 +195,10 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     return;
   }
 
+  if (fcmToken) {
+    await hospital.update({ fcmToken });
+  }
+
   const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
   const token = jwt.sign({ id: hospital.id, name: hospital.name, role: "hospital", roleId: hospital.roleId, isRefresh: false }, jwtKey, {
     expiresIn: "15m",
@@ -218,6 +238,7 @@ res.status(200).json({
   authDefaultPermission: 1,
   authPermission, 
 });
+
 
 });
 
@@ -342,7 +363,7 @@ export const sendOtp: any = asyncHandler(async (req: Request, res: Response) => 
 
 // VERIFY OTP - POST /hospital/auth/verify-otp & /hospital/otp
 export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) => {
-  const { phone, email, otp } = req.body;
+  const { phone, email, otp, fcmToken } = req.body;
 
   if ((!phone && !email) || !otp) {
     res.status(400).json({ success: false, message: "Identifier (phone/email) and OTP are required" });
@@ -366,6 +387,10 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
   if (hospital.otpExpiry && new Date() > hospital.otpExpiry) {
     res.status(400).json({ success: false, message: "OTP has expired" });
     return;
+  }
+
+  if (fcmToken) {
+    await hospital.update({ fcmToken });
   }
 
   // Clear OTP after successful verification
@@ -986,7 +1011,6 @@ export const logout: any = asyncHandler(async (req: Request, res: Response) => {
   for (const url of services) {
     try {
       const response = await axios.post(url, payload);
-
       
 
       // IMPORTANT: check service success
@@ -1014,3 +1038,4 @@ export const logout: any = asyncHandler(async (req: Request, res: Response) => {
   });
   return;
 });
+

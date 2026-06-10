@@ -32,7 +32,7 @@ export const connectDB = async () => {
 
     // ❌ REMOVE THIS IN PRODUCTION
     if (!isProduction) {
-      await sequelize.sync({ alter: true });
+      // await sequelize.sync({ alter: true });
       console.log("🚀 Database schema synchronized");
     }
 
