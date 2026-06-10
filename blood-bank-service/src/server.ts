@@ -17,9 +17,7 @@ const startServer = async () => {
         
         // 📡 Start Listening for Events
         await startSubscriber();
-        // Ensure tables are in sync
-        const { default: BloodBank } = await import("./models/bloodBank.model");
-        await BloodBank.sync({ alter: true });
+        
 
         // Starting Blood Bank Service
         const server = app.listen(PORT, () => {

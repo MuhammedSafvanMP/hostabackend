@@ -15,9 +15,6 @@ const startServer = async () => {
         const { startConsumer } = await import("./events/consumer");
         await startConsumer();
 
-        // Ensure table exists safely
-        const { default: Notification } = await import("./models/notification.model");
-        await Notification.sync({ alter: true });
 
         app.listen(PORT, () => {
             logger.info(`🚀 Notification Service is running on port ${PORT}`);
