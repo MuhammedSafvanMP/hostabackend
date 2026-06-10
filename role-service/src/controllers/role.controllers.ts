@@ -305,8 +305,9 @@ export const getRole = asyncHandler(async (req: Request, res: Response): Promise
 
   const admin = await Role.findAll({
     limit: 5,
-    order: [["createdAt", "DESC"]],
+    order: [["createdAt", "ASC"]],
   });
+
 
   if (role.count === 0) {
      res.status(404).json({

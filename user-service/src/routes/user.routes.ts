@@ -35,6 +35,15 @@ import {
 } from "../controllers/prescription.controller";
 
 import {
+addVitals,
+deleteVitals,
+getLatestVitals,
+getVitalsById,
+getVitalsByPatient,
+updateVitals
+} from "../controllers/patientVitals.controller";
+
+import {
   createLabResult,
   getLabResults,
   getLabResult,
@@ -97,11 +106,20 @@ router.delete("/patients/:id", authenticate, checkPermission("patient", "delete"
 
 // Prescription
 
-router.post("/prescription", authenticate, checkPermission("prescription", "create"), createPrescription);
+router.post("/prescription",  createPrescription);
 router.get("/prescription", authenticate, checkPermission("prescription", "view"), getPrescription);
 router.get("/prescription/:id", authenticate, checkPermission("prescription", "view"), getAPrescription);
 router.put("/prescription/:id", authenticate, checkPermission("prescription", "edit"), updateData);
 router.delete("/prescription/:id", authenticate, checkPermission("prescription", "delete"), deletePrescription);
+
+
+router.post("/vitals",  addVitals);
+router.get("/vitals", authenticate, checkPermission("vitals", "view"),getLatestVitals);
+router.get("/vitals/:id", authenticate, checkPermission("vitals", "view"), getVitalsById);
+router.put("/vitals/:id", authenticate, checkPermission("vitals", "edit"), updateVitals);
+router.get("/vitals/patient/:patientId",  getVitalsByPatient);
+router.delete("/vitals/:id", authenticate, checkPermission("vitals", "delete"), deleteVitals);
+
 
 // Lab Result
 router.post("/lab-results", authenticate, checkPermission("labresult", "create"), createLabResult);

@@ -50,7 +50,8 @@ PatientVitals.init(
     },
     prescriptionId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
+
     },
 
     temperature: DataTypes.FLOAT,
