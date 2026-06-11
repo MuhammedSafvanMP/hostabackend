@@ -125,12 +125,15 @@ export const getPrescription = asyncHandler(
     });
 
      const demoPrescription = await Prescription.findAll({
-    limit: 1,
+      where:{
+      templateType: "demo"
+      }, 
+     
     order: [["createdAt", "ASC"]],
   });
+  
 
-
-  if (demoPrescription.length === 0) {
+  if (prescriptions.length === 0) {
      res.status(404).json({
       success: false,
       message: "No data found",
@@ -145,6 +148,7 @@ export const getPrescription = asyncHandler(
     res.status(200).json({
       success: true,
       data: prescriptions,
+      demoPrescription,
       error: null,
     });
   }
