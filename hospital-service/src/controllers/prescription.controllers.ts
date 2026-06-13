@@ -12,18 +12,7 @@ dotenv.config();
 export const Registeration = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const {
-      bgColor,
-      textColor,
-      textAlign,
-      fontWeight,
-      fontSize,
-      editable,
-      height,
-      width,
-      y,
-      x,
-      content,
-      type,
+    design,
       templateType,
       hospitalId,
     } = req.body;
@@ -68,21 +57,13 @@ export const Registeration = asyncHandler(
 
     // Create prescription
     const newPrescription = await Prescription.create({
-      bgColor,
-      textColor,
-      textAlign,
-      fontWeight,
-      fontSize,
-      editable,
-      height,
-      width,
-      y,
-      x,
-      content,
-      type,
+    hospitalId,
       templateType,
-      hospitalId,
+       design
     });
+
+
+
 
     // Publish event
     await publishEvent(
@@ -260,18 +241,7 @@ export const updatePrescription = asyncHandler(
     const { id } = req.params;
 
     const {
-      bgColor,
-      textColor,
-      textAlign,
-      fontWeight,
-      fontSize,
-      editable,
-      height,
-      width,
-      y,
-      x,
-      content,
-      type,
+        design,
       templateType,
       hospitalId,
     } = req.body;
@@ -316,18 +286,7 @@ export const updatePrescription = asyncHandler(
 
     // Update
     await prescription.update({
-      bgColor,
-      textColor,
-      textAlign,
-      fontWeight,
-      fontSize,
-      editable,
-      height,
-      width,
-      y,
-      x,
-      content,
-      type,
+        design,
       templateType,
       hospitalId,
     });
