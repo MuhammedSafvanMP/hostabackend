@@ -6,7 +6,7 @@ import { Op, literal } from "sequelize";
 import { publishEvent } from "../events/publisher";
 dotenv.config();
 
-// ✅ Create Donor
+// ✅ Create ads
 export const createAd = async (req: Request, res: Response): Promise<any> => {
   try {
     const { imageUrl, startDate, endDate, kilometer, hospitalId } = req.body;
