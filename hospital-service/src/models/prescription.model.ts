@@ -136,6 +136,11 @@ TemplateItem.init(
       allowNull: false,
       defaultValue: [],
     },
+    canvasBg:
+    {
+      type: DataTypes.STRING,
+      defaultValue: "FFFFFF"
+    },
   },
   {
     sequelize,
