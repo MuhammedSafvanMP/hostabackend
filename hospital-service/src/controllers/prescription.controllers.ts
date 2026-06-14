@@ -12,20 +12,10 @@ dotenv.config();
 export const Registeration = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const {
-      bgColor,
-      textColor,
-      textAlign,
-      fontWeight,
-      fontSize,
-      editable,
-      height,
-      width,
-      y,
-      x,
-      content,
-      type,
+    design,
       templateType,
       hospitalId,
+      canvasBg
     } = req.body;
 
     // Check hospital
@@ -68,21 +58,14 @@ export const Registeration = asyncHandler(
 
     // Create prescription
     const newPrescription = await Prescription.create({
-      bgColor,
-      textColor,
-      textAlign,
-      fontWeight,
-      fontSize,
-      editable,
-      height,
-      width,
-      y,
-      x,
-      content,
-      type,
+    hospitalId,
       templateType,
-      hospitalId,
+       design,
+       canvasBg
     });
+
+
+
 
     // Publish event
     await publishEvent(
@@ -125,12 +108,15 @@ export const getPrescription = asyncHandler(
     });
 
      const demoPrescription = await Prescription.findAll({
-    limit: 1,
+      where:{
+      templateType: "demo"
+      }, 
+     
     order: [["createdAt", "ASC"]],
   });
+  
 
-
-  if (demoPrescription.length === 0) {
+  if (prescriptions.length === 0) {
      res.status(404).json({
       success: false,
       message: "No data found",
@@ -145,6 +131,7 @@ export const getPrescription = asyncHandler(
     res.status(200).json({
       success: true,
       data: prescriptions,
+      demoPrescription,
       error: null,
     });
   }
@@ -256,20 +243,10 @@ export const updatePrescription = asyncHandler(
     const { id } = req.params;
 
     const {
-      bgColor,
-      textColor,
-      textAlign,
-      fontWeight,
-      fontSize,
-      editable,
-      height,
-      width,
-      y,
-      x,
-      content,
-      type,
+        design,
       templateType,
       hospitalId,
+      canvasBg,
     } = req.body;
 
     // Check prescription
@@ -312,20 +289,10 @@ export const updatePrescription = asyncHandler(
 
     // Update
     await prescription.update({
-      bgColor,
-      textColor,
-      textAlign,
-      fontWeight,
-      fontSize,
-      editable,
-      height,
-      width,
-      y,
-      x,
-      content,
-      type,
+        design,
       templateType,
       hospitalId,
+      canvasBg,
     });
 
     // Publish event
