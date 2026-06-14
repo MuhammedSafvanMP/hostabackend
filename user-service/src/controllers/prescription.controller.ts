@@ -16,17 +16,8 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
  
 
   const { bookingId, hospitalId, doctorId, patientId, userId, complaint, medications, investigations, advice, next_consultation, empty_stomach, prescribedBy,
-     type,
-  content,
-  x,
-  y,
-  width,
-  templateHeight,
-  fontSize,
-  fontWeight,
-  textAlign,
-  textColor,
-  bgColor,
+    canvasBg,
+  design,
     } = req.body;
 
       const {
@@ -142,17 +133,8 @@ try {
   const prescription = await Prescription.create({
 
     bookingId, hospitalId, doctorId, patientId: finalPatientId, userId: finalUserId, complaint, medications, investigations, advice, next_consultation, empty_stomach, prescribedBy, 
-    type,
-  content,
-  x,
-  y,
-  width,
-  height: templateHeight,
-  fontSize,
-  fontWeight,
-  textAlign,
-  textColor,
-  bgColor,
+   canvasBg,
+  design,
   });
 
 
