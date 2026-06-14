@@ -122,6 +122,11 @@ TemplateItem.init(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    canvasBg:
+    {
+      type: DataTypes.STRING,
+      defaultValue: "FFFFFF"
+    },
 
    templateType: {
       type: DataTypes.ENUM(
@@ -136,11 +141,13 @@ TemplateItem.init(
       allowNull: false,
       defaultValue: [],
     },
+
     canvasBg:
     {
       type: DataTypes.STRING,
       defaultValue: "FFFFFF"
     },
+
   },
   {
     sequelize,
@@ -150,13 +157,7 @@ TemplateItem.init(
   }
 );
 
+
 export default TemplateItem;
-
-
-
-
-
-
-
 
 
