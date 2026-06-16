@@ -9,7 +9,6 @@ export const createDocument: any = asyncHandler(async (req: Request, res: Respon
     patientId,
     name,
     date,
-    imageUrl,
   });
 
   res.status(201).json({
