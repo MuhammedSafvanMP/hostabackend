@@ -141,8 +141,6 @@ export const createDonor: any = asyncHandler(async (req: any, res: Response) => 
     name,
   };
 
-  console.log("Request Body:", req.body);
-  console.log("Donor Data:", donorData);
 
   const donor = await BloodDonor.create(donorData as any);
 

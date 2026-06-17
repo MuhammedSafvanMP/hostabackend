@@ -19,7 +19,7 @@ module.exports = {
         },
         labId: {
           type: Sequelize.INTEGER,
-          allowNull: false,
+          allowNull: true,
         },
         hospitalId: {
           type: Sequelize.INTEGER,

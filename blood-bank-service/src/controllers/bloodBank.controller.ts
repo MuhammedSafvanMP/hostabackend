@@ -189,5 +189,11 @@ export const deleteStockById = asyncHandler(async (req: Request, res: Response) 
   // Soft Delete (paranoid mode)
   await stock.destroy();
 
+     await publishEvent("blood_bank_events", "STOCK_DELETED", {
+      hospitalId: stock.hospitalId,
+      bloodGroup: stock.bloodGroup,
+      count: stock.count || 0
+    });
+
   res.status(200).json({ success: true, message: "Inventory record soft-deleted successfully" });
 });

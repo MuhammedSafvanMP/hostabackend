@@ -241,6 +241,9 @@ export const roleDelete: any = asyncHandler(async (req: Request, res: Response) 
     where: { id: id }
   });
 
+    await publishEvent("role_events", "ROLE_DELETED", {
+    roleId: role.id,
+  });
 
   res.status(200).json({
     success: true,

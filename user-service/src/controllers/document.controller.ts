@@ -3,7 +3,7 @@ import asyncHandler from "express-async-handler";
 import Document from "../models/document.model";
 
 export const createDocument: any = asyncHandler(async (req: Request, res: Response) => {
-  const { patientId, name, date, imageUrl } = req.body;
+  const { patientId, name, date } = req.body;
 
   const document = await Document.create({
     patientId,
@@ -18,22 +18,13 @@ export const createDocument: any = asyncHandler(async (req: Request, res: Respon
   });
 });
 
-// export const getDocuments: any = asyncHandler(async (req: Request, res: Response) => {
-//   const documents = await Document.findAll({
-//     where: { isActive: true },
-//     order: [["createdAt", "DESC"]],
-//   });
 
-//   res.status(200).json({
-//     success: true,
-//     data: documents,
-//   });
-// });
 
 export const getDocuments = asyncHandler(
   async (req: Request, res: Response) : Promise<void> => {
     const normalizeQuery = (value: any) =>
       Array.isArray(value) ? value[0] : value;
+
 
     let { patientId } = req.query;
 

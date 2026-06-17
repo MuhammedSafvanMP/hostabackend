@@ -274,7 +274,7 @@ export const userService = {
     }); // Move to blacklist
     
     // Broadcast to other services (like blood-service) so they can cleanup too
-    await publishEvent('user_events', 'user.deleted', { userId: id });
+    await publishEvent('user_events', 'USER_DELETED', { userId: id });
   },
 
   async resetPassword(data: any) {
@@ -441,6 +441,8 @@ async resetPasswordWithEmail(userId: string, data: any) {
 
     await user.update(data);
     const { password: _, ...updatedUser } = user.toJSON();
+        await publishEvent('user_events', 'USER_UPDATED', { userId: id });
+
     return updatedUser;
   }
 };
