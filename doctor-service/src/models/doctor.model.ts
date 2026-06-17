@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../config/db";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 /* =======================
    INTERFACES
@@ -43,7 +43,6 @@ interface IOutDoorConsulting {
 
 interface IDoctor {
   id: number;
-  
   firstName: string;
   lastName: string;
   department?: string;
@@ -54,6 +53,7 @@ interface IDoctor {
   password?: string;
   fees?: number;
   dob?: Date;
+  hospitalName: string;
   gender?: string;
   knowLanguages?: string[];
   qualification?: string;
@@ -70,6 +70,7 @@ interface IDoctor {
   deleteDate?: Date;
   otp?: string;
   otpExpiry?: Date;
+  fcmToken?: string;
   hospitalId?: number;
   imageUrl?: string; 
   experience?: string;
@@ -96,6 +97,7 @@ class Doctor
   implements IDoctor
 {
   public id!: number;
+  public hospitalName!: string;
   public firstName!: string;
   public lastName!: string;
   public department?: string;
@@ -126,6 +128,8 @@ class Doctor
   public regNo?: string;
   public autoDecline?: number;
   public appointmentCount?: number;
+  public fcmToken: string;
+
 
 }
 
@@ -144,6 +148,10 @@ Doctor.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    hospitalName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
 
     firstName: {
       type: DataTypes.STRING,
@@ -159,6 +167,7 @@ Doctor.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+
 
     department: {
       type: DataTypes.STRING,
@@ -187,15 +196,19 @@ Doctor.init(
     phone: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
       validate: {
         notEmpty: true,
       },
     },
 
+    
+        fcmToken: {
+      type: DataTypes.STRING,
+    },
+
+
     email: {
       type: DataTypes.STRING,
-      unique: true,
       allowNull: true,
       validate: {
         isEmail: true,
@@ -206,6 +219,7 @@ Doctor.init(
       type: DataTypes.STRING, // 🔥 store imageUrl + public_id
       allowNull: true
     },
+
     password: {
       type: DataTypes.STRING,
     },
@@ -285,6 +299,9 @@ Doctor.init(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    
+    
+
 
 
   },
@@ -305,16 +322,18 @@ Doctor.init(
       },
     },
 
-    indexes: [
-      {
-        unique: true,
-        fields: ["phone"],
-      },
-      {
-        unique: true,
-        fields: ["email"],
-      },
-    ],
+
+indexes: [
+
+  {
+    unique: true,
+    fields: ["hospitalId", "phone"],
+  },
+  {
+    unique: true,
+    fields: ["hospitalId", "email"],
+  },
+],
   }
 );
 

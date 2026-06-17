@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../config/db";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 /* =======================
    INTERFACES

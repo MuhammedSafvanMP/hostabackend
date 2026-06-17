@@ -47,7 +47,7 @@ const getTwilioClient = () => {
 
 // ✅ REGISTER DONOR - POST /donors/register (Authenticated users only)
 export const createDonor: any = asyncHandler(async (req: any, res: Response) => {
-  const { phone, dateOfBirth, bloodGroup, address, userId: bodyUserId } = req.body;
+  const { phone, dateOfBirth, bloodGroup, address,name, userId: bodyUserId } = req.body;
   const tokenUserId = req.user.id;
   const authHeader = req.headers.authorization;
 
@@ -65,7 +65,7 @@ export const createDonor: any = asyncHandler(async (req: any, res: Response) => 
 
   // 2. Validate User Existence (Cross-Service: user-service)
   try {
-    await httpClient.get(`{process.env.USER_SERVICE_URL}/users/${userId}`, {
+    await httpClient.get(`${process.env.USER_SERVICE_URL}/users/${userId}`, {
       headers: { Authorization: authHeader }
     });
   } catch (error: any) {
@@ -132,13 +132,19 @@ export const createDonor: any = asyncHandler(async (req: any, res: Response) => 
     return;
   }
 
-  const donor = await BloodDonor.create({
+  const donorData = {
     phone: cleanedPhone,
     dateOfBirth,
     bloodGroup,
     address,
     userId,
-  } as any);
+    name,
+  };
+
+  console.log("Request Body:", req.body);
+  console.log("Donor Data:", donorData);
+
+  const donor = await BloodDonor.create(donorData as any);
 
   await publishEvent("blood_events", "DONOR_REGISTERED", {
     donorId: donor.id,
@@ -402,10 +408,21 @@ export const updateDonor: any = asyncHandler(async (req: Request, res: Response)
   if (bloodGroup) updatePayload.bloodGroup = bloodGroup;
   if (address) updatePayload.address = address;
 
-  const [affectedCount, affectedRows] = await BloodDonor.update(updatePayload, {
-    where: { id },
-    returning: true,
-  });
+  let affectedCount: number;
+  let affectedRows: BloodDonor[];
+
+  try {
+    [affectedCount, affectedRows] = await BloodDonor.update(updatePayload, {
+      where: { id },
+      returning: true,
+    });
+  } catch (error: any) {
+    console.error("UPDATE ERROR:", error);
+    console.error("MESSAGE:", error.message);
+    console.error("DETAILS:", error.errors);
+    console.error("PARENT:", error.parent);
+    throw error;
+  }
 
   if (affectedCount === 0) {
     res.status(404).json({

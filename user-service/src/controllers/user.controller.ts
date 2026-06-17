@@ -61,6 +61,7 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
       success: true,
       message: "OTP verified successfully",
       token,
+      fchmToken: user.fcmToken,
       userDetails: user,
       status: 200,
     });
@@ -139,13 +140,23 @@ export const verifyOtpEmail: any = asyncHandler(async (req: Request, res: Respon
   }
 });
 
-export const resetPasswordEmail: any = asyncHandler(async (req: Request, res: Response) => {
-  try {
-    const result = await userService.resetPasswordWithEmail(req.body);
-    res.status(200).json(result);
-  } catch (error: any) {
-    res.status(error.status || 500).json({ success: false, message: error.message });
-  }
+// export const resetPasswordEmail: any = asyncHandler(async (req: Request, res: Response) => {
+//   try {
+//     const result = await userService.resetPasswordWithEmail(req.body);
+//     res.status(200).json(result);
+//   } catch (error: any) {
+//     res.status(error.status || 500).json({ success: false, message: error.message });
+//   }
+// });
+
+
+export const resetPasswordEmail: any = asyncHandler(async (req: any, res: Response) => {
+  const result = await userService.resetPasswordWithEmail(
+    req.user.id,
+    req.body
+  );
+
+  res.json(result);
 });
 
 export const changePassword: any = asyncHandler(async (req: any, res: Response) => {
@@ -191,10 +202,7 @@ export const createPatient: any = asyncHandler(async (req: Request, res: Respons
       guardianName, addressLine, location, email, password, userId, hospitalId
     } = req.body;
 
-    // 2. Extract Vitals Info (if any)
-    const {
-      temperature, pulse, respiratoryRate, spo2, height, weight, waist
-    } = req.body;
+
 
     // 3. Handle User association conditions
     let finalUserId = userId;
@@ -254,24 +262,6 @@ export const createPatient: any = asyncHandler(async (req: Request, res: Respons
       guardianName, addressLine, location, email, password, userId: finalUserId, hospitalId
     }, { transaction: t });
 
-    // 4. If any vitals field is provided, create a vitals record
-    if (temperature || pulse || respiratoryRate || spo2 || height || weight || waist) {
-      // We'll calculate BMI/BSA here or let the service handle it.
-      // Since addVitals in patientVitalsService handles calculation, let's use a helper or just do it here to keep things in one transaction.
-      
-      let bmi, bsa;
-      if (height && weight) {
-        const hInM = height / 100;
-        bmi = parseFloat((weight / (hInM * hInM)).toFixed(2));
-        bsa = parseFloat((0.007184 * Math.pow(height, 0.725) * Math.pow(weight, 0.425)).toFixed(4));
-      }
-
-      await PatientVitals.create({
-        patientId: patient.id,
-        temperature, pulse, respiratoryRate, spo2,
-        height, weight, waist, bmi, bsa
-      }, { transaction: t });
-    }
 
     await t.commit();
 
@@ -532,26 +522,6 @@ export const updatePatient: any = asyncHandler(async (req: Request, res: Respons
       guardianName, addressLine, location, email, password, userId, hospitalId
     }, { transaction: t });
 
-    // 2. Check for NEW Vitals in the same request
-    const {
-      temperature, pulse, respiratoryRate, spo2, height, weight, waist
-    } = req.body;
-
-    if (temperature || pulse || respiratoryRate || spo2 || height || weight || waist) {
-      let bmi, bsa;
-      if (height && weight) {
-        const hInM = height / 100;
-        bmi = parseFloat((weight / (hInM * hInM)).toFixed(2));
-        bsa = parseFloat((0.007184 * Math.pow(height, 0.725) * Math.pow(weight, 0.425)).toFixed(4));
-      }
-
-      await PatientVitals.create({
-        patientId: patient.id,
-        temperature, pulse, respiratoryRate, spo2,
-        height, weight, waist, bmi, bsa
-      }, { transaction: t });
-    }
-
     await t.commit();
 
     // 3. Return updated patient with fresh vitals + user
@@ -657,5 +627,39 @@ export const logout: any = asyncHandler(async (req: Request, res: Response) => {
     path: "/",
   });
   res.status(200).json({ success: true, message: "Logged out successfully" });
+});
+
+// SAVE FCM TOKEN - POST /users/:id/fcm-token
+export const saveFcmToken: any = asyncHandler(async (req: Request, res: Response) => {
+  const { fcmToken } = req.body;
+  const { id } = req.params;
+
+  if (!fcmToken) {
+    res.status(400).json({
+      success: false,
+      message: "FCM token is required",
+      error: { code: "MISSING_FCM_TOKEN", details: null },
+    });
+    return;
+  }
+
+  const user = await User.findByPk(id);
+  if (!user) {
+    res.status(404).json({
+      success: false,
+      message: "User not found",
+      error: { code: "USER_NOT_FOUND", details: null },
+    });
+    return;
+  }
+
+  await user.update({ fcmToken });
+
+  res.status(200).json({
+    success: true,
+    message: "FCM token saved successfully",
+    data: { id: user.id, fcmToken: user.fcmToken },
+    error: null,
+  });
 });
 

@@ -1,7 +1,7 @@
 
 import { Request, Response } from "express";
 import { Op, Sequelize } from "sequelize";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
 import twilio from "twilio";
@@ -86,22 +86,9 @@ import { httpClient } from "../utils/httpClient";
 // REGISTER - POST /staff/register                             
 export const Registeration: any = asyncHandler(async (req: any, res: Response) => {
   
-  const { hospitalId: bodyHospitalId, name, phone, email, password,  designation, joiningDate, jobType, staffType,  dob, gender, knowLanguages, qualification, address } = req.body;
+  const { hospitalId, name, phone, email, password,  designation, joiningDate, jobType, staffType,  dob, gender, knowLanguages, qualification, address, hospitalName } = req.body;
 
-  const tokenHospitalId = req.user?.id;
-  const authHeader = req.headers.authorization;
 
-  // 1. Security Check: If hospitalId is provided in body, it must match the token ID
-  if (bodyHospitalId && Number(bodyHospitalId) !== Number(tokenHospitalId)) {
-    res.status(403).json({
-      success: false,
-      message: "Security violation: The provided hospitalId does not match your authenticated account.",
-      error: { code: "HOSPITAL_ID_MISMATCH" }
-    });
-    return;
-  }
-
-  const hospitalId = tokenHospitalId; // Source of truth
 
   if (!hospitalId) {
     res.status(400).json({ success: false, message: "Hospital ID is required" });
@@ -112,15 +99,15 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
   try {
 
     const hospitalResponse = await httpClient.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
-      headers: { Authorization: authHeader }
+      headers: { Authorization: req.headers.authorization }
     });
     if (!hospitalResponse.data || !hospitalResponse.data.success) {
       res.status(400).json({ success: false, message: "Invalid hospital ID" });
       return;
     }
   } catch (error) {
-    res.status(404).json({ 
-      success: false, 
+    res.status(404).json({
+      success: false,
       message: `Hospital with ID ${hospitalId} does not exist in the hospital service.`,
       error: { code: "HOSPITAL_NOT_FOUND" }
     });
@@ -149,9 +136,9 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
 
   try {
     const newStaff = await Staff.create({
-      hospitalId, name, phone, email, password, dob, gender, 
-      knowLanguages, qualification, address, 
-      designation, joiningDate, jobType, staffType,
+      hospitalId, name, phone, email, password, dob, gender,
+      knowLanguages, qualification, address,
+      designation, joiningDate, jobType, staffType,hospitalName
     });
 
     await publishEvent("staff_events", "STAFF_REGISTERED", {
@@ -180,7 +167,7 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
 
 // LOGIN - POST /staff/login
 export const login: any = asyncHandler(async (req: Request, res: Response) => {
-  const { email, phone, password } = req.body;
+  const { email, phone, password, fcmToken } = req.body;
 
   if (!email && !phone) {
     res.status(400).json({
@@ -207,6 +194,17 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     });
     return;
   }
+
+    if (fcmToken) {
+  await Staff.update(
+    { fcmToken },
+    {
+      where: {
+        email,
+      },
+    }
+  );
+}
 
   const checkPassword = await bcrypt.compare(password, staff.password || "");
   if (!checkPassword) {
@@ -245,13 +243,40 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
 
   setRefreshTokenCookie(res, refreshToken);
 
+
+let authPermission = [];
+
+if (staff.roleId) {
+  try {
+    const res = await axios.get(
+      `${process.env.ROLE_SERVICE_URL}/rolepermission`,
+      {
+        params: {
+          roleId: staff.roleId,
+          hospitalId: staff.hospitalId,
+        },
+      }
+    );
+
+    authPermission = res.data;
+  } catch (err: any) {
+    console.error("Role service failed:", err.response?.status);
+    authPermission = [];
+  }
+}
+
+
+
   res.status(200).json({
     success: true,
     message: "Logged in successfully",
     status: 200,
     token, // Show token in response as requested
+    fcmToken: fcmToken || staff.fcmToken, // Return latest FCM token for client use
     data: staff,
     error: null,
+     authDefaultPermission: 1,
+    authPermission
   });
 });
 
@@ -312,7 +337,7 @@ export const loginWithPhone: any = asyncHandler(async (req: Request, res: Respon
 
 // VERIFY OTP - POST /staff/verify-otp
 export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) => {
-  const { phone, otp } = req.body;
+  const { phone, otp, fcmToken } = req.body;
 
   if (!phone || !otp) {
     res.status(400).json({ success: false, message: "Phone and OTP are required" });
@@ -332,7 +357,11 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
     return;
   }
 
-  // Clear OTP
+  // Persist FCM token if provided, then clear OTP
+  if (fcmToken) {
+    staff.fcmToken = fcmToken;
+  }
+
   staff.otp = undefined;
   staff.otpExpiry = undefined;
   await staff.save();
@@ -360,7 +389,7 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
 });
 
 // GET ONE - GET /staff/:id
-export const getanStaff : any = asyncHandler(async (req: Request, res: Response) => {
+export const getanStaff: any = asyncHandler(async (req: Request, res: Response) => {
   const staff = await Staff.findOne({ where: { id: req.params.id, isDelete: false } });
   if (!staff) {
     res.status(404).json({
@@ -407,8 +436,8 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
         return;
       }
     } catch (error) {
-      res.status(400).json({ 
-        success: false, 
+      res.status(400).json({
+        success: false,
         message: "Hospital validation failed. Please ensure the hospital exists.",
         error: { code: "HOSPITAL_VALIDATION_FAILED" }
       });
@@ -576,55 +605,55 @@ export const getStaffs = asyncHandler(
         { staffType: { [Op.iLike]: `%${search_query}%` } },
         { gender: { [Op.iLike]: `%${search_query}%` } },
         { staffId: { [Op.iLike]: `%${search_query}%` } },
-         Sequelize.where(
-            Sequelize.cast(
-              Sequelize.json("address.district"),
-              "TEXT"
-            ),
-            {
-              [Op.iLike]: `%${search_query}%`,
-            }
+        Sequelize.where(
+          Sequelize.cast(
+            Sequelize.json("address.district"),
+            "TEXT"
           ),
+          {
+            [Op.iLike]: `%${search_query}%`,
+          }
+        ),
 
-          Sequelize.where(
-            Sequelize.cast(
-              Sequelize.json("address.place"),
-              "TEXT"
-            ),
-            {
-              [Op.iLike]: `%${search_query}%`,
-            }
+        Sequelize.where(
+          Sequelize.cast(
+            Sequelize.json("address.place"),
+            "TEXT"
           ),
+          {
+            [Op.iLike]: `%${search_query}%`,
+          }
+        ),
 
-          Sequelize.where(
-            Sequelize.cast(
-              Sequelize.json("address.state"),
-              "TEXT"
-            ),
-            {
-              [Op.iLike]: `%${search_query}%`,
-            }
+        Sequelize.where(
+          Sequelize.cast(
+            Sequelize.json("address.state"),
+            "TEXT"
           ),
+          {
+            [Op.iLike]: `%${search_query}%`,
+          }
+        ),
 
-          Sequelize.where(
-            Sequelize.cast(
-              Sequelize.json("address.country"),
-              "TEXT"
-            ),
-            {
-              [Op.iLike]: `%${search_query}%`,
-            }
+        Sequelize.where(
+          Sequelize.cast(
+            Sequelize.json("address.country"),
+            "TEXT"
           ),
+          {
+            [Op.iLike]: `%${search_query}%`,
+          }
+        ),
 
-          Sequelize.where(
-            Sequelize.cast(
-              Sequelize.json("address.pincode"),
-              "TEXT"
-            ),
-            {
-              [Op.iLike]: `%${search_query}%`,
-            }
+        Sequelize.where(
+          Sequelize.cast(
+            Sequelize.json("address.pincode"),
+            "TEXT"
           ),
+          {
+            [Op.iLike]: `%${search_query}%`,
+          }
+        ),
       ];
     }
 
@@ -728,7 +757,7 @@ export const changepassword: any = asyncHandler(async (req: Request, res: Respon
   }
 
   staff.password = newPassword || password; // Use newPassword if provided, else keep same if verified? No, usually it's for reset.
-  
+
   if (newPassword) {
     staff.password = newPassword;
   }
@@ -817,11 +846,11 @@ export const verifyStaffOtp: any = asyncHandler(async (req: Request, res: Respon
 
   setRefreshTokenCookie(res, refreshToken);
 
-  res.status(200).json({ 
-    success: true, 
+  res.status(200).json({
+    success: true,
     message: "OTP verified",
     token,
-    data: staff 
+    data: staff
   });
 });
 
@@ -867,7 +896,7 @@ export const changeStaffPassword: any = asyncHandler(async (req: any, res: Respo
     res.status(401).json({ success: false, message: "Incorrect current password" });
     return;
   }
-  
+
 
   staff.password = newPassword;
   await staff.save();
@@ -896,7 +925,7 @@ export const refreshStaffToken: any = asyncHandler(async (req: Request, res: Res
 
   try {
     const decoded: any = jwt.verify(refreshToken, jwtKey);
-    
+
     // Check Redis Blacklist / Rotation (REMOVED)
 
     const staff = await Staff.findByPk(decoded.id);
@@ -929,5 +958,39 @@ export const logout: any = asyncHandler(async (req: Request, res: Response) => {
     path: "/",
   });
   res.status(200).json({ success: true, message: "Logged out successfully" });
+});
+
+// SAVE FCM TOKEN - POST /staff/:id/fcm-token
+export const saveFcmToken: any = asyncHandler(async (req: Request, res: Response) => {
+  const { fcmToken } = req.body;
+  const { id } = req.params;
+
+  if (!fcmToken) {
+    res.status(400).json({
+      success: false,
+      message: "FCM token is required",
+      error: { code: "MISSING_FCM_TOKEN", details: null },
+    });
+    return;
+  }
+
+  const staff = await Staff.findByPk(id);
+  if (!staff) {
+    res.status(404).json({
+      success: false,
+      message: "Staff not found",
+      error: { code: "STAFF_NOT_FOUND", details: null },
+    });
+    return;
+  }
+
+  await staff.update({ fcmToken });
+
+  res.status(200).json({
+    success: true,
+    message: "FCM token saved successfully",
+    data: { id: staff.id, fcmToken: staff.fcmToken },
+    error: null,
+  });
 });
 

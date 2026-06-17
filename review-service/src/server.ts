@@ -13,10 +13,8 @@ const startServer = async () => {
         await connectDB();
         await connectRabbitMQ();
         
-        // Ensure table exists safely
-        const { default: Review } = await import("./models/review.model");
-        await Review.sync({ alter: true });
         
+
         // Starting blood Service
         app.listen(PORT, () => {
             logger.info(`🚀 Review Service is running on port ${PORT}`);

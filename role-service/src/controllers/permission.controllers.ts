@@ -62,7 +62,7 @@ export const getanPermission : any = asyncHandler(async (req: Request, res: Resp
   res.status(200).json({
     success: true,
     status: "Success",
-    data: Permission,
+    data: permission,
     error: null,
   });
 });

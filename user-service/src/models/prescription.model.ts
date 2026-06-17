@@ -40,6 +40,9 @@ interface IPrescription {
 
   empty_stomach?: boolean;
   date?: Date; 
+  prescribedBy: string;
+  canvasBg : string;
+  design: string[];
 
   deleteDate?: Date;
   isActive?: boolean;
@@ -102,6 +105,11 @@ class Prescription
   public deleteDate?: Date;
   public isActive?: boolean;
   public isDelete?: boolean;
+  public prescribedBy: string;
+
+  public canvasBg: string;
+  public design: string[];
+  
 
 } 
 
@@ -120,6 +128,11 @@ Prescription.init(
     bookingId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+    },
+
+    prescribedBy: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
 
     userId: {
@@ -188,7 +201,19 @@ Prescription.init(
     isDelete: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
-    }
+    },
+
+       canvasBg:
+    {
+      type: DataTypes.STRING,
+    },
+
+
+    design: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: [],
+    },
 
   },
 

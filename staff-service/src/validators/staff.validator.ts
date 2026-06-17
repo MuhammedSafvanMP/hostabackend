@@ -23,6 +23,7 @@ export const registerStaffSchema = z.object({
   knowLanguages: z.array(z.string()).optional(),
   qualification: z.string().optional(),
   address: addressSchema,
+  fcmToken: z.string().optional(),
 });
 
 export const updateStaffSchema = registerStaffSchema.partial();
@@ -30,6 +31,7 @@ export const updateStaffSchema = registerStaffSchema.partial();
 export const loginStaffSchema = z.object({
   email: z.string().email("Invalid email format"),
   password: z.string().min(1, "Password is required"),
+  fcmToken: z.string().optional(),
 });
 
 export const loginWithPhoneSchema = z.object({
@@ -44,6 +46,7 @@ export const verifyOtpSchema = z.object({
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits").optional(),
   email: z.string().email("Invalid email format").optional(),
   otp: z.string().length(6, "OTP must be 6 digits"),
+  fcmToken: z.string().optional(),
 }).refine(data => data.email || data.phone, {
   message: "Either email or phone is required",
   path: ["phone"],

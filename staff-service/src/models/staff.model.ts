@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../config/db";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 /* =======================
    INTERFACES
@@ -38,7 +38,9 @@ interface IStaff {
   otpExpiry?: Date;
   roleId: number; 
   imageUrl: string;
-  
+  hospitalName: string;
+  fcmToken: string;
+
 }
 
 /* =======================
@@ -98,6 +100,8 @@ class Staff
   public otpExpiry?: Date;
   public roleId!: number;   
   public imageUrl: string;
+  public hospitalName: string;
+  public fcmToken: string;
 
   // timestamps
   public readonly createdAt!: Date;
@@ -182,6 +186,10 @@ Staff.init(
         isEmail: true,
       },
     },
+       hospitalName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
 
     password: {
       type: DataTypes.STRING,
@@ -213,6 +221,10 @@ Staff.init(
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
+       fcmToken: {
+      type: DataTypes.STRING,
+    },
+
 
     isDelete: {
       type: DataTypes.BOOLEAN,
@@ -283,4 +295,3 @@ Staff.afterCreate(async (staff: Staff) => {
 });
 
 export default Staff;
-

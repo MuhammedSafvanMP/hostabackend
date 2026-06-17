@@ -136,6 +136,14 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: Sequelize.fn("NOW"),
       },
+      hospitalName: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        defaultValue: "thasni",
+      },
+      fcmToken: {
+        type: Sequelize.STRING
+      },
     });
 
     // Indexes (IMPORTANT for performance)

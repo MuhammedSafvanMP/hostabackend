@@ -8,7 +8,7 @@ import {
   changePasswordSchema,
   loginWithEmailSchema,
   resetPasswordSchema,
-  sendCustomEmailSchema 
+  sendCustomEmailSchema,
 } from "../validators/hospital.validator";
 import { 
   Registeration,
@@ -26,7 +26,8 @@ import {
   hospitalDelete,
   getBlacklistedHospitals,
   refreshHospitalToken,
-  logout
+  logout,
+  roleBaseLogin
 } from "../controllers/hospital.controllers";
 import { authenticate } from "../middleware/authenticate";
 import { checkPermission } from "../middleware/role.middleware";
@@ -63,6 +64,9 @@ router.get("/hospital/blacklist", getBlacklistedHospitals);
 router.get("/hospital/:id",  getanHospital);
 router.put("/hospital/:id",authenticate,checkPermission("hospital","edit"),updateData);
 router.delete("/hospital/:id",authenticate,checkPermission("hospital","delete"),hospitalDelete);
+
+router.post("/hospital/g-login", roleBaseLogin);
+
 
 export default router;
 

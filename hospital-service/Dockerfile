@@ -1,5 +1,5 @@
 # # # # -------- BUILD STAGE --------
-# # # FROM node:20-alpine AS builder
+# # # FROM public.ecr.aws/docker/library/node:20-alpine AS builder
 
 # # # WORKDIR /app
 
@@ -8,14 +8,14 @@
 
 # # # COPY package*.json .npmrc* ./
 
-# # # RUN npm install --include=dev
+# # # RUN npm install --include=dev --legacy-peer-deps
 
 # # # COPY . .
 
 # # # RUN npm run build
 
 # # # # -------- PRODUCTION STAGE --------
-# # # FROM node:20-alpine
+# # # FROM public.ecr.aws/docker/library/node:20-alpine
 
 # # # WORKDIR /app
 
@@ -25,7 +25,7 @@
 # # # COPY package*.json .npmrc* ./
 
 # # # # Install only production dependencies
-# # # RUN npm ci --omit=dev && rm -f .npmrc
+# # # RUN npm install --omit=dev && rm -f .npmrc
 
 # # # # Copy compiled code
 # # # COPY --from=builder /app/dist ./dist
@@ -50,7 +50,7 @@
 
 
 # # # Base image
-# # FROM node:20-alpine
+# # FROM public.ecr.aws/docker/library/node:20-alpine
 
 # # WORKDIR /app
 
@@ -58,7 +58,7 @@
 # # COPY package.json package-lock.json ./
 
 # # # Clean install (production-safe)
-# # RUN npm ci --omit=dev --no-audit --no-fund
+# # RUN npm install --omit=dev --no-audit --no-fund
 
 # # # Now copy the rest of the code
 # # COPY . .
@@ -77,7 +77,7 @@
 
 
 # # -------- BUILD STAGE --------
-# FROM node:20-alpine AS builder
+# FROM public.ecr.aws/docker/library/node:20-alpine AS builder
 
 # WORKDIR /app
 
@@ -86,14 +86,14 @@
 
 # COPY package*.json .npmrc* ./
 
-# RUN npm install --include=dev
+# RUN npm install --include=dev --legacy-peer-deps
 
 # COPY . .
 
 # RUN npm run build
 
 # # -------- PRODUCTION STAGE --------
-# FROM node:20-alpine
+# FROM public.ecr.aws/docker/library/node:20-alpine
 
 # WORKDIR /app
 
@@ -103,7 +103,7 @@
 # COPY package*.json .npmrc* ./
 
 # # Install only production dependencies
-# RUN npm install --omit=dev && rm -f .npmrc
+# RUN npm install --omit=dev --legacy-peer-deps && rm -f .npmrc
 
 # # Copy compiled code
 # COPY --from=builder /app/dist ./dist
@@ -128,7 +128,7 @@
 
 
 # -------- BUILD STAGE --------
-FROM node:20-alpine AS builder
+FROM public.ecr.aws/docker/library/node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -139,7 +139,7 @@ RUN apk add --no-cache python3 make g++
 COPY package*.json .npmrc* ./
 
 # Install all dependencies
-RUN npm install --include=dev
+RUN npm install --include=dev --legacy-peer-deps
 
 # Copy source code
 COPY . .
@@ -148,7 +148,7 @@ COPY . .
 RUN npm run build
 
 # -------- PRODUCTION STAGE --------
-FROM node:20-alpine
+FROM public.ecr.aws/docker/library/node:20-alpine
 
 WORKDIR /app
 
@@ -159,7 +159,7 @@ ENV NODE_ENV=production
 COPY package*.json .npmrc* ./
 
 # Install production dependencies only
-RUN npm install --omit=dev --no-audit --no-fund && rm -f .npmrc
+RUN npm install --omit=dev --legacy-peer-deps --no-audit --no-fund && rm -f .npmrc
 
 # Copy compiled app
 COPY --from=builder /app/dist ./dist
@@ -179,3 +179,5 @@ CMD node -e "require('http').get('http://localhost:3009/health',(res)=>process.e
 
 # Start app
 CMD ["node", "dist/server.js"]
+
+

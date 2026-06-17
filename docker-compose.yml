@@ -13,13 +13,10 @@ services:
       - ambulance-service
       - blood-service
       - blood-bank-service
-      - pharmacy-service
       - staff-service
-      - medicine-reminder-service
       - booking-service
       - notification-service
       - review-service
-      - lab-service
       - ads-service 
       - role-service  
       - s3-service
@@ -68,14 +65,14 @@ services:
     networks:
       - hosta-network
 
-  pharmacy-service:
-    container_name: pharmacy-service
-    build: ./pharmacy-service
-    environment:
-      - NODE_OPTIONS=--dns-result-order=ipv4first
-    env_file: ./pharmacy-service/.env
-    networks:
-      - hosta-network 
+#  pharmacy-service:
+#    container_name: pharmacy-service
+#    build: ./pharmacy-service
+#    environment:
+#      - NODE_OPTIONS=--dns-result-order=ipv4first
+#    env_file: ./pharmacy-service/.env
+#    networks:
+#      - hosta-network
 
   staff-service:
     container_name: staff-service
@@ -132,14 +129,14 @@ services:
     depends_on:
       - role-service
 
-  medicine-reminder-service:
-    container_name: medicine-reminder-service
-    build: ./medicinremainder-service
-    environment:
-      - NODE_OPTIONS=--dns-result-order=ipv4first
-    env_file: ./medicinremainder-service/.env
-    networks:
-      - hosta-network
+#  medicine-reminder-service:
+#    container_name: medicine-reminder-service
+#    build: ./medicinremainder-service
+#    environment:
+#      - NODE_OPTIONS=--dns-result-order=ipv4first
+#    env_file: ./medicinremainder-service/.env
+#    networks:
+#      - hosta-network
 
   notification-service:
     container_name: notification-service
@@ -159,16 +156,16 @@ services:
     networks:
       - hosta-network
 
-  lab-service:
-    container_name: lab-service
-    build: ./lab-service
-    environment:
-      - NODE_OPTIONS=--dns-result-order=ipv4first
-    env_file: ./lab-service/.env
-    networks:
-      - hosta-network
-    depends_on:
-      - role-service
+#  lab-service:
+#    container_name: lab-service
+#    build: ./lab-service
+#    environment:
+#      - NODE_OPTIONS=--dns-result-order=ipv4first
+#    env_file: ./lab-service/.env
+#    networks:
+#      - hosta-network
+#    depends_on:
+#      - role-service
 
   ads-service:
     container_name: ads-service
@@ -204,6 +201,19 @@ services:
     environment:
       - NODE_OPTIONS=--dns-result-order=ipv4first
     env_file: ./bulmq-service/.env
+    networks:
+      - hosta-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
     networks:
       - hosta-network
 
