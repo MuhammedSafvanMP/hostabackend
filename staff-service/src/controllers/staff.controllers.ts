@@ -502,6 +502,11 @@ export const staffDelete: any = asyncHandler(async (req: Request, res: Response)
     deleteDate: new Date(),
   });
 
+
+    await publishEvent("staff_events", "STAFF_DELETED", {
+      staffId: staff.id,
+    });
+
   res.status(200).json({
     success: true,
     message: "Staff account moved to blacklist.",

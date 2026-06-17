@@ -1,34 +1,34 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
-import Speciality from "../models/speciality.model";
+import Category from "../models/category.model";
 import { publishEvent } from "../events/publisher";
 import dotenv from "dotenv";
 import { Op } from "sequelize";
 dotenv.config();
 
-// REGISTER - POST /speciality/register
+// REGISTER - POST /category/register
 export const Registeration: any = asyncHandler(async (req: any, res: Response) => {
   const { name } = req.body;
 
 
-  const exist = await Speciality.findOne({ where: { name: name } });
+  const exist = await Category.findOne({ where: { name: name } });
   if (exist) {
     res.status(404).json({
       success: false,
-      message: "Speciality is already exist",
+      message: "Category is already exist",
       data: null,
-      error: { code: "SPECIALITY_ALREADY_EXISTS", details: null },
+      error: { code: "CATEGORY_ALREADY_EXISTS", details: null },
     });
     return;
   }
 
-  const newSpeciality = await Speciality.create({
+  const newCategory = await Category.create({
    name, 
   });
 
-  await publishEvent("speciality_events", "SPECIALITY_REGISTERED", {
-    specialityId: newSpeciality.id,
-    name: newSpeciality.name,
+  await publishEvent("category_events", "CATEGORY_REGISTERED", {
+    specialityId: newCategory.id,
+    name: newCategory.name,
   });
 
   res.status(201).json({
@@ -40,15 +40,15 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
 });
 
 
-// GET ONE - GET /speciality/:id
-export const getanSpeciality : any = asyncHandler(async (req: Request, res: Response) => {
-  const speciality = await Speciality.findByPk(req.params.id);
-  if (!speciality) {
+// GET ONE - GET /Category/:id
+export const getanCategory : any = asyncHandler(async (req: Request, res: Response) => {
+  const category = await Category.findByPk(req.params.id);
+  if (!category) {
     res.status(404).json({
       success: false,
-      message: "Speciality not found",
+      message: "Category not found",
       data: null,
-      error: { code: "SPECIALITY_NOT_FOUND", details: null },
+      error: { code: "CATEGORY_NOT_FOUND", details: null },
     });
     return;
   }
@@ -56,7 +56,7 @@ export const getanSpeciality : any = asyncHandler(async (req: Request, res: Resp
   res.status(200).json({
     success: true,
     status: "Success",
-    data: speciality,
+    data: category,
     error: null,
   });
 });
@@ -66,67 +66,67 @@ export const updateData: any = asyncHandler(async (req: Request, res: Response) 
   const { id } = req.params;
   const updatePayload = req.body;
 
-  const speciality = await Speciality.update(updatePayload, {
+  const category = await Category.update(updatePayload, {
     where: { id: id },
     returning: true,
   });
 
-  if (!speciality[1] || speciality[1].length === 0) {
+  if (!category[1] || category[1].length === 0) {
     res.status(404).json({
       success: false,
-      message: "speciality not found",
+      message: "category not found",
       status: 200,
       data: null,
-      error: { code: "SPECIALITY_NOT_FOUND", details: null },
+      error: { code: "CATEGORY_NOT_FOUND", details: null },
     });
     return;
   }
 
-  await publishEvent("speciality_events", "SPECIALITY_UPDATED", {
-    specialityId: speciality[1][0].id,
+  await publishEvent("category_events", "CATEGORY_UPDATED", {
+    categoryId: category[1][0].id,
   });
 
   res.status(200).json({
     success: true,
     message: "successfully updated",
-    data: speciality[1][0],
+    data: category[1][0],
     error: null,
   });
 });
 
-// DELETE - DELETE /speciality/:id
-export const specialityDelete: any = asyncHandler(async (req: Request, res: Response) => {
+// DELETE - DELETE /Category/:id
+export const categoryDelete: any = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const speciality = await Speciality.findByPk(id);
-  if (!speciality) {
+  const category = await Category.findByPk(id);
+  if (!category) {
     res.status(404).json({
       success: false,
-      message: "speciality not found",
+      message: "category not found",
       data: null,
-      error: { code: "SPECIALITY_NOT_FOUND", details: null },
+      error: { code: "CATEGORY_NOT_FOUND", details: null },
     });
     return;
   }
 
   // 🔥 Perform Soft Delete (requires paranoid: true in model)
-  await speciality.destroy();
+  await category.destroy();
 
-    await publishEvent("speciality_events", "SPECIALITY_DELETED", {
-    specialityId: speciality[1][0].id,
+    await publishEvent("category_events", "CATEGORY_DELETED", {
+    categoryId: category[1][0].id,
   });
 
   res.status(200).json({
     success: true,
-    message: "Speciality soft-deleted successfully",
+    message: "category soft-deleted successfully",
     status: 200,
     data: null,
     error: null,
   });
 });
 
-// GET ALL - GET /speciality
-export const getSpecialitys = asyncHandler(async (req: Request, res: Response) : Promise<void> => {
+// GET ALL - GET /Category
+export const getCategorys = asyncHandler(async (req: Request, res: Response) : Promise<void> => {
   let { name, search_query }: any = req.query;
 
   if (Array.isArray(name)) name = name[0];
@@ -149,12 +149,12 @@ export const getSpecialitys = asyncHandler(async (req: Request, res: Response) :
     ];
   }
 
-  const speciality = await Speciality.findAndCountAll({
+  const category = await Category.findAndCountAll({
     where: whereCondition,
     order: [["createdAt", "DESC"]],
   });
 
-  if (speciality.count === 0) {
+  if (category.count === 0) {
   res.status(404).json({
       success: false,
       message: "No data found",
@@ -166,11 +166,10 @@ export const getSpecialitys = asyncHandler(async (req: Request, res: Response) :
 
   res.status(200).json({
     success: true,
-    data: speciality.rows,
-    count: speciality.count,
+    data: category.rows,
+    count: category.count,
     error: null,
   });
 
   return; 
 });
-

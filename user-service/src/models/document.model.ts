@@ -53,7 +53,7 @@ Document.init(
     imageUrl: {
       type: DataTypes.TEXT,
       allowNull: true,
-     
+
     },
 
     isActive: {

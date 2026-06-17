@@ -17,7 +17,7 @@ dotenv.config();
 /*                                  CONSTANTS                                 */
 /* -------------------------------------------------------------------------- */
 
-const VALID_ROLES = ["hospital", "user", "doctor", "staff", "ad"] as const;
+const VALID_ROLES = ["hospital", "user", "doctor", "staff", "ad", "documents", "lab-results"] as const;
 
 const SERVICE_CONFIG: Record<
   string,
@@ -45,6 +45,22 @@ const SERVICE_CONFIG: Record<
   ad: {
     baseUrl: process.env.AD_SERVICE_URL,
     endpoint: "ad",
+  },
+   speciality: {
+    baseUrl: process.env.SPECIALITY_SERVICE_URL,
+    endpoint: "speciality",
+  },
+    documents: {
+    baseUrl: process.env.USER_SERVICE_URL,
+    endpoint: "documents",
+  },
+    category: {
+    baseUrl: process.env.SPECIALITY_SERVICE_URL,
+    endpoint: "category",
+  },
+    userLabresult: {
+    baseUrl: process.env.USER_SERVICE_URL,
+    endpoint: "lab-results",
   },
 };
 

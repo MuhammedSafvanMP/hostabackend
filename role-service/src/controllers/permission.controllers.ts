@@ -126,6 +126,10 @@ export const permissionDelete: any = asyncHandler(async (req: Request, res: Resp
     where: { id: id }
   });
 
+  await publishEvent("permission_events", "PERMISSION_DELETED", {
+    PermissionId: permission.id,
+  });
+
 
   res.status(200).json({
     success: true,
