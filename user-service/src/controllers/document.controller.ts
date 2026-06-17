@@ -18,10 +18,13 @@ export const createDocument: any = asyncHandler(async (req: Request, res: Respon
   });
 });
 
+
+
 export const getDocuments = asyncHandler(
   async (req: Request, res: Response) : Promise<void> => {
     const normalizeQuery = (value: any) =>
       Array.isArray(value) ? value[0] : value;
+
 
     let { patientId } = req.query;
 
