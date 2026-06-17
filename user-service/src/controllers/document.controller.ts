@@ -3,13 +3,12 @@ import asyncHandler from "express-async-handler";
 import Document from "../models/document.model";
 
 export const createDocument: any = asyncHandler(async (req: Request, res: Response) => {
-  const { patientId, name, date, imageUrl } = req.body;
+  const { patientId, name, date } = req.body;
 
   const document = await Document.create({
     patientId,
     name,
     date,
-    imageUrl,
   });
 
   res.status(201).json({
@@ -19,17 +18,33 @@ export const createDocument: any = asyncHandler(async (req: Request, res: Respon
   });
 });
 
-export const getDocuments: any = asyncHandler(async (req: Request, res: Response) => {
-  const documents = await Document.findAll({
-    where: { isActive: true },
-    order: [["createdAt", "DESC"]],
-  });
+export const getDocuments = asyncHandler(
+  async (req: Request, res: Response) : Promise<void> => {
+    const normalizeQuery = (value: any) =>
+      Array.isArray(value) ? value[0] : value;
 
-  res.status(200).json({
-    success: true,
-    data: documents,
-  });
-});
+    let { patientId } = req.query;
+
+    patientId = normalizeQuery(patientId);
+
+    const whereClause: any = {};
+
+    if (patientId && !isNaN(Number(patientId))) {
+      whereClause.patientId = Number(patientId);
+    }
+
+    const documents = await Document.findAll({
+      where: whereClause,
+      order: [["createdAt", "DESC"]],
+    });
+
+     res.status(200).json({
+      success: true,
+      data: documents,
+    });
+    return;
+  }
+);
 
 export const getDocument: any = asyncHandler(async (req: Request, res: Response) => {
   const document = await Document.findOne({

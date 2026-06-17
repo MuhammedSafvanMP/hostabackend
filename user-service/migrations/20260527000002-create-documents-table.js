@@ -31,7 +31,7 @@ module.exports = {
         },
         imageUrl: {
           type: Sequelize.TEXT,
-          allowNull: false,
+          allowNull: true,
         },
         isActive: {
           type: Sequelize.BOOLEAN,
