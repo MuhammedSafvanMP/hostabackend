@@ -34,13 +34,6 @@ TemplateItem.init(
       allowNull: false,
       defaultValue: [],
     },
-
-    canvasBg:
-    {
-      type: DataTypes.STRING,
-      defaultValue: "FFFFFF"
-    },
-
   },
   {
     sequelize,
@@ -50,7 +43,13 @@ TemplateItem.init(
   }
 );
 
-
 export default TemplateItem;
+
+
+
+
+
+
+
 
 
