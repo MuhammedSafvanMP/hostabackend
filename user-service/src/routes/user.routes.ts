@@ -24,6 +24,7 @@ import {
   refreshUserToken,
   logout,
   getBlacklistedUsers,
+  sendEnquiry
 } from "../controllers/user.controller";
 
 import {
@@ -134,6 +135,9 @@ router.get("/documents", authenticate, checkPermission("document", "view"), getD
 router.get("/documents/:id", authenticate, validateParams(idParamSchema), checkPermission("document", "view"), getDocument);
 router.put("/documents/:id", authenticate, validateParams(idParamSchema), checkPermission("document", "edit"), updateDocument);
 router.delete("/documents/:id", authenticate, validateParams(idParamSchema), checkPermission("document", "delete"), deleteDocument);
+
+router.post("/email-enquiry",   sendEnquiry);
+
 
 export default router;
 

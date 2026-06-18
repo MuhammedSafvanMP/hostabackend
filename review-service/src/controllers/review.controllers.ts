@@ -18,12 +18,14 @@ asyncHandler(
       hospitalId,
       doctorId,
       comment,
-      rating
+      rating,
+     
     } = req.body;
 
     /* =========================
        VALIDATE INPUT
     ========================== */
+
 
     if (!userId) {
       res.status(400).json({
@@ -33,14 +35,7 @@ asyncHandler(
       return;
     }
 
-    if (!hospitalId && !doctorId) {
-      res.status(400).json({
-        success: false,
-        message:
-          "hospitalId or doctorId required"
-      });
-      return;
-    }
+
 
     if (!comment) {
       res.status(400).json({
@@ -54,10 +49,11 @@ asyncHandler(
        EXISTENCE CHECKS
     ========================== */
 
+    let user: any;
 
     try {
       // 1. Check User
-      await axios.get(`${process.env.USER_SERVICE_URL}/users/${userId}`, {
+    user = await axios.get(`${process.env.USER_SERVICE_URL}/users/${userId}`, {
         headers: { Authorization: req.headers.authorization }
       });
     } catch (error: any) {
@@ -133,9 +129,9 @@ asyncHandler(
 
     }
 
-    /* =========================
-       CHECK USER COMPLETED BOOKING
-    ========================== */
+    // /* =========================
+    //    CHECK USER COMPLETED BOOKING
+    // ========================== */
 
     const userBookings =
       matchedBookings.filter(
@@ -155,18 +151,41 @@ asyncHandler(
       return;
     }
 
+    
+
+
     /* =========================
        CREATE REVIEW
     ========================== */
 
-    const newReview =
+let newReview : any;
+
+    if(hospitalId && doctorId){
+
+      newReview =
       await Review.create({
         userId,
-        hospitalId,
         doctorId,
         comment,
-        rating
+        rating,
+        imageUrl: user?.data?.data?.imageUrl,
+        name: user?.data?.data?.name,
       });
+
+    }else{
+         
+    newReview =  await Review.create({
+        userId,
+        hospitalId,
+        comment,
+        rating,
+        imageUrl: user?.data?.data?.imageUrl,
+        name: user?.data?.data?.name,
+      });
+
+    }
+
+
 
     /* =========================
        PUBLISH EVENT
