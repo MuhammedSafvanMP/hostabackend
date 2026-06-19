@@ -12,6 +12,8 @@ export const createBookingSchema = z.object({
   booking_time: z.string().min(1, "Booking time is required"),
 });
 
+
+
 export const updateBookingStatusSchema = z.object({
   status: z.enum(["pending", "accepted", "declined", "cancel"]),
 });
