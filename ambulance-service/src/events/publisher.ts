@@ -58,7 +58,7 @@ export const publishEvent = async (queue: string, routingKey: string, data: any)
       console.log(`📤 Published event '${routingKey}' to queue '${queue}'`);
     }
 
-         await axios.post(`${process.env.SOCKET_SERVICE_URL}/emit-event`, {
+         await axios.post(`${process.env.SOCKETIO_SERVICE_URL}/emit-event`, {
             event: routingKey,
             userId : null,
             data

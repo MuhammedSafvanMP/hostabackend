@@ -32,7 +32,7 @@ export const publishEvent = async (exchange: string, routingKey: string, data: a
             logger.info(`📤 Published event '${routingKey}' to exchange '${exchange}'`);
         }
 
-            await axios.post(`${process.env.SOCKET_SERVICE_URL}/emit-event`, {
+            await axios.post(`${process.env.SOCKETIO_SERVICE_URL}/emit-event`, {
             event: routingKey,
             userId : data?.hospitalId,
             data
