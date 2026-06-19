@@ -1,5 +1,8 @@
 import amqp from 'amqplib';
 import { env } from '../config/env';
+import axios from 'axios';
+import dotenv from "dotenv";
+dotenv.config();
 
 let channel: amqp.Channel;
 
@@ -45,7 +48,13 @@ export const publishEvent = async (exchange: string, routingKey: string, data: a
         }
         await channel.assertExchange(exchange, 'direct', { durable: true });
         channel.publish(exchange, routingKey, Buffer.from(JSON.stringify(data)), { persistent: true });
-        console.log(`📤 Published event '${routingKey}' to exchange '${exchange}'`);
+
+            await axios.post(`${process.env.SOCKET_SERVICE_URL}/emit-event`, {
+            event: routingKey,
+            userId : data?.userId,
+            data
+        });
+
     } catch (error) {
         console.error('❌ Event Publish Error:', error);
     }

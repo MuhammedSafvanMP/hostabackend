@@ -1,5 +1,8 @@
 import amqp, { Channel } from "amqplib";
 import { env } from "../config/env";
+import axios from "axios";
+import dotenv from "dotenv";
+dotenv.config();
 
 let channel: Channel | undefined;
 let connection: any;
@@ -31,11 +34,11 @@ const connectRabbitMQ = async (): Promise<void> => {
 
 connectRabbitMQ();
 
-export const publishEvent = async (queue: string, eventType: string, data: any): Promise<void> => {
+export const publishEvent = async (queue: string, routingKey: string, data: any): Promise<void> => {
   try {
     if (!channel) {
       if (env.NODE_ENV === "development") {
-        console.warn(`Channel not established. Cannot publish event ${eventType} to ${queue}`);
+        console.warn(`Channel not established. Cannot publish event ${routingKey} to ${queue}`);
       }
       return;
     }
@@ -43,17 +46,26 @@ export const publishEvent = async (queue: string, eventType: string, data: any):
     await channel.assertQueue(queue, { durable: true });
 
     const message = {
-      eventType,
+      routingKey,
       data,
       timestamp: new Date().toISOString()
     };
 
     channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)));
 
+
     if (env.NODE_ENV === "development") {
-      console.log(`📤 Published event '${eventType}' to queue '${queue}'`);
+      console.log(`📤 Published event '${routingKey}' to queue '${queue}'`);
     }
+
+         await axios.post(`${process.env.SOCKET_SERVICE_URL}/emit-event`, {
+            event: routingKey,
+            userId : null,
+            data
+        });
+
+
   } catch (error) {
-    console.error(`Failed to publish event ${eventType}:`, error);
+    console.error(`Failed to publish event ${routingKey}:`, error);
   }
 };
