@@ -37,10 +37,11 @@ asyncHandler(
 
 
 
-    if (!comment) {
+ 
+    if (!rating) {
       res.status(400).json({
         success: false,
-        message: "comment required"
+        message: "rating required"
       });
       return;
     }
