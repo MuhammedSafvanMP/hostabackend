@@ -1,41 +1,5 @@
-// import express from "express";
-// import cors from "cors";
-// import { io } from "./socket/socket.js";
-
-// const app = express();
-
-// app.use(cors());
-
-// app.get("/health", (req, res) => {
-//   res.json({
-//     status: "OK",
-//     service: "socket-service"
-//   });
-// });
-
-// app.get("/test", (req, res) => {
-//   if (io) {
-//     io.emit("test-event", {
-//       message: "Socket working"
-//     });
-//     res.send("Event emitted");
-//   } else {
-//     res.status(503).send("Socket server not initialized yet");
-//   }
-// });
-
-// export default app;
-
-
-
-
-
-
 import express from "express";
 import cors from "cors";
-// import helmet from "helmet";
-// import cookieParser from "cookie-parser";
-
 import { io } from "./socket/socket.js";
 
 const app = express();
@@ -46,11 +10,6 @@ const app = express();
 app.set("trust proxy", 1);
 
 /**
- * SECURITY
- */
-// app.use(helmet());
-
-/**
  * INTERNAL CORS
  */
 app.use(
@@ -59,7 +18,6 @@ app.use(
             "http://localhost:5173",
             "https://hostahospital.com",
         ],
-
         methods: [
             "GET",
             "POST",
@@ -68,7 +26,6 @@ app.use(
             "PATCH",
             "OPTIONS",
         ],
-
         credentials: true,
     })
 );
@@ -77,7 +34,6 @@ app.use(
  * BODY PARSER
  */
 app.use(express.json({ limit: "10mb" }));
-
 app.use(
     express.urlencoded({
         limit: "10mb",
@@ -85,7 +41,44 @@ app.use(
     })
 );
 
-// app.use(cookieParser());
+// ==============================================
+// ADD THIS ENDPOINT FOR EMITTING EVENTS
+// ==============================================
+app.post("/emit-event", (req, res) => {
+    try {
+        const { event, userId, data } = req.body;
+    
+
+        if (!io) {
+            return res.status(503).json({
+                success: false,
+                message: "Socket server not initialized yet"
+            });
+        }
+
+        // Emit to specific room if provided
+        if (userId) {
+            io.to(userId).emit(event, data);
+        } else {
+            // Broadcast to all connected clients
+            io.emit(event, data);
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: `Event '${event}' emitted successfully`,
+            emittedTo: userId || 'all clients'
+        });
+
+    } catch (error) {
+        console.error('❌ Error emitting event:', error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to emit event",
+            error: process.env.NODE_ENV === "development" ? error : undefined
+        });
+    }
+});
 
 /**
  * HEALTH
@@ -104,19 +97,15 @@ app.get("/health", (req, res) => {
  * SOCKET TEST
  */
 app.get("/test", (req, res) => {
-
     if (io) {
-
         io.emit("test-event", {
             message: "Socket working",
         });
-
         return res.status(200).json({
             success: true,
             message: "Socket event emitted successfully",
         });
     }
-
     return res.status(503).json({
         success: false,
         message: "Socket server not initialized yet",
@@ -129,8 +118,7 @@ app.get("/test", (req, res) => {
 app.use((req, res) => {
     res.status(404).json({
         status: 404,
-        message:
-            "Requested socket-related resource not found",
+        message: "Requested socket-related resource not found",
     });
 });
 
@@ -138,7 +126,6 @@ app.use((req, res) => {
  * GLOBAL ERROR HANDLER
  */
 app.use((err: any, req: any, res: any, next: any) => {
-
     console.error("Socket Service Error:", {
         message: err.message,
         stack: err.stack,
@@ -146,14 +133,8 @@ app.use((err: any, req: any, res: any, next: any) => {
 
     res.status(err.status || 500).json({
         success: false,
-
-        message:
-            "Internal Server Error in Socket Service",
-
-        error:
-            process.env.NODE_ENV === "development"
-                ? err
-                : {},
+        message: "Internal Server Error in Socket Service",
+        error: process.env.NODE_ENV === "development" ? err : {},
     });
 });
 
