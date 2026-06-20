@@ -37,7 +37,7 @@ asyncHandler(
 
 
 
- 
+
     if (!rating) {
       res.status(400).json({
         success: false,
@@ -326,6 +326,8 @@ export const getReview: any = asyncHandler(
 
     hospitalId = normalize(hospitalId);
     doctorId = normalize(doctorId);
+    page = normalize(page);
+    limit = normalize(limit);
 
     // Pagination
     page = Math.max(Number(page) || 1, 1);

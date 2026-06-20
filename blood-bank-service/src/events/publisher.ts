@@ -1,6 +1,9 @@
 import amqp from 'amqplib';
 import { env } from '../config/env';
 import { logger } from '../utils/logger';
+import axios from 'axios';
+import dotenv from "dotenv";
+dotenv.config();
 
 let channel: amqp.Channel;
 
@@ -28,6 +31,15 @@ export const publishEvent = async (exchange: string, routingKey: string, data: a
             channel.publish(exchange, routingKey, Buffer.from(JSON.stringify(data)), { persistent: true });
             logger.info(`📤 Published event '${routingKey}' to exchange '${exchange}'`);
         }
+
+            await axios.post(`${process.env.SOCKETIO_SERVICE_URL}/emit-event`, {
+            event: routingKey,
+            userId : data?.hospitalId,
+            data
+        });
+
+
+
     } catch (error) {
         logger.error('❌ Event Publish Error:', error);
     }
