@@ -28,8 +28,8 @@ router.post("/ambulance/otp", validate(verifyOtpSchema), verifyOtp);
 
 // CRUD
 router.get("/ambulance", getAmbulaces);
-router.get("/ambulance/:id", validateParams(idParamSchema),checkPermission("ambulance", "view"), getanAmbulace);
-router.put("/ambulance/:id", validateParams(idParamSchema), validate(updateSchema),checkPermission("ambulance", "edit"), updateData);
-router.delete("/ambulance/:id", validateParams(idParamSchema),checkPermission("ambulance", "delete"), ambulanceDelete);
+router.get("/ambulance/:id", validateParams(idParamSchema), getanAmbulace);
+router.put("/ambulance/:id", validateParams(idParamSchema), validate(updateSchema), updateData);
+router.delete("/ambulance/:id", validateParams(idParamSchema), ambulanceDelete);
 
 export default router;
