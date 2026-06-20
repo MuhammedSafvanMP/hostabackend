@@ -47,6 +47,9 @@ app.use(
 app.post("/emit-event", (req, res) => {
     try {
         const { event, userId, data } = req.body;
+
+
+        console.log(req.body, "hlelooo");
     
 
         if (!io) {
@@ -64,11 +67,16 @@ app.post("/emit-event", (req, res) => {
             io.emit(event, data);
         }
 
+         console.log("ok");
+
         return res.status(200).json({
             success: true,
             message: `Event '${event}' emitted successfully`,
             emittedTo: userId || 'all clients'
         });
+
+
+       
 
     } catch (error) {
         console.error('❌ Error emitting event:', error);

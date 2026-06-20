@@ -21,6 +21,7 @@ services:
       - role-service  
       - s3-service
       - bulmq-service
+      - socketio-service
     networks:
       - hosta-network
 
@@ -204,6 +205,17 @@ services:
     networks:
       - hosta-network
 
+  socketio-service:
+    container_name: socketio-service
+    build: ./socketio-service
+    ports:
+      - "3019:3019"
+    environment:
+      - NODE_OPTIONS=--dns-result-order=ipv4first
+    env_file: ./socketio-service/.env
+    networks:
+      - hosta-network
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -223,3 +235,4 @@ networks:
     driver: bridge
     driver_opts:
       com.docker.network.driver.mtu: "1400"
+
