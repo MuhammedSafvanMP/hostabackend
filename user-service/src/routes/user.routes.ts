@@ -82,7 +82,7 @@ router.put("/users/auth/change-password", validate(changePasswordSchema), change
 
 // Refresh and Logout
 router.post("/users/refresh", refreshUserToken);
-router.post("/users/logout", logout);
+router.post("/users/logout",authenticate, logout);
 
 router.get("/users",   getUsers);
 router.get("/users/blacklist", getBlacklistedUsers);

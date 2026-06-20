@@ -50,7 +50,7 @@ router.post("/hospital/auth/verify-otp", validate(verifyOtpSchema), verifyOtp);
 router.post("/hospital/auth/reset-password", authenticate, validate(resetPasswordSchema), resetPassword);
 router.put("/hospital/auth/change-password", authenticate, validate(changePasswordSchema), changePassword);
 router.post("/hospital/refresh", refreshHospitalToken);
-router.post("/hospital/logout", logout);
+router.post("/hospital/logout",authenticate, logout);
 
 
 // Notifications
