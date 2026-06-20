@@ -1,17 +1,25 @@
 "use strict";
 module.exports = {
   async up(queryInterface, Sequelize) {
-    const table = await queryInterface.describeTable("patient_vitals");
-
-    if (!table.prescriptionId) {
+    const tableInfo = await queryInterface.describeTable("patient_vitals");
+    if (!tableInfo.prescriptionId) {
       await queryInterface.addColumn("patient_vitals", "prescriptionId", {
         type: Sequelize.INTEGER,
         allowNull: true,
+        references: {
+          model: "prescriptions",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
       });
     }
   },
 
   async down(queryInterface) {
-    // optional
+    const tableInfo = await queryInterface.describeTable("patient_vitals");
+    if (tableInfo.prescriptionId) {
+      await queryInterface.removeColumn("patient_vitals", "prescriptionId");
+    }
   },
 };

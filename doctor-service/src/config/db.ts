@@ -36,11 +36,13 @@ export const connectDB = async () => {
       console.log("✅ PostgreSQL Connected (Doctor Service)");
       connected = true;
 
-      // ❌ REMOVE THIS IN PRODUCTION
-      if (!isProduction) {
-        await sequelize.sync({ alter: true });
-        console.log("🚀 Database schema synchronized");
+      // In dev: alter tables to match models. In prod: only create missing tables (safe).
+      if (isProduction) {
+        await sequelize.sync(); // safe — only creates tables that don't exist
+      } else {
+        await sequelize.sync({ alter: true }); // dev — alters columns to match model
       }
+      console.log("🚀 Database schema synchronized");
     } catch (error) {
       attempts++;
       console.error(`❌ DB Connection attempt ${attempts} failed:`, error instanceof Error ? error.message : error);

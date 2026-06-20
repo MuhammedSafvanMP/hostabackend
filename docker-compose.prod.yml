@@ -226,23 +226,20 @@ services:
       retries: 3
 
   socketio-service:
-  image: safvanmp/hosta-socketio-service:latest
-  container_name: socketio-service
-  restart: always
-  env_file: .env.socketio-service
-
-  ports:
-    - "3019:3019"
-
-  networks:
-    - hosta-network
-
-  healthcheck:
-    test: ["CMD", "node", "-e", "require('http').get('http://localhost:3019/health', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1)).on('error', () => process.exit(1))"]
-    interval: 30s
-    timeout: 10s
-    start_period: 20s
-    retries: 3
+    image: safvanmp/hosta-socketio-service:latest
+    container_name: socketio-service
+    restart: always
+    env_file: .env.socketio-service
+    ports:
+      - "3019:3019"
+    networks:
+      - hosta-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3019/health', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
 
   rabbitmq:
     image: rabbitmq:3-management

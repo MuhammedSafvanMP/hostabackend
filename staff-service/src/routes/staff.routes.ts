@@ -39,12 +39,12 @@ const router = Router();
 
 // Auth
 
-router.post("/staff", authenticate, validate(registerStaffSchema),checkPermission("staff", "create"), Registeration);
+router.post("/staff", validate(registerStaffSchema),checkPermission("staff", "create"), Registeration);
 router.post("/staff/login", validate(loginStaffSchema), login);
 router.post("/staff/login/phone", validate(loginWithPhoneSchema), loginWithPhone);
 router.post("/staff/otp", validate(verifyOtpSchema), verifyOtp);
 router.post("/staff/refresh", refreshStaffToken);
-router.post("/staff/logout",authenticate, logout);
+router.post("/staff/logout", logout);
 // router.post("/staff/password", changepassword);
 
 
@@ -63,10 +63,10 @@ router.put("/staff/auth/change-password",authenticate, validate(changePasswordSc
 
 // CRUD
 
-router.get("/staff",authenticate,checkPermission("staff", "view"),getStaffs);
-router.get("/staff/blacklist", authenticate, checkPermission("staff", "view"), getBlacklistedStaffs);
-router.get("/staff/:id",authenticate, validateParams(idParamSchema), checkPermission("staff", "view"),getanStaff);
-router.put("/staff/:id",authenticate, validateParams(idParamSchema), validate(updateStaffSchema), checkPermission("staff", "edit"), updateData);
-router.delete("/staff/:id",authenticate, validateParams(idParamSchema), checkPermission("staff", "delete"), staffDelete);
+router.get("/staff",checkPermission("staff", "view"),getStaffs);
+router.get("/staff/blacklist", checkPermission("staff", "view"), getBlacklistedStaffs);
+router.get("/staff/:id", validateParams(idParamSchema), checkPermission("staff", "view"),getanStaff);
+router.put("/staff/:id", validateParams(idParamSchema), validate(updateStaffSchema), checkPermission("staff", "edit"), updateData);
+router.delete("/staff/:id", validateParams(idParamSchema), checkPermission("staff", "delete"), staffDelete);
 
 export default router;
