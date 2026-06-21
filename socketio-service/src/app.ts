@@ -15,8 +15,9 @@ app.set("trust proxy", 1);
 app.use(
     cors({
         origin: [
-            "http://localhost:5173",
-            "https://hostahospital.com",
+            // "http://localhost:5173",
+            // "https://hostahospital.com",
+            "*"
         ],
         methods: [
             "GET",
