@@ -50,7 +50,7 @@ router.post("/hospital/auth/verify-otp", validate(verifyOtpSchema), verifyOtp);
 router.post("/hospital/auth/reset-password", authenticate, validate(resetPasswordSchema), resetPassword);
 router.put("/hospital/auth/change-password", authenticate, validate(changePasswordSchema), changePassword);
 router.post("/hospital/refresh", refreshHospitalToken);
-router.post("/hospital/logout", logout);
+router.post("/hospital/logout",authenticate, logout);
 
 
 // Notifications
@@ -62,8 +62,8 @@ router.post("/hospital/notify/email", authenticate, validate(sendCustomEmailSche
 router.get("/hospital",  getHospital);
 router.get("/hospital/blacklist", getBlacklistedHospitals);
 router.get("/hospital/:id",  getanHospital);
-router.put("/hospital/:id",authenticate,checkPermission("hospital","edit"),updateData);
-router.delete("/hospital/:id",authenticate,checkPermission("hospital","delete"),hospitalDelete);
+router.put("/hospital/:id",updateData);
+router.delete("/hospital/:id",hospitalDelete);
 
 router.post("/hospital/g-login", roleBaseLogin);
 

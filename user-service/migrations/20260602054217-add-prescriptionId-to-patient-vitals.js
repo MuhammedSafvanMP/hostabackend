@@ -2,18 +2,19 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.addColumn("patient_vitals", "prescriptionId", {
-      type: Sequelize.INTEGER,
-      allowNull: true,
-    });
+    const tableInfo = await queryInterface.describeTable("patient_vitals");
+    if (!tableInfo.prescriptionId) {
+      await queryInterface.addColumn("patient_vitals", "prescriptionId", {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      });
+    }
   },
 
   async down(queryInterface) {
-    await queryInterface.removeColumn("patient_vitals", "prescriptionId");
-  },
+    const tableInfo = await queryInterface.describeTable("patient_vitals");
+    if (tableInfo.prescriptionId) {
+      await queryInterface.removeColumn("patient_vitals", "prescriptionId");
+    }
+  }
 };
-
-
-
-
-

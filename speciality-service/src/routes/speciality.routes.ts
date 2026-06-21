@@ -15,11 +15,11 @@ const router = Router();
 
 // CRUD
 
-router.post("/speciality", authenticate, checkPermission("speciality", "create"),Registeration);
-router.get("/speciality", authenticate, checkPermission("speciality", "view"),getSpecialitys);
-router.get("/speciality/:id",authenticate, checkPermission("speciality", "view"), getanSpeciality);
-router.put("/speciality/:id",authenticate, checkPermission("speciality", "edit"), updateData);
-router.delete("/speciality/:id",authenticate, checkPermission("speciality", "delete"), specialityDelete);
+router.post("/speciality", checkPermission("speciality", "create"),Registeration);
+router.get("/speciality", checkPermission("speciality", "view"),getSpecialitys);
+router.get("/speciality/:id", checkPermission("speciality", "view"), getanSpeciality);
+router.put("/speciality/:id", checkPermission("speciality", "edit"), updateData);
+router.delete("/speciality/:id", checkPermission("speciality", "delete"), specialityDelete);
 
 
 export default router;

@@ -230,6 +230,8 @@ services:
     container_name: socketio-service
     restart: always
     env_file: .env.socketio-service
+    ports:
+      - "3019:3019"
     networks:
       - hosta-network
     healthcheck:
