@@ -29,7 +29,7 @@ export const proxyRequest = async (req: Request, res: Response) => {
   try {
     const options = {
         method: req.method as any,
-        url: `${SERVICES.ADS_SERVICE}${req.originalUrl.replace("/api/emit-event", "/emit-event")}`,
+        url: `${SERVICES.SOCKETIO_SERVICE}${req.originalUrl.replace("/api/emit-event", "/emit-event")}`,
         data: req.body,
         headers: {
             ...(() => {
