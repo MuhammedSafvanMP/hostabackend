@@ -131,7 +131,7 @@ router.get(
 
 router.get(
 
-  "/notification/:id",
+  "/notification/:id",authenticate,
 
   getanNotification
 
@@ -146,7 +146,7 @@ router.get(
 
 router.get(
 
-  "/notification/:role/:id",
+  "/notification/:role/:id",authenticate,
 
   validateParams(getByRoleParamsSchema),
 
@@ -168,7 +168,7 @@ router.put(
 
   "/notification/read/:role/:userId/:notificationId",
 
-  
+  authenticate,
 
   markAsRead
 

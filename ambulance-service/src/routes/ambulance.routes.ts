@@ -22,14 +22,14 @@ import { checkPermission } from "../middleware/role.middleware";
 const router = Router();
 
 // Auth 
-router.post("/ambulance", validate(registerSchema), Registeration);
+router.post("/ambulance", authenticate, validate(registerSchema), Registeration);
 router.post("/ambulance/login/phone", validate(loginWithPhoneSchema), loginWithPhone);
 router.post("/ambulance/otp", validate(verifyOtpSchema), verifyOtp);
 
 // CRUD
 router.get("/ambulance", getAmbulaces);
-router.get("/ambulance/:id", validateParams(idParamSchema), getanAmbulace);
-router.put("/ambulance/:id", validateParams(idParamSchema), validate(updateSchema), updateData);
-router.delete("/ambulance/:id", validateParams(idParamSchema), ambulanceDelete);
+router.get("/ambulance/:id", authenticate, validateParams(idParamSchema),checkPermission("ambulance", "view"), getanAmbulace);
+router.put("/ambulance/:id", authenticate, validateParams(idParamSchema), validate(updateSchema),checkPermission("ambulance", "edit"), updateData);
+router.delete("/ambulance/:id", authenticate, validateParams(idParamSchema),checkPermission("ambulance", "delete"), ambulanceDelete);
 
 export default router;

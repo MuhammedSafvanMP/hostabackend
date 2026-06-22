@@ -17,9 +17,9 @@ const router = Router();
 
 router.post("/category", Registeration);
 router.get("/category",  getCategorys);
-router.get("/category/:id", getanCategory);
-router.put("/category/:id", updateData);
-router.delete("/category/:id", categoryDelete);
+router.get("/category/:id",authenticate, checkPermission("category", "view"), getanCategory);
+router.put("/category/:id",authenticate, checkPermission("category", "edit"), updateData);
+router.delete("/category/:id",authenticate, checkPermission("category", "delete"), categoryDelete);
 
 
 export default router;
