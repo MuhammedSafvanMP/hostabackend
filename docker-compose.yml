@@ -22,6 +22,9 @@ services:
       - s3-service
       - bulmq-service
       - socketio-service
+      - speciality-service
+      - doctor-service
+      - hospital-service
     networks:
       - hosta-network
 
