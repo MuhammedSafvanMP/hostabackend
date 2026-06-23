@@ -50,9 +50,10 @@ export const startCleanupJob = () => {
     }
   };
 
-  // Run once on startup
-  performCleanup();
-
-  // Then run periodically
-  setInterval(performCleanup, INTERVAL);
+  // Delay first run by 30s to allow DB sync to finish creating tables
+  setTimeout(() => {
+    performCleanup();
+    // Then run periodically every 24 hours
+    setInterval(performCleanup, INTERVAL);
+  }, 30000);
 };
