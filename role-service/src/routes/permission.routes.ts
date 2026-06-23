@@ -23,7 +23,7 @@ router.get("/permission", authenticate, checkPermission("permission", "view"), g
 router.get("/permission/:id", authenticate, checkPermission("permission", "view"), getanPermission);
 router.put("/permission/:id", authenticate, checkPermission("permission", "edit"), updateData);
 router.delete("/permission/:id", authenticate, checkPermission("permission", "delete"), permissionDelete);
-router.post("/check-permission", authenticate, checkPermissionService);
+router.post("/check-permission",  checkPermissionService);
 
 
 export default router;
