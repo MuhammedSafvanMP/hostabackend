@@ -16,11 +16,11 @@ const router = Router();
 
 // CRUD
 
-router.post("/prescription-template",  Registeration);
-router.get("/prescription-template",  getPrescription);
-router.get("/prescription-template/:id",  getPrescriptionById);
-router.put("/prescription-template/:id", updatePrescription);
-router.delete("/prescription-template/:id",  prescriptionDelete);
+router.post("/prescription-template", authenticate, checkPermission("prescription-template", "create"),  Registeration);
+router.get("/prescription-template", authenticate, checkPermission("prescription-template", "view"),  getPrescription);
+router.get("/prescription-template/:id", authenticate, checkPermission("prescription-template", "view"),   getPrescriptionById);
+router.put("/prescription-template/:id", authenticate, checkPermission("prescription-template", "edit"),  updatePrescription);
+router.delete("/prescription-template/:id", authenticate, checkPermission("prescription-template", "delete"),   prescriptionDelete);
 
 export default router;
 

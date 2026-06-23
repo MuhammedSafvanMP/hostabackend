@@ -23,7 +23,7 @@ const router = Router();
 
 // Auth 
 router.post("/ambulance", authenticate, validate(registerSchema), Registeration);
-router.post("/ambulance/login/phone", validate(loginWithPhoneSchema), loginWithPhone);
+router.post("/ambulance/login/phone",  validate(loginWithPhoneSchema), loginWithPhone);
 router.post("/ambulance/otp", validate(verifyOtpSchema), verifyOtp);
 
 // CRUD
