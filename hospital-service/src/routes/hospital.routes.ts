@@ -37,7 +37,7 @@ import { checkPermission } from "../middleware/role.middleware";
 const router = Router();
 
 // Auth & Password Flow
-router.post("/hospital", validate(registerHospitalSchema), Registeration);
+router.post("/hospital",  validate(registerHospitalSchema), Registeration);
 router.post("/hospital/login", validate(loginHospitalSchema), login);
 router.post("/hospital/login/phone", validate(loginWithPhoneSchema), loginWithPhone);
 router.post("/hospital/otp",validate(verifyOtpSchema),verifyLoginOtp)
@@ -48,9 +48,9 @@ router.post("/hospital/otp",validate(verifyOtpSchema),verifyLoginOtp)
 router.post("/hospital/auth/send-otp", validate(loginWithEmailSchema), sendOtp);
 router.post("/hospital/auth/verify-otp", validate(verifyOtpSchema), verifyOtp);
 router.post("/hospital/auth/reset-password", authenticate, validate(resetPasswordSchema), resetPassword);
-router.put("/hospital/auth/change-password", authenticate, validate(changePasswordSchema), changePassword);
+router.put("/hospital/auth/change-password", authenticate, checkPermission("hospital", "edit"), validate(changePasswordSchema), changePassword);
 router.post("/hospital/refresh", refreshHospitalToken);
-router.post("/hospital/logout", logout);
+router.post("/hospital/logout", authenticate, checkPermission("hospital", "create"),  logout);
 
 
 // Notifications
@@ -60,10 +60,10 @@ router.post("/hospital/notify/email", authenticate, validate(sendCustomEmailSche
 
 
 router.get("/hospital",  getHospital);
-router.get("/hospital/blacklist", getBlacklistedHospitals);
+router.get("/hospital/blacklist", authenticate, checkPermission("hospital", "view"),  getBlacklistedHospitals);
 router.get("/hospital/:id",  getanHospital);
-router.put("/hospital/:id",authenticate,checkPermission("hospital","edit"),updateData);
-router.delete("/hospital/:id",authenticate,checkPermission("hospital","delete"),hospitalDelete);
+router.put("/hospital/:id",authenticate,checkPermission("hospital","edit"), updateData);
+router.delete("/hospital/:id",authenticate,checkPermission("hospital","delete"), hospitalDelete);
 
 router.post("/hospital/g-login", roleBaseLogin);
 

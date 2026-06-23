@@ -8,11 +8,12 @@ export const checkPermission =
 
     try {
 
-      const roleId = req.user?.roleId;
-            
+      const roleId = req.user.roleId;
+      
+      
 
       const response = await axios.post(
-         `${process.env.ROLE_SERVICE_URL}/check-permission`,
+        `${process.env.ROLE_SERVICE_URL}/check-permission`,
         {
           roleId,
           module,
@@ -24,7 +25,6 @@ export const checkPermission =
           },
         }
       );
-      
 
       if (!response.data.allowed) {
 
