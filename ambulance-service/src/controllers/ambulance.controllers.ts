@@ -304,6 +304,8 @@ export const getAmbulaces = asyncHandler(
       pincode,
       vehicleType,
       search_query,
+      limit=10,
+      page = 1,
     }: any = req.query;
 
     // Handle array query params
@@ -317,6 +319,15 @@ export const getAmbulaces = asyncHandler(
     if (Array.isArray(pincode)) pincode = pincode[0];
     if (Array.isArray(vehicleType)) vehicleType = vehicleType[0];
     if (Array.isArray(search_query)) search_query = search_query[0];
+ if (Array.isArray(page)) page = page[0];
+ if (Array.isArray(limit)) limit = limit[0];
+
+
+ 
+
+  const pageNum = Number(page);
+  const limitNum = Number(limit);
+
 
 
     const where: any = {};
@@ -437,23 +448,43 @@ export const getAmbulaces = asyncHandler(
       where[Op.and] = andConditions;
     }
 
-    const ambulance = await Ambulance.findAll({
-      where,
-      order: [["createdAt", "DESC"]],
-    });
 
-    if (!ambulance.length) {
-      res.status(404).json({
-        success: false,
-        message: "No data found",
-        data: [],
-      });
-      return;
-    }
+      const { count, rows } = await Ambulance.findAndCountAll({
+    where,
+    limit: limitNum,
+    offset: (pageNum - 1) * limitNum,
+    order: [["createdAt", "DESC"]],
+  });
 
-    res.status(200).json({
-      success: true,
-      data: ambulance,
+  if (count === 0) {
+   res.status(200).json({
+      success: false,
+      message: "No data found",
+      data: [],
     });
+    return ;
+  }
+
+ 
+
+  const totalPages = Math.ceil(count / limitNum);
+
+  res.status(200).json({
+    success: true,
+    data: rows,
+    pagination: {
+      totalItems: count,
+      totalPages,
+      currentPage: pageNum,
+      limit: limitNum,
+      hasNextPage: pageNum < totalPages,
+      hasPreviousPage: pageNum > 1,
+    },
+  });
+
+
+
   }
 );
+
+

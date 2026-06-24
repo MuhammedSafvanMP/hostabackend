@@ -109,6 +109,17 @@ export const getAllStock = asyncHandler(async (req: Request, res: Response): Pro
     order: [["bloodGroup", "ASC"]],
   });
 
+
+
+    if (!stocks.length) {
+      res.status(200).json({
+        success: false,
+        message: "No data found",
+        data: [],
+      });
+      return;
+    }
+
   res.status(200).json({
     success: true,
     count: stocks.length,
