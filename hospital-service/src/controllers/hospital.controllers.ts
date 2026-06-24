@@ -216,6 +216,8 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
   setRefreshTokenCookie(res, refreshToken);
 
 
+  
+
   const authPermissionRes = await axios.get(
   `${process.env.ROLE_SERVICE_URL}/rolepermission`,
   {
@@ -224,6 +226,9 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     },
   }
 );
+
+
+
 
 const authPermission = authPermissionRes.data;
 

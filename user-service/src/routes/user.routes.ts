@@ -78,25 +78,23 @@ router.post("/users/otp", validate(verifyOtpSchema), verifyOtp);
 router.post("/users/auth/send-otp", validate(sendOtpEmailSchema), sendOtpEmail);
 router.post("/users/auth/verify-otp", validate(verifyOtpEmailSchema), verifyOtpEmail);
 router.post("/users/auth/reset-password",authenticate, validate(resetPasswordEmailSchema), resetPasswordEmail);
-router.put("/users/auth/change-password", authenticate, validate(changePasswordSchema), changePassword);
+router.put("/users/auth/change-password", authenticate, checkPermission("users", "edit"), validate(changePasswordSchema), changePassword);
 
 // Refresh and Logout
 router.post("/users/refresh", refreshUserToken);
-router.post("/users/logout", authenticate,logout);
+router.post("/users/logout", authenticate, checkPermission("users", "create"), logout);
 
-router.get("/users",   getUsers);
+router.get("/users", authenticate, checkPermission("users", "view"),   getUsers);
 router.get("/users/blacklist", authenticate, checkPermission("users", "view"), getBlacklistedUsers);
 router.get("/users/:id", authenticate, validateParams(idParamSchema), checkPermission("users", "view"), getUser);
 router.put("/users/:id", authenticate, validateParams(idParamSchema), validate(updateUserSchema), checkPermission("users", "edit"), updateUser);
 router.delete("/users/:id", authenticate, validateParams(idParamSchema), checkPermission("users", "delete"), deleteUser);
 
 
-// router.post("/users/:id/token", validateParams(idParamSchema), saveExpoToken);
-// router.post("/users/test/:id", validateParams(idParamSchema), testPushNotification);
 
 
 // Patient Routes
-router.post("/patients", createPatient);
+router.post("/patients", authenticate, checkPermission("patient", "create"), createPatient);
 router.get("/patients", authenticate, checkPermission("patient", "view")  , getPatients);
 router.get("/patients/blacklist", authenticate, checkPermission("patient", "view"), getBlacklistedPatients);
 router.get("/patients/:id", authenticate, checkPermission("patient", "view"), validateParams(idParamSchema), getPatient);
@@ -107,14 +105,14 @@ router.delete("/patients/:id", authenticate, checkPermission("patient", "delete"
 
 // Prescription
 
-router.post("/prescription",  createPrescription);
+router.post("/prescription", authenticate, checkPermission("prescription", "create"),  createPrescription);
 router.get("/prescription", authenticate, checkPermission("prescription", "view"), getPrescription);
 router.get("/prescription/:id", authenticate, checkPermission("prescription", "view"), getAPrescription);
 router.put("/prescription/:id", authenticate, checkPermission("prescription", "edit"), updateData);
 router.delete("/prescription/:id", authenticate, checkPermission("prescription", "delete"), deletePrescription);
 
 
-router.post("/vitals",  addVitals);
+router.post("/vitals", authenticate, checkPermission("vitals", "create"),  addVitals);
 router.get("/vitals", authenticate, checkPermission("vitals", "view"),getLatestVitals);
 router.get("/vitals/:id", authenticate, checkPermission("vitals", "view"), getVitalsById);
 router.put("/vitals/:id", authenticate, checkPermission("vitals", "edit"), updateVitals);
@@ -136,7 +134,7 @@ router.get("/documents/:id", authenticate, validateParams(idParamSchema), checkP
 router.put("/documents/:id", authenticate, validateParams(idParamSchema), checkPermission("document", "edit"), updateDocument);
 router.delete("/documents/:id", authenticate, validateParams(idParamSchema), checkPermission("document", "delete"), deleteDocument);
 
-router.post("/email-enquiry",   sendEnquiry);
+router.post("/email-enquiry", authenticate,   sendEnquiry);
 
 
 export default router;

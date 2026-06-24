@@ -186,7 +186,8 @@ export const deleteStockById = asyncHandler(async (req: Request, res: Response) 
   }
 
   // Soft Delete (paranoid mode)
-  await stock.destroy();
+
+    await stock.destroy({ force: true });
 
 
 
