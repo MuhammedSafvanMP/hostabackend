@@ -449,12 +449,14 @@ export const getAmbulaces = asyncHandler(
     }
 
 
+
       const { count, rows } = await Ambulance.findAndCountAll({
     where,
     limit: limitNum,
     offset: (pageNum - 1) * limitNum,
     order: [["createdAt", "DESC"]],
   });
+
 
   if (count === 0) {
    res.status(200).json({
