@@ -9,6 +9,7 @@ import {
   staffDelete,
   getStaffs,
   getBlacklistedStaffs,
+  recoverStaff,
   changepassword,
   sendStaffOtp,
   verifyStaffOtp,
@@ -66,6 +67,7 @@ router.put("/staff/auth/change-password",authenticate, validate(changePasswordSc
 router.get("/staff",authenticate,checkPermission("staff", "view"),getStaffs);
 router.get("/staff/blacklist", authenticate, checkPermission("staff", "view"), getBlacklistedStaffs);
 router.get("/staff/:id",authenticate, validateParams(idParamSchema), checkPermission("staff", "view"),getanStaff);
+router.put("/staff/recover/:id", authenticate, checkPermission("staff", "edit"), recoverStaff);
 router.put("/staff/:id",authenticate, validateParams(idParamSchema), validate(updateStaffSchema), checkPermission("staff", "edit"), updateData);
 router.delete("/staff/:id",authenticate, validateParams(idParamSchema), checkPermission("staff", "delete"), staffDelete);
 

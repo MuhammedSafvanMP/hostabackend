@@ -950,6 +950,49 @@ export const getBlacklistedHospitals: any = asyncHandler(async (req: Request, re
 
 
 
+// RECOVER FROM BLACKLIST - PUT /hospital/recover/:id
+export const recoverHospital: any = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const hospital = await Hospital.findOne({
+    where: {
+      id,
+      isDelete: true,
+    },
+  });
+
+  if (!hospital) {
+    res.status(404).json({
+      success: false,
+      message: "Blacklisted hospital not found",
+      data: null,
+      error: { code: "HOSPITAL_NOT_FOUND", details: null },
+    });
+    return;
+  }
+
+  await hospital.update({
+    isDelete: false,
+    isActive: true,
+    deleteDate: null,
+    deleteRequested: false,
+  });
+
+  await publishEvent("hospital_events", "HOSPITAL_RECOVERED", {
+    hospitalId: hospital.id,
+    hospitalName: hospital.name,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Hospital recovered successfully",
+    data: hospital,
+    error: null,
+  });
+});
+
+
+
 // REFRESH TOKEN - POST /hospital/refresh
 export const refreshHospitalToken: any = asyncHandler(async (req: Request, res: Response) => {
   const refreshToken = req.cookies?.refreshToken;

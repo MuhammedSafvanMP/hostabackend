@@ -590,6 +590,52 @@ export const deletePatient: any = asyncHandler(async (req: Request, res: Respons
   }
 });
 
+// RECOVER USER FROM BLACKLIST - PUT /users/recover/:id
+export const recoverUser: any = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const user = await userService.recoverUser(id);
+
+  res.status(200).json({
+    success: true,
+    message: "User recovered successfully",
+    data: user,
+    error: null,
+  });
+});
+
+// RECOVER PATIENT FROM BLACKLIST - PUT /patients/recover/:id
+export const recoverPatient: any = asyncHandler(async (req: Request, res: Response) => {
+  const patient = await Patient.findOne({ where: { id: req.params.id, isDelete: true } });
+
+  if (!patient) {
+    res.status(404).json({ success: false, message: "Blacklisted patient not found" });
+    return;
+  }
+
+  await patient.update({
+    isActive: true,
+    isDelete: false,
+    deleteDate: null,
+  });
+
+  try {
+    await publishEvent("patient_events", "PATIENT_RECOVERED", {
+      patientId: patient.id,
+      userId: patient.userId || null,
+      hospitalId: patient.hospitalId,
+    });
+  } catch (err) {
+    console.error("Failed to publish PATIENT_RECOVERED event:", err);
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Patient recovered successfully",
+    data: patient,
+  });
+});
+
 // REFRESH TOKEN - POST /users/refresh
 export const refreshUserToken: any = asyncHandler(async (req: Request, res: Response) => {
   const refreshToken = req.cookies?.refreshToken;

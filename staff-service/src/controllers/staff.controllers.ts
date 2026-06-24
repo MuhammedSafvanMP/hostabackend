@@ -731,6 +731,46 @@ export const getBlacklistedStaffs: any = asyncHandler(async (req: Request, res: 
   });
 });
 
+// RECOVER FROM BLACKLIST - PUT /staff/recover/:id
+export const recoverStaff: any = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const staff = await Staff.findOne({
+    where: {
+      id,
+      isDelete: true,
+    },
+  });
+
+  if (!staff) {
+    res.status(404).json({
+      success: false,
+      message: "Blacklisted staff not found",
+      data: null,
+      error: { code: "STAFF_NOT_FOUND", details: null },
+    });
+    return;
+  }
+
+  await staff.update({
+    isDelete: false,
+    isActive: true,
+    deleteDate: null,
+  });
+
+  await publishEvent("staff_events", "STAFF_RECOVERED", {
+    staffId: staff.id,
+    staffName: staff.name,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Staff recovered successfully",
+    data: staff,
+    error: null,
+  });
+});
+
 // CHANGE PASSWORD - PUT /staff/changepassword
 export const changepassword: any = asyncHandler(async (req: Request, res: Response) => {
   const { email, password, newPassword } = req.body;
