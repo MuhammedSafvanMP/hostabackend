@@ -86,7 +86,7 @@
 
 //   res.status(err.status || 500).json({
 //     success: false,
-//     message: "Internal Server Error in Speciality Service",
+//     message: err.message || "Internal Server Error in Speciality Service",
 //     error: env.NODE_ENV === "development" ? err : {}, // Still show object in dev, hide details in prod
 
 //   });
@@ -228,7 +228,7 @@ app.use(
             success: false,
 
             message:
-                "Internal Server Error in Speciality Service",
+                err.message || "Internal Server Error in Speciality Service",
 
             error:
                 env.NODE_ENV === "development"

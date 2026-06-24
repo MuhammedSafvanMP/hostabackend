@@ -86,7 +86,7 @@
 
 //   res.status(err.status || 500).json({
 //     success: false,
-//     message: "Internal Server Error in Medicinremainder Service",
+//     message: err.message || "Internal Server Error in Medicinremainder Service",
 //     error: env.NODE_ENV === "development" ? err : {}, // Still show object in dev, hide details in prod
 //   });
 // });
@@ -225,7 +225,7 @@ app.use(
             success: false,
 
             message:
-                "Internal Server Error in Medicinremainder Service",
+                err.message || "Internal Server Error in Medicinremainder Service",
 
             error:
                 env.NODE_ENV === "development"
