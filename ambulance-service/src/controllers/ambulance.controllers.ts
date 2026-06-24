@@ -284,7 +284,7 @@ export const ambulanceDelete: any = asyncHandler(async (req: Request, res: Respo
   res.status(200).json({
     success: true,
     message: "Your account deleted successfully",
-    data: null,
+    data: [],
     error: null,
   });
 });
@@ -446,7 +446,7 @@ export const getAmbulaces = asyncHandler(
       res.status(404).json({
         success: false,
         message: "No data found",
-        data: null,
+        data: [],
       });
       return;
     }
