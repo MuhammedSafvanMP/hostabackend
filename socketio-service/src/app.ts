@@ -204,7 +204,7 @@ app.use((err: any, req: any, res: any, next: any) => {
 
     res.status(err.status || 500).json({
         success: false,
-        message: "Internal Server Error in Socket Service",
+        message: err.message || "Internal Server Error in Socket Service",
         error: process.env.NODE_ENV === "development" ? err : {},
     });
 });

@@ -4,8 +4,7 @@ import BloodBank from "../models/bloodBank.model";
 import { httpClient } from "../utils/httpClient";
 import { publishEvent } from "../events/publisher";
 import { Op } from "sequelize";
-import dotenv from "dotenv";
-dotenv.config();
+import { env } from "../config/env";
 
 const VALID_BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
@@ -16,7 +15,7 @@ export const createOrUpdateStock = asyncHandler(async (req: any, res: Response) 
 
   // 🏥 Validate Hospital (Cross-Service: hospital-service)
   try {
-    await httpClient.get(`${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
+    await httpClient.get(`${env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`, {
       headers: { Authorization: req.headers.authorization }
     });
   } catch (error: any) {
@@ -30,9 +29,9 @@ export const createOrUpdateStock = asyncHandler(async (req: any, res: Response) 
   }
 
   if (!VALID_BLOOD_GROUPS.includes(bloodGroup)) {
-    res.status(400).json({ 
-      success: false, 
-      message: `Invalid blood group. Must be one of: ${VALID_BLOOD_GROUPS.join(", ")}` 
+    res.status(400).json({
+      success: false,
+      message: `Invalid blood group. Must be one of: ${VALID_BLOOD_GROUPS.join(", ")}`
     });
     return;
   }
@@ -44,7 +43,7 @@ export const createOrUpdateStock = asyncHandler(async (req: any, res: Response) 
     // ⚔️ Add to existing count
     const newCount = Number(stock.count) + Number(count || 0);
     await stock.update({ count: newCount });
-    
+
     await publishEvent("blood_bank_events", "STOCK_UPDATED", {
       hospitalId,
       bloodGroup,
@@ -52,10 +51,10 @@ export const createOrUpdateStock = asyncHandler(async (req: any, res: Response) 
       action: "added"
     });
 
-    res.status(200).json({ 
-      success: true, 
-      message: `Added ${count} units. New total for ${bloodGroup} is ${newCount} units for hospital ${hospitalId}`, 
-      data: stock 
+    res.status(200).json({
+      success: true,
+      message: `Added ${count} units. New total for ${bloodGroup} is ${newCount} units for hospital ${hospitalId}`,
+      data: stock
     });
   } else {
     // ⚔️ Create new record
@@ -67,10 +66,10 @@ export const createOrUpdateStock = asyncHandler(async (req: any, res: Response) 
       count: count || 0
     });
 
-    res.status(201).json({ 
-      success: true, 
-      message: `Blood group ${bloodGroup} record created with ${count} units for hospital ${hospitalId}`, 
-      data: stock 
+    res.status(201).json({
+      success: true,
+      message: `Blood group ${bloodGroup} record created with ${count} units for hospital ${hospitalId}`,
+      data: stock
     });
   }
 });
@@ -114,7 +113,7 @@ export const getAllStock = asyncHandler(async (req: Request, res: Response): Pro
     count: stocks.length,
     data: stocks,
   });
-   return;
+  return;
 });
 
 
@@ -129,8 +128,8 @@ export const getStocksByHospitalId = asyncHandler(async (req: Request, res: Resp
   });
 
   if (stocks.length === 0) {
-    res.status(404).json({ 
-      success: false, 
+    res.status(404).json({
+      success: false,
       message: `No blood bank inventory found for hospital ${hospitalId}`,
       data: null,
       error: { code: "NO_DATA_FOUND", details: null }
@@ -162,8 +161,8 @@ export const updateStockById = asyncHandler(async (req: Request, res: Response) 
     res.status(404).json({ success: false, message: `No inventory record found with ID ${id}` });
     return;
   }
-  
-  
+
+
   await stock.update({ count });
 
   await publishEvent("blood_bank_events", "STOCK_UPDATED", {
@@ -191,12 +190,12 @@ export const deleteStockById = asyncHandler(async (req: Request, res: Response) 
     await stock.destroy({ force: true });
 
 
- 
+
   await publishEvent("blood_bank_events", "STOCK_DELETED", {
-      hospitalId: stock.hospitalId,
-      bloodGroup: stock.bloodGroup,
-      count: stock.count || 0
-    });
+    hospitalId: stock.hospitalId,
+    bloodGroup: stock.bloodGroup,
+    count: stock.count || 0
+  });
 
   res.status(200).json({ success: true, message: "Inventory record soft-deleted successfully" });
 });

@@ -133,7 +133,7 @@ app.use(
             success: false,
 
             message:
-                "Internal Server Error in Review Service",
+                err.message || "Internal Server Error in Review Service",
 
             error:
                 env.NODE_ENV === "development"

@@ -127,7 +127,7 @@ app.use(
             success: false,
 
             message:
-                "Internal Server Error in Notification Service",
+                err.message || "Internal Server Error in Notification Service",
 
             error:
                 env.NODE_ENV === "development"

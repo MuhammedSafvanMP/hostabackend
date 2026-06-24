@@ -128,7 +128,7 @@ app.use(
             success: false,
 
             message:
-                "Internal Server Error in Speciality Service",
+                err.message || "Internal Server Error in Speciality Service",
 
             error:
                 env.NODE_ENV === "development"

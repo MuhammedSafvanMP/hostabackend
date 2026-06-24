@@ -9,6 +9,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   RABBITMQ_URL: z.string().url().optional(),
   JWT_SECRET: z.string().min(10),
+  HOSPITAL_SERVICE_URL: z.string().url(),
 });
 
 const parsed = envSchema.safeParse(process.env);
