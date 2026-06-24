@@ -443,7 +443,7 @@ export const getAmbulaces = asyncHandler(
     });
 
     if (!ambulance.length) {
-      res.status(404).json({
+      res.status(200).json({
         success: false,
         message: "No data found",
         data: [],
