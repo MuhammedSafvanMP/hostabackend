@@ -9,6 +9,7 @@ import {
   doctorDelete,
   getDoctors,
   getBlacklistedDoctors,
+  recoverDoctor,
   changepassword,
   sendDoctorOtp,
   verifyDoctorOtp,
@@ -59,6 +60,7 @@ router.post("/doctor/logout",authenticate, checkPermission("doctor", "create"), 
 router.get("/doctor", getDoctors);
 router.get("/doctor/blacklist", authenticate, checkPermission('doctor', 'view'), getBlacklistedDoctors);
 router.get("/doctor/:id", getanDoctor);
+router.put("/doctor/recover/:id", authenticate, checkPermission('doctor', 'edit'), recoverDoctor);
 router.put("/doctor/:id", authenticate, checkPermission('doctor','edit'), updateData);
 router.delete("/doctor/:id", authenticate, checkPermission('doctor','delete'), doctorDelete);
 

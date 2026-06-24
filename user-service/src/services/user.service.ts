@@ -277,6 +277,21 @@ export const userService = {
     await publishEvent('user_events', 'USER_DELETED', { userId: id });
   },
 
+  async recoverUser(id: string) {
+    const user = await User.findOne({ where: { id, isDelete: true } });
+    if (!user) throw { status: 404, message: "Blacklisted user not found" };
+
+    await user.update({
+      isActive: true,
+      isDelete: false,
+      deleteDate: null,
+    });
+
+    await publishEvent('user_events', 'USER_RECOVERED', { userId: id });
+
+    return user;
+  },
+
   async resetPassword(data: any) {
     const user = await User.findOne({ where: { id: data.id, isDelete: false } });
     if (!user) throw { status: 404, message: "User not found" };

@@ -1,6 +1,7 @@
 import PatientVitals from "../models/patientVitals.model";
 import Patient from "../models/patient.model";
 import { logger } from "../utils/logger";
+import { getVitalsById } from "../controllers/patientVitals.controller";
 
 export const patientVitalsService = {
   /**
@@ -50,6 +51,14 @@ export const patientVitalsService = {
       order: [["createdAt", "DESC"]],
     });
   },
+
+
+  
+  async getAllVitals() {
+  return await PatientVitals.findAll({
+    order: [["createdAt", "DESC"]],
+  });
+},
 
   /**
    * Get latest vitals for a patient

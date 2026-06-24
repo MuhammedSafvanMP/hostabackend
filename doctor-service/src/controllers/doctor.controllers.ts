@@ -733,6 +733,47 @@ export const getBlacklistedDoctors: any = asyncHandler(
   },
 );
 
+
+// RECOVER FROM BLACKLIST - PUT /doctor/recover/:id
+export const recoverDoctor: any = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const doctor = await Doctor.findOne({
+    where: {
+      id,
+      isDelete: true,
+    },
+  });
+
+  if (!doctor) {
+    res.status(404).json({
+      success: false,
+      message: "Blacklisted doctor not found",
+      data: null,
+      error: { code: "DOCTOR_NOT_FOUND", details: null },
+    });
+    return;
+  }
+
+  await doctor.update({
+    isDelete: false,
+    isActive: true,
+    deleteDate: null,
+  });
+
+  await publishEvent("doctor_events", "DOCTOR_RECOVERED", {
+    doctorId: doctor.id,
+    doctorName: doctor.displayName,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Doctor recovered successfully",
+    data: doctor,
+    error: null,
+  });
+});
+
 // CHANGE PASSWORD - PUT /doctor/password
 export const changepassword: any = asyncHandler(
   async (req: Request, res: Response) => {
