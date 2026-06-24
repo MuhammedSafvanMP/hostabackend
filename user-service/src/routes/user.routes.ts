@@ -42,7 +42,6 @@ addVitals,
 deleteVitals,
 getLatestVitals,
 getVitalsById,
-getAllVitals,
 getVitalsByPatient,
 updateVitals
 
@@ -119,11 +118,10 @@ router.delete("/prescription/:id", authenticate, checkPermission("prescription",
 
 
 router.post("/vitals", authenticate, checkPermission("vitals", "create"),  addVitals);
-router.get("/vitals", authenticate, checkPermission("vitals", "view"), getAllVitals);
 router.get("/vitals/:id", authenticate, checkPermission("vitals", "view"), getVitalsById);
 router.put("/vitals/:id", authenticate, checkPermission("vitals", "edit"), updateVitals);
 router.get("/vitals/patient/:patientId", authenticate, checkPermission("vitals", "view"), getVitalsByPatient);
-
+router.get("/vitals", authenticate, checkPermission("vitals", "view"), getLatestVitals);
 router.delete("/vitals/:id", authenticate, checkPermission("vitals", "delete"), deleteVitals);
 
   
