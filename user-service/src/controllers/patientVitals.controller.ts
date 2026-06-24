@@ -34,8 +34,17 @@ export const getVitalsByPatient: any = asyncHandler(async (req: Request, res: Re
 // GET LATEST VITALS FOR A PATIENT
 export const getLatestVitals: any = asyncHandler(async (req: Request, res: Response) => {
   try {
-    const patientId = parseInt(req.params.patientId);
-    const vitals = await patientVitalsService.getLatestVitals(patientId);
+
+    const normalizeQuery = (value: any) =>
+      Array.isArray(value) ? value[0] : value;
+
+    let {
+     patientId
+    }: any = req.query;
+
+    patientId = normalizeQuery(patientId);
+   
+    const vitals = await patientVitalsService.getLatestVitals(Number(patientId));
     res.status(200).json({
       success: true,
       data: vitals,
