@@ -11,19 +11,21 @@ import { Op, Sequelize } from "sequelize";
 dotenv.config();
 
 
+// GET ALL USERS Prescription
+
 
 export const createPrescription: any = asyncHandler(async (req: Request, res: Response) => {
  
-
   const { bookingId, hospitalId, doctorId, patientId, userId, complaint, medications, investigations, advice, next_consultation, empty_stomach, prescribedBy,
-    canvasBg,
+   canvasBg,
   design,
     } = req.body;
 
       const {
       temperature, pulse, respiratoryRate, spo2, height, weight, waist
     } = req.body;
-
+ 
+ 
 
   const errors: string[] = [];
 
@@ -69,7 +71,6 @@ try {
 }
 
 
-    
     
     if (user) {
       patientExists = await Patient.create({
@@ -131,7 +132,6 @@ try {
 
   // 5. Create Prescription
   const prescription = await Prescription.create({
-
     bookingId, hospitalId, doctorId, patientId: finalPatientId, userId: finalUserId, complaint, medications, investigations, advice, next_consultation, empty_stomach, prescribedBy, 
    canvasBg,
   design,
@@ -149,11 +149,11 @@ try {
         bmi = parseFloat((weight / (hInM * hInM)).toFixed(2));
         bsa = parseFloat((0.007184 * Math.pow(height, 0.725) * Math.pow(weight, 0.425)).toFixed(4));
       }
+      
 
       await PatientVitals.create({
         prescriptionId: prescription.id,
-        patientId: patientId,
-
+        patientId: patientExists?.id,
         temperature, pulse, respiratoryRate, spo2,
         height, weight, waist, bmi, bsa
       });
@@ -173,7 +173,6 @@ try {
     }
   );
 
-  
 
   res.status(201).json({
     success: true,
@@ -183,8 +182,6 @@ try {
 });
 
 
-
-// GET ALL USERS Prescription
 
 export const getPrescription = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
