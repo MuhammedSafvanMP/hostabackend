@@ -12,7 +12,8 @@ import {
   updateData,
   notificationDelete,
   getReadNotifications,
-  getUnreadNotifications
+  getUnreadNotifications,
+  markAsReadAll
 
 } from "../controllers/notification.controllers";
 
@@ -135,6 +136,13 @@ router.put(
 
   updateData
 
+);
+
+router.put(
+  "/notification/read-all/:role/:userId",
+  authenticate,
+  checkPermission("notification", "edit"),
+ markAsReadAll
 );
 
 /* =========================================================
