@@ -15,7 +15,8 @@ dotenv.config();
 
 
 export const createPrescription: any = asyncHandler(async (req: Request, res: Response) => {
- 
+
+  
   const { bookingId, hospitalId, doctorId, patientId, userId, complaint, medications, investigations, advice, next_consultation, empty_stomach, prescribedBy,
    canvasBg,
   design,
@@ -71,6 +72,15 @@ try {
 }
 
 
+const dob = booking?.data?.data?.patient_dob;
+
+let formattedDob = null;
+
+if (dob) {
+  const [day, month, year] = dob.split("/");
+  formattedDob = `${year}-${month}-${day}`;
+}
+
     
     if (user) {
       patientExists = await Patient.create({
@@ -79,7 +89,7 @@ try {
         name: booking?.data?.data?.patient_name,
         gender: booking?.data?.data?.patient_gender,
         age: booking?.data?.data?.patient_age,
-        dob: booking?.data?.data?.patient_dob,
+        dob: formattedDob,
         mobileNumber:  booking?.data?.data?.patient_phone,
         addressLine: booking?.data?.data?.patient_place,
         location: { place: booking?.data?.data?.patient_place, pincode: 0 },

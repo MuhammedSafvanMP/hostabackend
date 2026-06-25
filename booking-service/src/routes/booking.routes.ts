@@ -15,7 +15,7 @@ const router = Router();
 // CRUD - Accessible by authenticated Users and Staff
 router.post("/booking", authenticate, checkPermission("booking", "create" ),  Registeration);
 router.get("/booking", authenticate, checkPermission("booking", "view" ), getBookings);
-router.get("/booking/:id", authenticate, checkPermission("booking", "view" ), getanBooking);
+router.get("/booking/:id", authenticate, checkPermission("booking", "view" ),  getanBooking);
 router.put("/booking/:id", authenticate, checkPermission("booking", "edit" ), updateData);
 router.delete("/booking/:id", authenticate, checkPermission("booking", "delete" ), bookingDelete);
 
