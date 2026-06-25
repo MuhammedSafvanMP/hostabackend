@@ -77,7 +77,7 @@ router.post("/users/otp", validate(verifyOtpSchema), verifyOtp);
 // Email Password Reset Flow
 router.post("/users/auth/send-otp", validate(sendOtpEmailSchema), sendOtpEmail);
 router.post("/users/auth/verify-otp", validate(verifyOtpEmailSchema), verifyOtpEmail);
-router.post("/users/auth/reset-password",authenticate, validate(resetPasswordEmailSchema), resetPasswordEmail);
+router.post("/users/auth/reset-password", validate(resetPasswordEmailSchema), resetPasswordEmail);
 router.put("/users/auth/change-password", authenticate, checkPermission("users", "edit"), validate(changePasswordSchema), changePassword);
 
 // Refresh and Logout

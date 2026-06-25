@@ -888,9 +888,9 @@ export const resetStaffPassword: any = asyncHandler(async (req: any, res: Respon
 
 // CHANGE STAFF PASSWORD (JWT) - PUT /staff/auth/change-password
 export const changeStaffPassword: any = asyncHandler(async (req: any, res: Response) => {
-  const { currentPassword, newPassword } = req.body;
+  const { currentPassword, newPassword, staffId } = req.body;
 
-  const staff = await Staff.scope("withPassword").findOne({ where: { id: req.user.id, isDelete: false } });
+  const staff = await Staff.scope("withPassword").findOne({ where: { id: req.user.id  || staffId, isDelete: false } });
   if (!staff) {
     res.status(404).json({ success: false, message: "Staff not found" });
     return;

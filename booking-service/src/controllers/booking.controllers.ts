@@ -465,7 +465,7 @@ export const getBookings = asyncHandler(async (req: Request, res: Response) : Pr
     };
   }
 
-   if (department) {
+   if (gender) {
     whereClause.patient_gender = {
       [Op.iLike]: `%${gender}%`,
     };
@@ -494,15 +494,25 @@ export const getBookings = asyncHandler(async (req: Request, res: Response) : Pr
     };
   }
 
-  if (startDate || endDate || date) {
-  const startDates = new Date(startDate || date);
-  startDates.setHours(0, 0, 0, 0);
+  if (date) {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
 
-  const endDates = new Date(endDate);
-  endDate.setHours(23, 59, 59, 999);
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
 
   whereClause.booking_date = {
-    [Op.between]: [startDates, endDates],
+    [Op.between]: [start, end],
+  };
+} else if (startDate && endDate) {
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(endDate);
+  end.setHours(23, 59, 59, 999);
+
+  whereClause.booking_date = {
+    [Op.between]: [start, end],
   };
 }
 

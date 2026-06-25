@@ -54,7 +54,7 @@ router.post("/staff/auth/send-otp", validate(loginWithEmailSchema), sendStaffOtp
 
 router.post("/staff/auth/verify-otp", validate(verifyOtpSchema), verifyStaffOtp);
 
-router.post("/staff/auth/reset-password", authenticate, validate(resetPasswordSchema), resetStaffPassword);
+router.post("/staff/auth/reset-password", validate(resetPasswordSchema), resetStaffPassword);
 
 router.put("/staff/auth/change-password",authenticate, validate(changePasswordSchema),checkPermission("staff", "edit"),changeStaffPassword);
 
