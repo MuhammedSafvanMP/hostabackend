@@ -11,6 +11,8 @@ import {
   markAsRead,
   updateData,
   notificationDelete,
+  getReadNotifications,
+  getUnreadNotifications
 
 } from "../controllers/notification.controllers";
 
@@ -33,6 +35,11 @@ const router = Router();
 /* =========================================================
    CREATE NOTIFICATION
 ========================================================= */
+
+
+
+router.get("/notification/unread/:role/:id", authenticate, checkPermission("notification", "view"), getUnreadNotifications);
+router.get("/notification/read/:role/:id", authenticate, checkPermission("notification", "view"), getReadNotifications);
 
 router.post(
 
@@ -88,6 +95,10 @@ router.get(
   getRoleNotifications
 
 );
+
+
+
+
 
 /* =========================================================
    MARK AS READ

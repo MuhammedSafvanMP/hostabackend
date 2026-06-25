@@ -296,6 +296,144 @@ export const getRoleNotifications: any = asyncHandler(
   }
 );
 
+export const getReadNotifications = asyncHandler(
+  async (req: any, res: Response) => {
+    const { role, id } = req.params;
+
+    const numericId = Number(id);
+
+    const notifications = await Notification.findAll({
+      order: [["createdAt", "DESC"]],
+    });
+
+    const readNotifications = notifications.filter((n: any) => {
+      let targetIds: number[] = [];
+      let readStatus: any = {};
+
+      switch (role) {
+        case "user":
+          targetIds = n.userIds || [];
+          readStatus = n.userReadStatus || {};
+          break;
+
+        case "hospital":
+          targetIds = n.hospitalIds || [];
+          readStatus = n.hospitalReadStatus || {};
+          break;
+
+        case "doctor":
+          targetIds = n.doctorIds || [];
+          readStatus = n.doctorReadStatus || {};
+          break;
+
+        case "staff":
+          targetIds = n.staffIds || [];
+          readStatus = n.staffReadStatus || {};
+          break;
+
+        case "pharmacy":
+          targetIds = n.pharmacyIds || [];
+          readStatus = n.pharmacyReadStatus || {};
+          break;
+
+        case "lab":
+          targetIds = n.labIds || [];
+          readStatus = n.labReadStatus || {};
+          break;
+
+        case "superadmin":
+          targetIds = n.superAdminIds || [];
+          readStatus = n.superAdminReadStatus || {};
+          break;
+
+        default:
+          return false;
+      }
+
+      return (
+        targetIds.includes(numericId) &&
+        readStatus[String(numericId)] === true
+      );
+    });
+
+    res.status(200).json({
+      success: true,
+      count: readNotifications.length,
+      data: readNotifications,
+    });
+  }
+);
+
+export const getUnreadNotifications = asyncHandler(
+  async (req: any, res: Response) => {
+    const { role, id } = req.params;
+
+    const numericId = Number(id);
+
+    const notifications = await Notification.findAll({
+      order: [["createdAt", "DESC"]],
+    });
+
+    const unreadNotifications = notifications.filter((n: any) => {
+      let targetIds: number[] = [];
+      let readStatus: any = {};
+
+      switch (role) {
+        case "user":
+          targetIds = n.userIds || [];
+          readStatus = n.userReadStatus || {};
+          break;
+
+        case "hospital":
+          targetIds = n.hospitalIds || [];
+          readStatus = n.hospitalReadStatus || {};
+          break;
+
+        case "doctor":
+          targetIds = n.doctorIds || [];
+          readStatus = n.doctorReadStatus || {};
+          break;
+
+        case "staff":
+          targetIds = n.staffIds || [];
+          readStatus = n.staffReadStatus || {};
+          break;
+
+        case "pharmacy":
+          targetIds = n.pharmacyIds || [];
+          readStatus = n.pharmacyReadStatus || {};
+          break;
+
+        case "lab":
+          targetIds = n.labIds || [];
+          readStatus = n.labReadStatus || {};
+          break;
+
+        case "superadmin":
+          targetIds = n.superAdminIds || [];
+          readStatus = n.superAdminReadStatus || {};
+          break;
+
+        default:
+          return false;
+      }
+
+      return (
+        targetIds.includes(numericId) &&
+        readStatus[String(numericId)] !== true
+      );
+    });
+
+    res.status(200).json({
+      success: true,
+      count: unreadNotifications.length,
+      data: unreadNotifications,
+    });
+  }
+);
+
+
+
 /* =========================================================
    MARK AS READ
    PUT /notification/read/:notificationId/:role/:userId
