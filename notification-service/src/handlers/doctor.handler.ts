@@ -5,11 +5,11 @@ export const handleDoctorEvent = async (routingKey: string, content: any) => {
   if (routingKey === "DOCTOR_REGISTERED") {
     await Notification.create({
       hospitalIds: content.hospitalId ? [content.hospitalId] : [],
-      message: `New Doctor registered: Dr. ${content.doctorName || "Doctor"}. Welcome to the platform!`,
+      message: `New Doctor registered:  ${content.doctorName || "Doctor"}. Welcome to the platform!`,
     }).catch((err) => console.error("Failed to save consolidated doctor notification", err));
 
     if (content.hospitalId) {
-      const msg = `New Doctor registered: Dr. ${content.doctorName || "Doctor"}`;
+      const msg = `New Doctor registered:  ${content.doctorName || "Doctor"}`;
       socketEmitter.to(`user_${content.hospitalId}`).emit("hospital_event", {
         event: routingKey,
         message: msg,

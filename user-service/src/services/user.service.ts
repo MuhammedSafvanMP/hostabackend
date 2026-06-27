@@ -245,11 +245,12 @@ export const userService = {
     return { token, refreshToken, user: userJson };
   },
 
+  
   async getAllUsers() {
-    return await User.findAll({
-      where: { isDelete: false }
-    });
-  },
+  return await User.findAll({
+    where: {}
+  });
+},
 
   async getBlacklistedUsers() {
     return await User.findAll({

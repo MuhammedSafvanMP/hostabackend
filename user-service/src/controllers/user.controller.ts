@@ -366,6 +366,9 @@ export const getPatients = asyncHandler(async (req: Request, res: Response): Pro
     isDelete: false,
   };
 
+  // const whereCondition: any = {};
+  
+
   // Field filters
   if (name) {
     whereCondition.name = {
