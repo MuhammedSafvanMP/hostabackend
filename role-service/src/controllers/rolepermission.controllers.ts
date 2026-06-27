@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import Rolepermission from "../models/rolepermission.model";
 import { publishEvent } from "../events/publisher";
+import axios from "axios";
 
 // REGISTER - POST /Rolepermission
 
@@ -254,3 +255,113 @@ export const getRolepermission: any = asyncHandler(async (req: Request, res: Res
     error: null,
   });
 });
+
+
+
+
+export const rolepermissionAssgin = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const { hospitalId, roleId, userType }: any = req.body; // Prefer body instead of query
+
+    if (!hospitalId || !roleId || !userType) {
+      res.status(400).json({
+        success: false,
+        message: "hospitalId, roleId and userType are required",
+      });
+      return;
+    }
+
+    // Check role exists
+    let role: any;
+
+    try {
+      role = await axios.get(
+        `${process.env.ROLE_SERVICE_URL}/role?hospitalId=${hospitalId}&roleId=${roleId}`,
+      );
+    } catch (error: any) {
+      res.status(404).json({
+        success: false,
+        message: "Role not found",
+      });
+      return;
+    }
+
+    // Check hospital exists
+    let hospital: any;
+
+    try {
+      hospital = await axios.get(
+        `${process.env.HOSPITAL_SERVICE_URL}/hospital/${hospitalId}`,
+      );
+    } catch (error: any) {
+      res.status(404).json({
+        success: false,
+        message: "Hospital not found",
+      });
+      return;
+    }
+
+    // =========================
+    // DOCTOR ROLE ASSIGNMENT
+    // =========================
+
+    if (userType.toLowerCase() === "doctor") {
+      const doctors = req.body.doctorIds || [];
+
+      for (const doctor of doctors) {
+        try {
+          const doctorResponse = await axios.get(
+            `${process.env.DOCTOR_SERVICE_URL}/doctor?hospitalId=${hospitalId}&doctorId=${doctor.id}`,
+          );
+
+          const doctorData = doctorResponse?.data?.data;
+
+          if (doctorData) {
+            await axios.put(
+              `${process.env.DOCTOR_SERVICE_URL}/doctor/${doctor.id}`,
+              {
+                roleId: doctor.roleId,
+              },
+            );
+          }
+        } catch (error) {
+          console.error(`Failed to update doctor ${doctor.id}`, error);
+        }
+      }
+    }
+
+    // =========================
+    // STAFF ROLE ASSIGNMENT
+    // =========================
+
+    if (userType.toLowerCase() === "staff") {
+      const staffs = req.body.staffIds || [];
+
+      for (const staff of staffs) {
+        try {
+          const staffResponse = await axios.get(
+            `${process.env.STAFF_SERVICE_URL}/staff?hospitalId=${hospitalId}&staffId=${staff.id}`,
+          );
+
+          const staffData = staffResponse?.data?.data;
+
+          if (staffData) {
+            await axios.put(
+              `${process.env.STAFF_SERVICE_URL}/staff/${staff.id}`,
+              {
+                roleId: staff.roleId,
+              },
+            );
+          }
+        } catch (error) {
+          console.error(`Failed to update staff ${staff.id}`, error);
+        }
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Role assignment updated successfully",
+    });
+  },
+);
