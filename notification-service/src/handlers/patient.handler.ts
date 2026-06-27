@@ -38,7 +38,8 @@ export const handlePatientEvent = async (
   if (
     routingKey === "PATIENT_REGISTERED" ||
     routingKey === "PATIENT_UPDATED" ||
-    routingKey === "PATIENT_DELETED"
+    routingKey === "PATIENT_DELETED" ||
+    routingKey === "PATIENT_RECOVERED"
   ) {
     let msg = "";
 
@@ -48,6 +49,8 @@ export const handlePatientEvent = async (
       msg = `Patient profile updated: ${content.patientName || "Patient"}`;
     } else if (routingKey === "PATIENT_DELETED") {
       msg = `Patient profile deleted / moved to blacklist (ID: ${content.patientId})`;
+    } else if (routingKey === "PATIENT_RECOVERED") {
+      msg = `Patient profile recovered from blacklist (ID: ${content.patientId})`;
     }
 
     await Notification.create({
