@@ -23,6 +23,6 @@ router.get("/rolepermission",    getRolepermission);
 router.get("/rolepermission/:id", authenticate, checkPermission("rolepermission", "view"),  getanRolepermission);
 router.put("/rolepermission/:id", authenticate, checkPermission("rolepermission", "edit"),  updateData);
 router.delete("/rolepermission/:id", authenticate, checkPermission("rolepermission", "delete"),  rolepermissionDelete);
-router.patch("/rolepermission", authenticate, authenticate, checkPermission("rolepermission", "create"), rolepermissionAssgin)
+router.patch("/rolepermission", authenticate,  rolepermissionAssgin)
 
 export default router;  

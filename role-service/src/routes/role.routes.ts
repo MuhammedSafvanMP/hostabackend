@@ -18,7 +18,7 @@ const router = Router();
 // CRUD
 
 router.post("/role", authenticate, checkPermission("role", "create"),   createRole);
-router.get("/role", authenticate, checkPermission("role", "view"),  getRole);
+router.get("/role", authenticate,  getRole);
 router.get("/role/:id", authenticate, checkPermission("role", "view"),  getanRole);
 router.put("/role/:id", authenticate, checkPermission("role", "edit"),  updateData);
 router.delete("/role/:id", authenticate, checkPermission("role", "delete"),  roleDelete);
