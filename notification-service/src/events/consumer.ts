@@ -10,6 +10,7 @@ import { handlePrescriptionEvent } from "../handlers/prescription.handler";
 import { handleAdEvent } from "../handlers/ad.handler";
 import { handleAmbulanceEvent } from "../handlers/ambulance.handler";
 import { handleBloodEvent } from "../handlers/blood.handler";
+import { handleBloodBankEvent } from "../handlers/bloodbankhandler";
 
 let connection: any;
 let channel: amqp.Channel;
@@ -120,6 +121,7 @@ export const startConsumer = async () => {
         await channel.assertExchange("blood_bank_events", "direct", { durable: true });
         await channel.bindQueue(queue, "blood_bank_events", "STOCK_CREATED");
         await channel.bindQueue(queue, "blood_bank_events", "STOCK_UPDATED");
+        await channel.bindQueue(queue, "blood_bank_events", "STOCK_DELETED");
 
         // 5. Blood Donor
         await channel.assertExchange("blood_events", "direct", { durable: true });
@@ -216,8 +218,10 @@ export const startConsumer = async () => {
                         await handleAdEvent(routingKey, content);
                     } else if (routingKey.startsWith("AMBULANCE_")) {
                         await handleAmbulanceEvent(routingKey, content);
-                    } else if (routingKey.startsWith("DONOR_") || routingKey.startsWith("STOCK_")) {
+                    } else if (routingKey.startsWith("DONOR_")) {
                         await handleBloodEvent(routingKey, content);
+                    } else if (routingKey.startsWith("STOCK_")) {
+                        await handleBloodBankEvent(routingKey, content);
                     }
 
                     channel.ack(msg);
@@ -263,10 +267,10 @@ export const startConsumer = async () => {
 export const closeRabbitMQ = async () => {
     try {
         if (channel) {
-            await channel.close().catch(() => {});
+            await channel.close().catch(() => { });
         }
         if (connection) {
-            await connection.close().catch(() => {});
+            await connection.close().catch(() => { });
         }
         console.log("✅ RabbitMQ Connection cleanly closed.");
     } catch (err) {

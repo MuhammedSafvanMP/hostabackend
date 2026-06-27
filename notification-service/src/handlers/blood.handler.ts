@@ -20,7 +20,7 @@ export const handleBloodEvent = async (routingKey: string, content: any) => {
     socketEmitter.to("role_1").emit("blood_donor_event", { event: routingKey, message: msg, data: content });
   }
 
-  if (routingKey === "STOCK_UPDATED" || routingKey === "STOCK_CREATED") {
+  if (routingKey === "DONOR_UPDATED" || routingKey === "DONOR_CREATED" || routingKey === "DONOR_DELETED") {
     if (content.hospitalId) {
       socketEmitter.to(`user_${content.hospitalId}`).emit("emergency_alert", {
         message: `Blood Stock Alert: ${content.bloodGroup} inventory is now ${content.count} units.`,
