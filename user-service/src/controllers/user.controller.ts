@@ -362,11 +362,11 @@ export const getPatients = asyncHandler(async (req: Request, res: Response): Pro
   const pageNum = Number(page);
   const limitNum = Number(limit);
 
-  const whereCondition: any = {
-    isDelete: false,
-  };
+  // const whereCondition: any = {
+  //   isDelete: false,
+  // };
 
-  // const whereCondition: any = {};
+  const whereCondition: any = {};
   
 
   // Field filters
