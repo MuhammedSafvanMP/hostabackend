@@ -277,6 +277,9 @@ export const rolepermissionAssgin = asyncHandler(
     try {
       role = await axios.get(
         `${process.env.ROLE_SERVICE_URL}/role?hospitalId=${hospitalId}&roleId=${roleId}`,
+        {
+          headers: { Authorization: req.headers.authorization },
+        }
       );
     } catch (error: any) {
       res.status(404).json({
@@ -317,12 +320,17 @@ export const rolepermissionAssgin = asyncHandler(
           const doctorData = doctorResponse?.data?.data;
 
           if (doctorData) {
-            await axios.put(
-              `${process.env.DOCTOR_SERVICE_URL}/doctor/${doctor.id}`,
-              {
-                roleId: doctor.roleId,
-              },
-            );
+         
+
+             await axios.put(
+    `${process.env.DOCTOR_SERVICE_URL}/doctor/${doctor.id}`,
+    { roleId: doctor.roleId },
+    {
+      headers: req.headers.authorization
+        ? { Authorization: req.headers.authorization }
+        : {},
+    }
+  );
           }
         } catch (error) {
           console.error(`Failed to update doctor ${doctor.id}`, error);
@@ -347,11 +355,14 @@ export const rolepermissionAssgin = asyncHandler(
 
           if (staffData) {
             await axios.put(
-              `${process.env.STAFF_SERVICE_URL}/staff/${staff.id}`,
-              {
-                roleId: staff.roleId,
-              },
-            );
+    `${process.env.STAFF_SERVICE_URL}/staff/${staff.id}`,
+    { roleId: staff.roleId },
+    {
+      headers: req.headers.authorization
+        ? { Authorization: req.headers.authorization }
+        : {},
+    }
+  );
           }
         } catch (error) {
           console.error(`Failed to update staff ${staff.id}`, error);
