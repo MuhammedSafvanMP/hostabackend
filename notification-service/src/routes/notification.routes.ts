@@ -11,6 +11,9 @@ import {
   markAsRead,
   updateData,
   notificationDelete,
+  getReadNotifications,
+  getUnreadNotifications,
+  markAsReadAll
 
 } from "../controllers/notification.controllers";
 
@@ -33,6 +36,11 @@ const router = Router();
 /* =========================================================
    CREATE NOTIFICATION
 ========================================================= */
+
+
+
+router.get("/notification/unread/:role/:id", authenticate, checkPermission("notification", "view"), getUnreadNotifications);
+router.get("/notification/read/:role/:id", authenticate, checkPermission("notification", "view"), getReadNotifications);
 
 router.post(
 
@@ -89,6 +97,10 @@ router.get(
 
 );
 
+
+
+
+
 /* =========================================================
    MARK AS READ
    EXAMPLE:
@@ -124,6 +136,13 @@ router.put(
 
   updateData
 
+);
+
+router.put(
+  "/notification/read-all/:role/:userId",
+  authenticate,
+  checkPermission("notification", "edit"),
+ markAsReadAll
 );
 
 /* =========================================================

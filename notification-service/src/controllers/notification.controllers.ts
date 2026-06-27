@@ -296,6 +296,144 @@ export const getRoleNotifications: any = asyncHandler(
   }
 );
 
+export const getReadNotifications = asyncHandler(
+  async (req: any, res: Response) => {
+    const { role, id } = req.params;
+
+    const numericId = Number(id);
+
+    const notifications = await Notification.findAll({
+      order: [["createdAt", "DESC"]],
+    });
+
+    const readNotifications = notifications.filter((n: any) => {
+      let targetIds: number[] = [];
+      let readStatus: any = {};
+
+      switch (role) {
+        case "user":
+          targetIds = n.userIds || [];
+          readStatus = n.userReadStatus || {};
+          break;
+
+        case "hospital":
+          targetIds = n.hospitalIds || [];
+          readStatus = n.hospitalReadStatus || {};
+          break;
+
+        case "doctor":
+          targetIds = n.doctorIds || [];
+          readStatus = n.doctorReadStatus || {};
+          break;
+
+        case "staff":
+          targetIds = n.staffIds || [];
+          readStatus = n.staffReadStatus || {};
+          break;
+
+        case "pharmacy":
+          targetIds = n.pharmacyIds || [];
+          readStatus = n.pharmacyReadStatus || {};
+          break;
+
+        case "lab":
+          targetIds = n.labIds || [];
+          readStatus = n.labReadStatus || {};
+          break;
+
+        case "superadmin":
+          targetIds = n.superAdminIds || [];
+          readStatus = n.superAdminReadStatus || {};
+          break;
+
+        default:
+          return false;
+      }
+
+      return (
+        targetIds.includes(numericId) &&
+        readStatus[String(numericId)] === true
+      );
+    });
+
+    res.status(200).json({
+      success: true,
+      count: readNotifications.length,
+      data: readNotifications,
+    });
+  }
+);
+
+export const getUnreadNotifications = asyncHandler(
+  async (req: any, res: Response) => {
+    const { role, id } = req.params;
+
+    const numericId = Number(id);
+
+    const notifications = await Notification.findAll({
+      order: [["createdAt", "DESC"]],
+    });
+
+    const unreadNotifications = notifications.filter((n: any) => {
+      let targetIds: number[] = [];
+      let readStatus: any = {};
+
+      switch (role) {
+        case "user":
+          targetIds = n.userIds || [];
+          readStatus = n.userReadStatus || {};
+          break;
+
+        case "hospital":
+          targetIds = n.hospitalIds || [];
+          readStatus = n.hospitalReadStatus || {};
+          break;
+
+        case "doctor":
+          targetIds = n.doctorIds || [];
+          readStatus = n.doctorReadStatus || {};
+          break;
+
+        case "staff":
+          targetIds = n.staffIds || [];
+          readStatus = n.staffReadStatus || {};
+          break;
+
+        case "pharmacy":
+          targetIds = n.pharmacyIds || [];
+          readStatus = n.pharmacyReadStatus || {};
+          break;
+
+        case "lab":
+          targetIds = n.labIds || [];
+          readStatus = n.labReadStatus || {};
+          break;
+
+        case "superadmin":
+          targetIds = n.superAdminIds || [];
+          readStatus = n.superAdminReadStatus || {};
+          break;
+
+        default:
+          return false;
+      }
+
+      return (
+        targetIds.includes(numericId) &&
+        readStatus[String(numericId)] !== true
+      );
+    });
+
+    res.status(200).json({
+      success: true,
+      count: unreadNotifications.length,
+      data: unreadNotifications,
+    });
+  }
+);
+
+
+
 /* =========================================================
    MARK AS READ
    PUT /notification/read/:notificationId/:role/:userId
@@ -499,5 +637,107 @@ export const notificationDelete: any = asyncHandler(
       error: null,
     });
 
+  }
+);
+
+
+export const markAsReadAll: any = asyncHandler(
+  async (req: any, res: Response) : Promise<void> => {
+    const { role, userId } = req.params;
+    const { notificationIds } = req.body;
+
+
+    if (!Array.isArray(notificationIds) || notificationIds.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: "notificationIds array is required",
+      });
+      return;
+    }
+
+    const notifications = await Notification.findAll({
+      where: {
+        id: notificationIds,
+      },
+    });
+
+    const numericUserId = Number(userId);
+
+    for (const notification of notifications) {
+      switch (role) {
+        case "user":
+          notification.userReadStatus = {
+            ...(notification.userReadStatus as object),
+            [numericUserId]: true,
+          };
+          break;
+
+        case "hospital":
+          notification.hospitalReadStatus = {
+            ...(notification.hospitalReadStatus as object),
+            [numericUserId]: true,
+          };
+          break;
+
+        case "doctor":
+          notification.doctorReadStatus = {
+            ...(notification.doctorReadStatus as object),
+            [numericUserId]: true,
+          };
+          break;
+
+        case "staff":
+          notification.staffReadStatus = {
+            ...(notification.staffReadStatus as object),
+            [numericUserId]: true,
+          };
+          break;
+
+        case "pharmacy":
+          notification.pharmacyReadStatus = {
+            ...(notification.pharmacyReadStatus as object),
+            [numericUserId]: true,
+          };
+          break;
+
+        case "lab":
+          notification.labReadStatus = {
+            ...(notification.labReadStatus as object),
+            [numericUserId]: true,
+          };
+          break;
+
+        case "superadmin":
+          notification.superAdminReadStatus = {
+            ...(notification.superAdminReadStatus as object),
+            [numericUserId]: true,
+          };
+          break;
+
+        default:
+           res.status(400).json({
+            success: false,
+            message: "Invalid role",
+          });
+          return;
+      }
+
+      await notification.save();
+
+      await publishEvent(
+        "notification_events",
+        "NOTIFICATION_READ",
+        {
+          notificationId: notification.id,
+          role,
+          userId,
+        }
+      );
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "All notifications marked as read",
+    });
   }
 );
