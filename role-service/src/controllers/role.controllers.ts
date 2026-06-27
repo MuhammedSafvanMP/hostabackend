@@ -254,20 +254,27 @@ export const roleDelete: any = asyncHandler(async (req: Request, res: Response) 
   });
 });
 
-// GET ALL - GET /role
+
+
+
 export const getRole = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  let {
+ let {
     hospitalId,
     labId,
     pharmacyId,
+    roleId,
     page = 1,
     limit = 10,
     search_query,
   }: any = req.query;
 
+  console.log(req.query, "qure");
+  
+
   if (Array.isArray(hospitalId)) hospitalId = hospitalId[0];
   if (Array.isArray(labId)) labId = labId[0];
   if (Array.isArray(pharmacyId)) pharmacyId = pharmacyId[0];
+  if (Array.isArray(roleId)) roleId = roleId[0];
   if (Array.isArray(page)) page = page[0];
   if (Array.isArray(limit)) limit = limit[0];
   if (Array.isArray(search_query)) search_query = search_query[0];
@@ -288,6 +295,11 @@ export const getRole = asyncHandler(async (req: Request, res: Response): Promise
   if (pharmacyId !== undefined) {
     whereClause.pharmacyId = Number(pharmacyId);
   }
+
+    if (roleId !== undefined) {
+    whereClause.id = Number(roleId);
+  }
+
 
   if (search_query) {
     whereClause[Op.or] = [
@@ -341,5 +353,3 @@ export const getRole = asyncHandler(async (req: Request, res: Response): Promise
   });
   return;
 });
-
-
