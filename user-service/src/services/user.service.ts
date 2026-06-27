@@ -9,6 +9,7 @@ import twilio from "twilio";
 import { logger } from "../utils/logger";
 import { publishEvent } from "../events/publisher";
 import { sendEmail } from "./mail.service";
+import { getBlacklistedUsers } from "../controllers/user.controller";
 
 let twilioClient: any = null;
 
@@ -244,6 +245,7 @@ export const userService = {
 
     return { token, refreshToken, user: userJson };
   },
+
 
   async getAllUsers() {
     return await User.findAll({
