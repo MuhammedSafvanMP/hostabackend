@@ -32,14 +32,22 @@ export const publishEvent = async (exchange: string, routingKey: string, data: a
             logger.info(`📤 Published event '${routingKey}' to exchange '${exchange}'`);
         }
 
-            await axios.post(`${process.env.SOCKETIO_SERVICE_URL}/emit-event`, {
-            event: routingKey,
-            userId : data?.hospitalId,
-            data
-        });
-
-
-
+        if (process.env.SOCKETIO_SERVICE_URL) {
+            try {
+                await axios.post(`${process.env.SOCKETIO_SERVICE_URL}/emit-event`, {
+                    event: routingKey,
+                    userId: data?.hospitalId,
+                    data
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${process.env.API_GATEWAY_KEY}`
+                    }   
+                });
+            } catch (axiosError: any) {
+                logger.warn(`⚠️ Failed to emit socket event via axios: ${axiosError.message}`);
+            }
+        }
     } catch (error) {
         logger.error('❌ Event Publish Error:', error);
     }
