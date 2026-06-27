@@ -46,4 +46,25 @@ export const handleDoctorEvent = async (routingKey: string, content: any) => {
     // 2. Also Notify SuperAdmin for security oversight
     socketEmitter.to("role_1").emit("hospital_event", { event: routingKey, message: msgText, data: content });
   }
+
+  if (routingKey === "DOCTOR_DELETED" || routingKey === "DOCTOR_RECOVERED") {
+    let msgText = "";
+    if (routingKey === "DOCTOR_DELETED") {
+      msgText = `Doctor profile deleted / moved to blacklist (ID: ${content.doctorId})`;
+    } else {
+      msgText = `Doctor profile recovered from blacklist (ID: ${content.doctorId})`;
+    }
+
+    await Notification.create({
+      hospitalIds: content.hospitalId ? [content.hospitalId] : [],
+      message: msgText,
+    }).catch((err) => console.error(`Failed to save doctor ${routingKey.toLowerCase().replace("_", " ")} notification`, err));
+
+    if (content.hospitalId) {
+      const targetRoom = `user_${content.hospitalId}`;
+      socketEmitter.to(targetRoom).emit("hospital_event", { event: routingKey, message: msgText, data: content });
+    }
+    
+    socketEmitter.to("role_1").emit("hospital_event", { event: routingKey, message: msgText, data: content });
+  }
 };

@@ -100,6 +100,7 @@ export const startConsumer = async () => {
         await channel.bindQueue(queue, "hospital_events", "HOSPITAL_UPDATED");
         await channel.bindQueue(queue, "hospital_events", "HOSPITAL_DELETED");
         await channel.bindQueue(queue, "hospital_events", "HOSPITAL_BLACKLISTED");
+        await channel.bindQueue(queue, "hospital_events", "HOSPITAL_RECOVERED");
 
         // 2. Booking
         await channel.assertExchange("booking_events", "direct", { durable: true });
@@ -114,6 +115,7 @@ export const startConsumer = async () => {
         await channel.bindQueue(queue, "doctor_events", "DOCTOR_REGISTERED");
         await channel.bindQueue(queue, "doctor_events", "DOCTOR_UPDATED");
         await channel.bindQueue(queue, "doctor_events", "DOCTOR_DELETED");
+        await channel.bindQueue(queue, "doctor_events", "DOCTOR_RECOVERED");
         await channel.bindQueue(queue, "doctor_events", "DOCTOR_PASSWORD_RESET");
         await channel.bindQueue(queue, "doctor_events", "DOCTOR_PASSWORD_CHANGED");
 
@@ -139,6 +141,7 @@ export const startConsumer = async () => {
         await channel.bindQueue(queue, "patient_events", "PATIENT_REGISTERED");
         await channel.bindQueue(queue, "patient_events", "PATIENT_UPDATED");
         await channel.bindQueue(queue, "patient_events", "PATIENT_DELETED");
+        await channel.bindQueue(queue, "patient_events", "PATIENT_RECOVERED");
 
         // 8. Ambulance
         await channel.assertExchange("ambulance_events", "direct", { durable: true });
@@ -150,6 +153,8 @@ export const startConsumer = async () => {
         await channel.assertExchange("staff_events", "direct", { durable: true });
         await channel.bindQueue(queue, "staff_events", "STAFF_REGISTERED");
         await channel.bindQueue(queue, "staff_events", "STAFF_UPDATED");
+        await channel.bindQueue(queue, "staff_events", "STAFF_DELETED");
+        await channel.bindQueue(queue, "staff_events", "STAFF_RECOVERED");
         await channel.bindQueue(queue, "staff_events", "STAFF_PASSWORD_RESET");
         await channel.bindQueue(queue, "staff_events", "STAFF_PASSWORD_CHANGED");
 
