@@ -64,7 +64,11 @@ export const patientVitalsService = {
    * Get latest vitals for a patient
    */
   async getLatestVitals(patientId: number) {
-    const patient = await Patient.findByPk(patientId);
+    const patient = await Patient.findAll({
+  where: {
+    patientId: patientId,
+  },
+});
     if (!patient) {
       throw { status: 404, message: "Patient not found" };
     }
