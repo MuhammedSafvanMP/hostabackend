@@ -557,9 +557,10 @@ export const getStaffs = asyncHandler(
     const offset = (page - 1) * limit;
 
     // base filter
-    const whereClause: any = {
-      isDelete: false,
-    };
+    // const whereClause: any = {
+    //   isDelete: false,
+    // };
+    const whereClause: any = {};
 
     // hospital filter
     if (hospitalId) {
