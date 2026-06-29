@@ -26,9 +26,9 @@ export const handleDoctorEvent = async (routingKey: string, content: any) => {
   if (routingKey === "DOCTOR_PASSWORD_RESET" || routingKey === "DOCTOR_PASSWORD_CHANGED") {
     let msgText = "";
     if (routingKey === "DOCTOR_PASSWORD_RESET") {
-      msgText = `Security Alert: Dr. ${content.doctorName || "Doctor"} has successfully reset their password.`;
+      msgText = `Security Alert:  ${content.doctorName || "Doctor"} has successfully reset their password.`;
     } else {
-      msgText = `Security Update: Dr. ${content.doctorName || "Doctor"} has changed their password.`;
+      msgText = `Security Update:  ${content.doctorName || "Doctor"} has changed their password.`;
     }
 
     await Notification.create({
