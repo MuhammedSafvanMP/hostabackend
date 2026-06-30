@@ -86,7 +86,7 @@ import { httpClient } from "../utils/httpClient";
 // REGISTER - POST /staff/register                             
 export const Registeration: any = asyncHandler(async (req: any, res: Response) => {
   
-  const { hospitalId, name, phone, email, password,  designation, joiningDate, jobType, staffType,  dob, gender, knowLanguages, qualification, address, hospitalName } = req.body;
+  const { hospitalId, name, phone, email, password, roleId,  designation, joiningDate, jobType, staffType,  dob, gender, knowLanguages, qualification, address, hospitalName } = req.body;
 
 
 
@@ -136,7 +136,7 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
 
   try {
     const newStaff = await Staff.create({
-      hospitalId, name, phone, email, password, dob, gender,
+      hospitalId, name, phone, email, password,roleId, dob, gender,
       knowLanguages, qualification, address,
       designation, joiningDate, jobType, staffType,hospitalName
     });

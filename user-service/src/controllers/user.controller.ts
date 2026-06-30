@@ -200,7 +200,7 @@ export const createPatient: any = asyncHandler(async (req: Request, res: Respons
   try {
     // 1. Extract Patient Info
     const {
-      name, bloodGroup, gender, maritalStatus,
+      name, bloodGroup, gender, maritalStatus,roleId,
       patientType, age, dob, mobileNumber, emergencyNumber,
       guardianName, addressLine, location, email, password, userId, hospitalId
     } = req.body;
@@ -238,7 +238,7 @@ export const createPatient: any = asyncHandler(async (req: Request, res: Respons
             name: name || mobileNumber,
             email: userEmail,
             phone: mobileNumber,
-            roleId: 3 // Default patient role
+            roleId: roleId || 3 // Default patient role
           }, { transaction: t });
           
           finalUserId = newUser.id;
