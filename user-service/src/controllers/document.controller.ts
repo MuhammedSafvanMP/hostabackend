@@ -70,7 +70,7 @@ export const getDocument: any = asyncHandler(async (req: Request, res: Response)
 
 export const updateDocument: any = asyncHandler(async (req: Request, res: Response) => {
   const document = await Document.findOne({
-    where: { id: req.params.id, isActive: true },
+    where: { id: req.params.id },
   });
 
   if (!document) {
@@ -90,23 +90,25 @@ export const updateDocument: any = asyncHandler(async (req: Request, res: Respon
   });
 });
 
-export const deleteDocument: any = asyncHandler(async (req: Request, res: Response) => {
-  const document = await Document.findOne({
-    where: { id: req.params.id, isActive: true },
+export const deleteDocument = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const deletedCount = await Document.destroy({
+    where: {
+      id: req.params.id,
+    },
   });
 
-  if (!document) {
-    res.status(404).json({
+  if (deletedCount === 0) {
+     res.status(404).json({
       success: false,
       message: "Document not found",
     });
-    return;
+
+      return ;
   }
 
-  await document.update({ isActive: false });
-
-  res.status(200).json({
+res.status(200).json({
     success: true,
     message: "Document deleted successfully",
   });
+    return;
 });
