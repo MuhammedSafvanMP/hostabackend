@@ -19,11 +19,13 @@ const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
     secure: true,
     sameSite:  "none",
     maxAge: 14 * 24 * 60 * 60 * 1000, // 2 weeks
-    // path: "/",
-     domain: 'hostahospital.com',
+    path: "/",
+    domain: ".hostahospital.com"
+
   });
 
 };
+
 
 
 
@@ -221,8 +223,6 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
 
   setRefreshTokenCookie(res, refreshToken);
 
-
-  
 
   const authPermissionRes = await axios.get(
   `${process.env.ROLE_SERVICE_URL}/rolepermission`,
