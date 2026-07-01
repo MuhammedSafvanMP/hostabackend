@@ -20,6 +20,8 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
   const { bookingId, hospitalId, doctorId, patientId, userId, complaint, medications, investigations, advice, next_consultation, empty_stomach, prescribedBy,
    canvasBg,
   design,
+  hospitalName,
+  patientName
     } = req.body;
 
       const {
@@ -148,6 +150,8 @@ if (dob) {
     bookingId, hospitalId, doctorId, patientId: finalPatientId, userId: finalUserId, complaint, medications, investigations, advice, next_consultation, empty_stomach, prescribedBy, 
    canvasBg,
   design,
+   hospitalName,
+  patientName
   });
 
 
