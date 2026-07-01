@@ -19,8 +19,8 @@ const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
     secure: true,
     sameSite:  "none",
     maxAge: 14 * 24 * 60 * 60 * 1000, // 2 weeks
-    path: "/",
-    signed: true,
+    // path: "/",
+     domain: 'hostahospital.com',
   });
 
 };
