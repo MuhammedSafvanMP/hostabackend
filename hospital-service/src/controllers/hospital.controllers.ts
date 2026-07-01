@@ -16,11 +16,11 @@ dotenv.config();
 const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: true,
-    sameSite:  "none",
+    secure: false,
+    sameSite:  "lax",
     maxAge: 14 * 24 * 60 * 60 * 1000, // 2 weeks
     path: "/",
-    domain: ".hostahospital.com"
+   
 
   });
 
