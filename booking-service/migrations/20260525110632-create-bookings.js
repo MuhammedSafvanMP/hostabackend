@@ -32,6 +32,11 @@ module.exports = {
         allowNull: true,
       },
 
+
+      hospitalName: {
+        type: Sequelize.STRING,
+      },
+
       patient_age: {
         type: Sequelize.INTEGER,
         allowNull: false,

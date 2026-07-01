@@ -18,6 +18,8 @@ interface IBooking {
   userId?: number;
   patientId?: number;
 
+  hospitalName?: string;
+
   doctorId: number;
   hospitalId: number;
 
@@ -91,6 +93,7 @@ class Booking
   public doctor_department!: string;
 
   public token?: number;
+  public hospitalName?: string;
 
   public status!:
     | "pending"
@@ -148,6 +151,10 @@ Booking.init(
     patient_dob: {
       type: DataTypes.STRING,
       allowNull: true,
+    },
+
+       hospitalName: {
+      type: DataTypes.STRING,
     },
 
     patient_age: {
