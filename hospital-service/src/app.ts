@@ -42,6 +42,7 @@ app.use(
         origin: [
             "http://localhost:5173",
             "https://hostahospital.com",
+            "https://www.hostahospital.com",
         ],
 
         methods: [
@@ -54,6 +55,7 @@ app.use(
         ],
 
         credentials: true,
+        allowedHeaders: ["Content-Type", "Authorization"],
     })
 );
 
