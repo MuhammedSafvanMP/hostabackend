@@ -20,8 +20,12 @@ const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
     sameSite:  "none",
     maxAge: 14 * 24 * 60 * 60 * 1000, // 2 weeks
     path: "/",
+    signed: true,
   });
+
 };
+
+
 
 
 
