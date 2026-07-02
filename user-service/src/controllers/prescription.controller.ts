@@ -21,7 +21,10 @@ export const createPrescription: any = asyncHandler(async (req: Request, res: Re
    canvasBg,
   design,
   hospitalName,
-  patientName
+  patientName,
+  age,
+  contact,
+  gender,
     } = req.body;
 
       const {
@@ -151,7 +154,10 @@ if (dob) {
    canvasBg,
   design,
    hospitalName,
-  patientName
+  patientName,
+    age,
+  contact,
+  gender,
   });
 
 
