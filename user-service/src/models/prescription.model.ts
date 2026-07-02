@@ -45,6 +45,9 @@ interface IPrescription {
   prescribedBy: string;
   canvasBg : string;
   design: string[];
+  gender: string;
+  age: number;
+  contact: string;
 
   deleteDate?: Date;
   isActive?: boolean;
@@ -114,6 +117,10 @@ class Prescription
 
   public hospitalName: string;
   public patientName: string;
+
+  public age: number;
+  public contact: string;
+  public gender: string;
   
 
 } 
@@ -142,6 +149,20 @@ Prescription.init(
 
     userId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+  
+
+      age: {
+      type: DataTypes.INTEGER,
+      
+    },
+
+      contact: {
+      type: DataTypes.STRING,
+    },
+      gender: {
+      type: DataTypes.STRING,
       allowNull: false,
     },
 
