@@ -16,17 +16,13 @@ dotenv.config();
 const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: true,
-    sameSite:  "none",
+    secure: false,
+    sameSite:  "lax",
     maxAge: 14 * 24 * 60 * 60 * 1000, // 2 weeks
     path: "/",
-    domain: ".hostahospital.com"
   });
 
 };
-
-
-
 
 
 
@@ -219,6 +215,7 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
   // Save refresh token to Redis (REMOVED)
 
   setRefreshTokenCookie(res, refreshToken);
+ 
 
 
   const authPermissionRes = await axios.get(
@@ -1019,8 +1016,19 @@ export const logout: any = asyncHandler(async (req: Request, res: Response) => {
 
   for (const url of services) {
     try {
-      const response = await axios.post(url, payload);
+
+  const response = await axios.post(url, payload, {
+  withCredentials: true,
+});
+
       
+const cookies = response.headers["set-cookie"];
+
+
+if (cookies) {
+  res.setHeader("Set-Cookie", cookies);
+}
+
 
       // IMPORTANT: check service success
       if (response.data?.success) {
@@ -1032,7 +1040,7 @@ export const logout: any = asyncHandler(async (req: Request, res: Response) => {
            error: null,
            authDefaultPermission: 1,
            authPermission: response.data.authPermission,
-           hospitals: response.data.hospitals
+           hospitals: response.data.hospitals,
         });
         return;
       }
