@@ -163,7 +163,6 @@ Prescription.init(
     },
       gender: {
       type: DataTypes.STRING,
-      allowNull: false,
     },
 
     patientId: {
