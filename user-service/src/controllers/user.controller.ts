@@ -16,9 +16,7 @@ dotenv.config();
 const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    // secure: process.env.NODE_ENV === "production"
-    // ,
-    secure:false,
+    secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: 14 * 24 * 60 * 60 * 1000, // 2 weeks
     path: "/",
@@ -645,6 +643,8 @@ export const recoverPatient: any = asyncHandler(async (req: Request, res: Respon
   });
 });
 
+import { env } from "../config/env";
+
 // REFRESH TOKEN - POST /users/refresh
 export const refreshUserToken: any = asyncHandler(async (req: Request, res: Response) => {
   const refreshToken = req.cookies?.refreshToken;
@@ -654,7 +654,7 @@ export const refreshUserToken: any = asyncHandler(async (req: Request, res: Resp
     return;
   }
 
-  const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
+  const jwtKey = env.JWT_SECRET || "supersecretjwtkey";
 
   try {
     const decoded: any = jwt.verify(refreshToken, jwtKey);
@@ -666,10 +666,14 @@ export const refreshUserToken: any = asyncHandler(async (req: Request, res: Resp
     }
 
     const newToken = generateToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId });
+    const newRefreshToken = generateRefreshToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId });
+
+    setRefreshTokenCookie(res, newRefreshToken);
 
     res.status(200).json({
       success: true,
       token: newToken,
+      refreshToken: newRefreshToken
     });
   } catch (error) {
     res.status(401).json({ success: false, message: "Invalid or expired refresh token" });
