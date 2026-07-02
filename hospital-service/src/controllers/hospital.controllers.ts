@@ -17,10 +17,11 @@ const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: true,
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    sameSite:  "none",
     maxAge: 14 * 24 * 60 * 60 * 1000, // 2 weeks
     path: "/",
   });
+
 };
 
 
@@ -216,9 +217,8 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
   // Save refresh token to Redis (REMOVED)
 
   setRefreshTokenCookie(res, refreshToken);
+ 
 
-
-  
 
   const authPermissionRes = await axios.get(
   `${process.env.ROLE_SERVICE_URL}/rolepermission`,
@@ -1037,7 +1037,7 @@ export const logout: any = asyncHandler(async (req: Request, res: Response) => {
   res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    sameSite: "none",
     path: "/",
   });
   res.status(200).json({ success: true, message: "Logged out successfully" });
@@ -1055,13 +1055,25 @@ export const logout: any = asyncHandler(async (req: Request, res: Response) => {
     `${process.env.HOSPITAL_SERVICE_URL}/hospital/login`,
     `${process.env.DOCTOR_SERVICE_URL}/doctor/login`,
     `${process.env.STAFF_SERVICE_URL}/staff/login`,
+    `${process.env.USER_SERVICE_URL}/users/login`,
   ];
 
 
   for (const url of services) {
     try {
-      const response = await axios.post(url, payload);
+
+  const response = await axios.post(url, payload, {
+  withCredentials: true,
+});
+
       
+const cookies = response.headers["set-cookie"];
+
+
+if (cookies) {
+  res.setHeader("Set-Cookie", cookies);
+}
+
 
       // IMPORTANT: check service success
       if (response.data?.success) {
@@ -1073,7 +1085,7 @@ export const logout: any = asyncHandler(async (req: Request, res: Response) => {
            error: null,
            authDefaultPermission: 1,
            authPermission: response.data.authPermission,
-           hospitals: response.data.hospitals
+           hospitals: response.data.hospitals,
         });
         return;
       }

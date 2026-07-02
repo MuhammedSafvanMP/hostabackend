@@ -30,8 +30,8 @@ export const Registeration: any = asyncHandler(
       booking_status,
       status,
       token,
+      hospitalName,
       
-
     } = req.body;
     
     const errors: string[] = [];
@@ -118,6 +118,7 @@ export const Registeration: any = asyncHandler(
       booking_status: booking_status || "user booking",
       status,
       token,
+      hospitalName,
 
     });
 
@@ -127,7 +128,7 @@ export const Registeration: any = asyncHandler(
 
     const doctorName =
       doctor?.data?.displayName || "Unknown Doctor"; 
-    const hospitalName =
+    const hospitalsName =
       hospitalRes?.data?.data?.name || `Hospital (ID: ${hospitalId})`;
 
     await Promise.allSettled([
@@ -164,7 +165,7 @@ export const Registeration: any = asyncHandler(
       doctorId,
       patient_name,
       doctorName,
-      hospitalName,
+      hospitalsName,
       booking_date,
     });
 

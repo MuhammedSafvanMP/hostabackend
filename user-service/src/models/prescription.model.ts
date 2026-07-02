@@ -25,6 +25,8 @@ interface IPrescription {
   bookingId: number; // 🔥 important
   userId: number;
   patientId?: number;
+  patientName: string;
+  hospitalName: string;
   doctorId: number;
   hospitalId: number;
 
@@ -109,6 +111,9 @@ class Prescription
 
   public canvasBg: string;
   public design: string[];
+
+  public hospitalName: string;
+  public patientName: string;
   
 
 } 
@@ -204,6 +209,18 @@ Prescription.init(
     },
 
        canvasBg:
+    {
+      type: DataTypes.STRING,
+    },
+
+
+       hospitalName:
+    {
+      type: DataTypes.STRING,
+    },
+
+
+       patientName:
     {
       type: DataTypes.STRING,
     },
