@@ -109,9 +109,12 @@ if (dob) {
 
   // 2. Validate Doctor (Cross-Service: doctor-service)
   try {
-    await httpClient.get(`${process.env.DOCTOR_SERVICE_URL}/doctor/${doctorId}`, {
+    const doctorResponse = await httpClient.get(`${process.env.DOCTOR_SERVICE_URL}/doctor/${doctorId}`, {
       headers: { Authorization: req.headers.authorization }
     });
+    const doctorName = doctorResponse.data.data.name; // adjust according to your API response
+
+    console.log("Doctor Response:", doctorResponse.data);
     
   } catch (error: any) {
     console.error("Doctor validation failed:", error.message);

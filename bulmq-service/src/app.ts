@@ -135,7 +135,7 @@ app.use(
       success: false,
 
       message:
-        "Internal Server Error in Bulmq Service",
+        err.message || "Internal Server Error in Bulmq Service",
 
       error:
         env.NODE_ENV === "development"

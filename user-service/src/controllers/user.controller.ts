@@ -200,7 +200,7 @@ export const createPatient: any = asyncHandler(async (req: Request, res: Respons
   try {
     // 1. Extract Patient Info
     const {
-      name, bloodGroup, gender, maritalStatus,
+      name, bloodGroup, gender, maritalStatus,roleId,
       patientType, age, dob, mobileNumber, emergencyNumber,
       guardianName, addressLine, location, email, password, userId, hospitalId
     } = req.body;
@@ -238,7 +238,7 @@ export const createPatient: any = asyncHandler(async (req: Request, res: Respons
             name: name || mobileNumber,
             email: userEmail,
             phone: mobileNumber,
-            roleId: 3 // Default patient role
+            roleId: roleId || 3 // Default patient role
           }, { transaction: t });
           
           finalUserId = newUser.id;
@@ -362,9 +362,12 @@ export const getPatients = asyncHandler(async (req: Request, res: Response): Pro
   const pageNum = Number(page);
   const limitNum = Number(limit);
 
-  const whereCondition: any = {
-    isDelete: false,
-  };
+  // const whereCondition: any = {
+  //   isDelete: false,
+  // };
+
+  const whereCondition: any = {};
+  
 
   // Field filters
   if (name) {
@@ -594,6 +597,52 @@ export const deletePatient: any = asyncHandler(async (req: Request, res: Respons
   } catch (err) {
     console.error("Failed to publish PATIENT_DELETED event:", err);
   }
+});
+
+// RECOVER USER FROM BLACKLIST - PUT /users/recover/:id
+export const recoverUser: any = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const user = await userService.recoverUser(id);
+
+  res.status(200).json({
+    success: true,
+    message: "User recovered successfully",
+    data: user,
+    error: null,
+  });
+});
+
+// RECOVER PATIENT FROM BLACKLIST - PUT /patients/recover/:id
+export const recoverPatient: any = asyncHandler(async (req: Request, res: Response) => {
+  const patient = await Patient.findOne({ where: { id: req.params.id, isDelete: true } });
+
+  if (!patient) {
+    res.status(404).json({ success: false, message: "Blacklisted patient not found" });
+    return;
+  }
+
+  await patient.update({
+    isActive: true,
+    isDelete: false,
+    deleteDate: null,
+  });
+
+  try {
+    await publishEvent("patient_events", "PATIENT_RECOVERED", {
+      patientId: patient.id,
+      userId: patient.userId || null,
+      hospitalId: patient.hospitalId,
+    });
+  } catch (err) {
+    console.error("Failed to publish PATIENT_RECOVERED event:", err);
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Patient recovered successfully",
+    data: patient,
+  });
 });
 
 // REFRESH TOKEN - POST /users/refresh

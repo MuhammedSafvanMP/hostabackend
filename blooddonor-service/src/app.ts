@@ -84,7 +84,7 @@
 
 //   res.status(err.status || 500).json({
 //     success: false,
-//     message: "Internal Server Error in Blood Service",
+//     message: err.message || "Internal Server Error in Blood Service",
 //     error: env.NODE_ENV === "development" ? errorDetails : {}, 
 //   });
 // });
@@ -224,7 +224,7 @@ app.use(
             success: false,
 
             message:
-                "Internal Server Error in Blood Service",
+                err.message || "Internal Server Error in Blood Service",
 
             error:
                 env.NODE_ENV === "development"

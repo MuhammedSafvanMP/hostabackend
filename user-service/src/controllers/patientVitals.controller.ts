@@ -31,6 +31,22 @@ export const getVitalsByPatient: any = asyncHandler(async (req: Request, res: Re
   }
 });
 
+
+// export const getAllVitals = asyncHandler(async (req: Request, res: Response) => {
+//   try {
+//     const vitals = await patientVitalsService.getAllVitals();
+
+//     res.status(200).json({
+//       success: true,
+//       data: vitals,
+//     });
+//   } catch (error: any) {
+//     res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// });
 // GET LATEST VITALS FOR A PATIENT
 export const getLatestVitals: any = asyncHandler(async (req: Request, res: Response) => {
   try {
@@ -57,6 +73,8 @@ export const getLatestVitals: any = asyncHandler(async (req: Request, res: Respo
 // GET ONE VITALS RECORD
 export const getVitalsById: any = asyncHandler(async (req: Request, res: Response) => {
   try {
+    
+
     const id = parseInt(req.params.id);
     const vitals = await patientVitalsService.getVitalsById(id);
     res.status(200).json({

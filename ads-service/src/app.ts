@@ -78,7 +78,7 @@
 
 //   res.status(err.status || 500).json({
 //     success: false,
-//     message: "Internal Server Error in Ad Service",
+//     message: err.message || "Internal Server Error in Ad Service",
 //     error: env.NODE_ENV === "development" ? err : {}, // Still show object in dev, hide details in prod
 //   });
 // });
@@ -219,7 +219,7 @@ app.use(
             success: false,
 
             message:
-                "Internal Server Error in Ad Service",
+                err.message || "Internal Server Error in Ad Service",
 
             error:
                 env.NODE_ENV === "development"

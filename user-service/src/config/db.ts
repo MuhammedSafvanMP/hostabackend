@@ -38,7 +38,7 @@ export const connectDB = async () => {
 
       // In dev: alter tables to match models. In prod: only create missing tables (safe).
       if (isProduction) {
-        await sequelize.sync(); // safe — only creates tables that don't exist
+        // await sequelize.sync(); // DISABLED - Use migrations instead // safe — only creates tables that don't exist
       } else {
         await sequelize.sync({ alter: true }); // dev — alters columns to match model
       }

@@ -21,6 +21,8 @@ import {
   updatePatient,
   deletePatient,
   getBlacklistedPatients,
+  recoverUser,
+  recoverPatient,
   refreshUserToken,
   logout,
   getBlacklistedUsers,
@@ -42,6 +44,7 @@ getLatestVitals,
 getVitalsById,
 getVitalsByPatient,
 updateVitals
+
 } from "../controllers/patientVitals.controller";
 
 import {
@@ -87,6 +90,7 @@ router.post("/users/logout", authenticate, checkPermission("users", "create"), l
 router.get("/users", authenticate, checkPermission("users", "view"),   getUsers);
 router.get("/users/blacklist", authenticate, checkPermission("users", "view"), getBlacklistedUsers);
 router.get("/users/:id", authenticate, validateParams(idParamSchema), checkPermission("users", "view"), getUser);
+router.put("/users/recover/:id", authenticate, checkPermission("users", "edit"), recoverUser);
 router.put("/users/:id", authenticate, validateParams(idParamSchema), validate(updateUserSchema), checkPermission("users", "edit"), updateUser);
 router.delete("/users/:id", authenticate, validateParams(idParamSchema), checkPermission("users", "delete"), deleteUser);
 
@@ -98,6 +102,7 @@ router.post("/patients", authenticate, checkPermission("patient", "create"), cre
 router.get("/patients", authenticate, checkPermission("patient", "view")  , getPatients);
 router.get("/patients/blacklist", authenticate, checkPermission("patient", "view"), getBlacklistedPatients);
 router.get("/patients/:id", authenticate, checkPermission("patient", "view"), validateParams(idParamSchema), getPatient);
+router.put("/patients/recover/:id", authenticate, checkPermission("patient", "edit"), recoverPatient);
 router.put("/patients/:id", authenticate, checkPermission("patient", "edit"), validateParams(idParamSchema), updatePatient);
 router.delete("/patients/:id", authenticate, checkPermission("patient", "delete"), validateParams(idParamSchema), deletePatient);
 
@@ -113,13 +118,13 @@ router.delete("/prescription/:id", authenticate, checkPermission("prescription",
 
 
 router.post("/vitals", authenticate, checkPermission("vitals", "create"),  addVitals);
-router.get("/vitals", authenticate, checkPermission("vitals", "view"),getLatestVitals);
 router.get("/vitals/:id", authenticate, checkPermission("vitals", "view"), getVitalsById);
 router.put("/vitals/:id", authenticate, checkPermission("vitals", "edit"), updateVitals);
-router.get("/vitals/patient/:patientId",  getVitalsByPatient);
+router.get("/vitals/patient/:patientId", authenticate, checkPermission("vitals", "view"), getVitalsByPatient);
+router.get("/vitals", authenticate, checkPermission("vitals", "view"), getLatestVitals);
 router.delete("/vitals/:id", authenticate, checkPermission("vitals", "delete"), deleteVitals);
 
-
+  
 // Lab Result
 router.post("/lab-results", authenticate, checkPermission("labresult", "create"), createLabResult);
 router.get("/lab-results", authenticate, checkPermission("labresult", "view"), getLabResults);

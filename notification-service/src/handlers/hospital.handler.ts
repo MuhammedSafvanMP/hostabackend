@@ -42,10 +42,16 @@ export const handleHospitalEvent = async (routingKey: string, content: any) => {
     }
   }
 
-  if (routingKey === "HOSPITAL_DELETED" || routingKey === "HOSPITAL_BLACKLISTED") {
-    const msg = routingKey === "HOSPITAL_BLACKLISTED"
-      ? `Hospital moved to blacklist (ID: ${content.hospitalId})`
-      : `Hospital permanently deleted (ID: ${content.hospitalId})`;
+  if (routingKey === "HOSPITAL_DELETED" || routingKey === "HOSPITAL_BLACKLISTED" || routingKey === "HOSPITAL_RECOVERED") {
+    let msg = "";
+    if (routingKey === "HOSPITAL_BLACKLISTED") {
+      msg = `Hospital moved to blacklist (ID: ${content.hospitalId})`;
+    } else if (routingKey === "HOSPITAL_RECOVERED") {
+      msg = `Hospital recovered from blacklist (ID: ${content.hospitalId})`;
+    } else {
+      msg = `Hospital permanently deleted (ID: ${content.hospitalId})`;
+    }
+
     await Notification.create({
       superAdminIds: [1],
       message: msg,

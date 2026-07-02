@@ -231,7 +231,7 @@ app.use(
             success: false,
 
             message:
-                "Internal Server Error in S3 Service",
+                err.message || "Internal Server Error in S3 Service",
 
             error:
                 env.NODE_ENV === "development"

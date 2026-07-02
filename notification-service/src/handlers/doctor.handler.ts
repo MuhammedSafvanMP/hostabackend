@@ -5,11 +5,11 @@ export const handleDoctorEvent = async (routingKey: string, content: any) => {
   if (routingKey === "DOCTOR_REGISTERED") {
     await Notification.create({
       hospitalIds: content.hospitalId ? [content.hospitalId] : [],
-      message: `New Doctor registered: Dr. ${content.doctorName || "Doctor"}. Welcome to the platform!`,
+      message: `New Doctor registered:  ${content.doctorName || "Doctor"}. Welcome to the platform!`,
     }).catch((err) => console.error("Failed to save consolidated doctor notification", err));
 
     if (content.hospitalId) {
-      const msg = `New Doctor registered: Dr. ${content.doctorName || "Doctor"}`;
+      const msg = `New Doctor registered:  ${content.doctorName || "Doctor"}`;
       socketEmitter.to(`user_${content.hospitalId}`).emit("hospital_event", {
         event: routingKey,
         message: msg,
@@ -26,9 +26,9 @@ export const handleDoctorEvent = async (routingKey: string, content: any) => {
   if (routingKey === "DOCTOR_PASSWORD_RESET" || routingKey === "DOCTOR_PASSWORD_CHANGED") {
     let msgText = "";
     if (routingKey === "DOCTOR_PASSWORD_RESET") {
-      msgText = `Security Alert: Dr. ${content.doctorName || "Doctor"} has successfully reset their password.`;
+      msgText = `Security Alert:  ${content.doctorName || "Doctor"} has successfully reset their password.`;
     } else {
-      msgText = `Security Update: Dr. ${content.doctorName || "Doctor"} has changed their password.`;
+      msgText = `Security Update:  ${content.doctorName || "Doctor"} has changed their password.`;
     }
 
     await Notification.create({
@@ -44,6 +44,27 @@ export const handleDoctorEvent = async (routingKey: string, content: any) => {
     }
 
     // 2. Also Notify SuperAdmin for security oversight
+    socketEmitter.to("role_1").emit("hospital_event", { event: routingKey, message: msgText, data: content });
+  }
+
+  if (routingKey === "DOCTOR_DELETED" || routingKey === "DOCTOR_RECOVERED") {
+    let msgText = "";
+    if (routingKey === "DOCTOR_DELETED") {
+      msgText = `Doctor profile deleted / moved to blacklist (ID: ${content.doctorId})`;
+    } else {
+      msgText = `Doctor profile recovered from blacklist (ID: ${content.doctorId})`;
+    }
+
+    await Notification.create({
+      hospitalIds: content.hospitalId ? [content.hospitalId] : [],
+      message: msgText,
+    }).catch((err) => console.error(`Failed to save doctor ${routingKey.toLowerCase().replace("_", " ")} notification`, err));
+
+    if (content.hospitalId) {
+      const targetRoom = `user_${content.hospitalId}`;
+      socketEmitter.to(targetRoom).emit("hospital_event", { event: routingKey, message: msgText, data: content });
+    }
+    
     socketEmitter.to("role_1").emit("hospital_event", { event: routingKey, message: msgText, data: content });
   }
 };

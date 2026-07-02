@@ -86,7 +86,7 @@ import { httpClient } from "../utils/httpClient";
 // REGISTER - POST /staff/register                             
 export const Registeration: any = asyncHandler(async (req: any, res: Response) => {
   
-  const { hospitalId, name, phone, email, password,  designation, joiningDate, jobType, staffType,  dob, gender, knowLanguages, qualification, address, hospitalName } = req.body;
+  const { hospitalId, name, phone, email, password, roleId,  designation, joiningDate, jobType, staffType,  dob, gender, knowLanguages, qualification, address, hospitalName } = req.body;
 
 
 
@@ -136,7 +136,7 @@ export const Registeration: any = asyncHandler(async (req: any, res: Response) =
 
   try {
     const newStaff = await Staff.create({
-      hospitalId, name, phone, email, password, dob, gender,
+      hospitalId, name, phone, email, password,roleId, dob, gender,
       knowLanguages, qualification, address,
       designation, joiningDate, jobType, staffType,hospitalName
     });
@@ -557,9 +557,10 @@ export const getStaffs = asyncHandler(
     const offset = (page - 1) * limit;
 
     // base filter
-    const whereClause: any = {
-      isDelete: false,
-    };
+    // const whereClause: any = {
+    //   isDelete: false,
+    // };
+    const whereClause: any = {};
 
     // hospital filter
     if (hospitalId) {
@@ -726,6 +727,46 @@ export const getBlacklistedStaffs: any = asyncHandler(async (req: Request, res: 
   res.status(200).json({
     success: true,
     status: "Success",
+    data: staff,
+    error: null,
+  });
+});
+
+// RECOVER FROM BLACKLIST - PUT /staff/recover/:id
+export const recoverStaff: any = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const staff = await Staff.findOne({
+    where: {
+      id,
+      isDelete: true,
+    },
+  });
+
+  if (!staff) {
+    res.status(404).json({
+      success: false,
+      message: "Blacklisted staff not found",
+      data: null,
+      error: { code: "STAFF_NOT_FOUND", details: null },
+    });
+    return;
+  }
+
+  await staff.update({
+    isDelete: false,
+    isActive: true,
+    deleteDate: null,
+  });
+
+  await publishEvent("staff_events", "STAFF_RECOVERED", {
+    staffId: staff.id,
+    staffName: staff.name,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Staff recovered successfully",
     data: staff,
     error: null,
   });

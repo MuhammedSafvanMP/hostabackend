@@ -25,6 +25,7 @@ import {
   updateData,
   hospitalDelete,
   getBlacklistedHospitals,
+  recoverHospital,
   refreshHospitalToken,
   logout,
   roleBaseLogin
@@ -56,12 +57,13 @@ router.post("/hospital/logout", authenticate, checkPermission("hospital", "creat
 // Notifications
 router.post("/hospital/notify/email", authenticate, validate(sendCustomEmailSchema), sendCustomEmail);
 
-// CRUD
+// CRUD 
 
 
 router.get("/hospital",  getHospital);
 router.get("/hospital/blacklist", authenticate, checkPermission("hospital", "view"),  getBlacklistedHospitals);
 router.get("/hospital/:id",  getanHospital);
+router.put("/hospital/recover/:id", authenticate, checkPermission("hospital", "edit"), recoverHospital);
 router.put("/hospital/:id",authenticate,checkPermission("hospital","edit"), updateData);
 router.delete("/hospital/:id",authenticate,checkPermission("hospital","delete"), hospitalDelete);
 

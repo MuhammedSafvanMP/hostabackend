@@ -10,6 +10,7 @@ import { handlePrescriptionEvent } from "../handlers/prescription.handler";
 import { handleAdEvent } from "../handlers/ad.handler";
 import { handleAmbulanceEvent } from "../handlers/ambulance.handler";
 import { handleBloodEvent } from "../handlers/blood.handler";
+import { handleBloodBankEvent } from "../handlers/bloodbankhandler";
 
 let connection: any;
 let channel: amqp.Channel;
@@ -99,6 +100,7 @@ export const startConsumer = async () => {
         await channel.bindQueue(queue, "hospital_events", "HOSPITAL_UPDATED");
         await channel.bindQueue(queue, "hospital_events", "HOSPITAL_DELETED");
         await channel.bindQueue(queue, "hospital_events", "HOSPITAL_BLACKLISTED");
+        await channel.bindQueue(queue, "hospital_events", "HOSPITAL_RECOVERED");
 
         // 2. Booking
         await channel.assertExchange("booking_events", "direct", { durable: true });
@@ -113,6 +115,7 @@ export const startConsumer = async () => {
         await channel.bindQueue(queue, "doctor_events", "DOCTOR_REGISTERED");
         await channel.bindQueue(queue, "doctor_events", "DOCTOR_UPDATED");
         await channel.bindQueue(queue, "doctor_events", "DOCTOR_DELETED");
+        await channel.bindQueue(queue, "doctor_events", "DOCTOR_RECOVERED");
         await channel.bindQueue(queue, "doctor_events", "DOCTOR_PASSWORD_RESET");
         await channel.bindQueue(queue, "doctor_events", "DOCTOR_PASSWORD_CHANGED");
 
@@ -120,6 +123,7 @@ export const startConsumer = async () => {
         await channel.assertExchange("blood_bank_events", "direct", { durable: true });
         await channel.bindQueue(queue, "blood_bank_events", "STOCK_CREATED");
         await channel.bindQueue(queue, "blood_bank_events", "STOCK_UPDATED");
+        await channel.bindQueue(queue, "blood_bank_events", "STOCK_DELETED");
 
         // 5. Blood Donor
         await channel.assertExchange("blood_events", "direct", { durable: true });
@@ -137,6 +141,7 @@ export const startConsumer = async () => {
         await channel.bindQueue(queue, "patient_events", "PATIENT_REGISTERED");
         await channel.bindQueue(queue, "patient_events", "PATIENT_UPDATED");
         await channel.bindQueue(queue, "patient_events", "PATIENT_DELETED");
+        await channel.bindQueue(queue, "patient_events", "PATIENT_RECOVERED");
 
         // 8. Ambulance
         await channel.assertExchange("ambulance_events", "direct", { durable: true });
@@ -148,6 +153,8 @@ export const startConsumer = async () => {
         await channel.assertExchange("staff_events", "direct", { durable: true });
         await channel.bindQueue(queue, "staff_events", "STAFF_REGISTERED");
         await channel.bindQueue(queue, "staff_events", "STAFF_UPDATED");
+        await channel.bindQueue(queue, "staff_events", "STAFF_DELETED");
+        await channel.bindQueue(queue, "staff_events", "STAFF_RECOVERED");
         await channel.bindQueue(queue, "staff_events", "STAFF_PASSWORD_RESET");
         await channel.bindQueue(queue, "staff_events", "STAFF_PASSWORD_CHANGED");
 
@@ -216,8 +223,10 @@ export const startConsumer = async () => {
                         await handleAdEvent(routingKey, content);
                     } else if (routingKey.startsWith("AMBULANCE_")) {
                         await handleAmbulanceEvent(routingKey, content);
-                    } else if (routingKey.startsWith("DONOR_") || routingKey.startsWith("STOCK_")) {
+                    } else if (routingKey.startsWith("DONOR_")) {
                         await handleBloodEvent(routingKey, content);
+                    } else if (routingKey.startsWith("STOCK_")) {
+                        await handleBloodBankEvent(routingKey, content);
                     }
 
                     channel.ack(msg);
@@ -263,10 +272,10 @@ export const startConsumer = async () => {
 export const closeRabbitMQ = async () => {
     try {
         if (channel) {
-            await channel.close().catch(() => {});
+            await channel.close().catch(() => { });
         }
         if (connection) {
-            await connection.close().catch(() => {});
+            await connection.close().catch(() => { });
         }
         console.log("✅ RabbitMQ Connection cleanly closed.");
     } catch (err) {

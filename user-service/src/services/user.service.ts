@@ -9,6 +9,7 @@ import twilio from "twilio";
 import { logger } from "../utils/logger";
 import { publishEvent } from "../events/publisher";
 import { sendEmail } from "./mail.service";
+import { getBlacklistedUsers } from "../controllers/user.controller";
 
 let twilioClient: any = null;
 
@@ -245,6 +246,7 @@ export const userService = {
     return { token, refreshToken, user: userJson };
   },
 
+
   async getAllUsers() {
     return await User.findAll({
       where: { isDelete: false }
@@ -275,6 +277,21 @@ export const userService = {
     
     // Broadcast to other services (like blood-service) so they can cleanup too
     await publishEvent('user_events', 'USER_DELETED', { userId: id });
+  },
+
+  async recoverUser(id: string) {
+    const user = await User.findOne({ where: { id, isDelete: true } });
+    if (!user) throw { status: 404, message: "Blacklisted user not found" };
+
+    await user.update({
+      isActive: true,
+      isDelete: false,
+      deleteDate: null,
+    });
+
+    await publishEvent('user_events', 'USER_RECOVERED', { userId: id });
+
+    return user;
   },
 
   async resetPassword(data: any) {
