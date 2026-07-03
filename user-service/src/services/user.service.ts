@@ -159,10 +159,20 @@ export const userService = {
       throw { status: 400, message: "Invalid phone number" };
     }
 
-    const user = await User.findOne({ where: { phone: numericPhone, isDelete: false } });
+    const user = await User.findOne({ where: { phone: numericPhone } });
     if (!user) {
       throw { status: 400, message: "Phone number not registered!" };
     }
+
+   if (user.isDelete === true) {
+  await user.update( {
+    isDelete: false,
+    isActive: true,
+    deleteDate: null,
+  });
+
+ 
+}
 
     const otp = numericPhone === APPLE_TEST_NUMBER 
       ? APPLE_TEST_OTP 
