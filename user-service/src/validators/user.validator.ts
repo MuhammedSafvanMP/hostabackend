@@ -25,8 +25,10 @@ export const loginWithPhoneSchema = z.object({
 export const verifyOtpSchema = z.object({
     phone: z.string().regex(/^[0-9]{10}$/, "Phone must be a 10-digit number"),
     otp: z.string().length(6, "OTP must be exactly 6 digits"),
-    fcmToken: z.string().optional(),
+    fcmToken: z.string().nullable().optional(),
 });
+
+
 
 export const updateUserSchema = z.object({
     name: z.string().min(2).optional(),
