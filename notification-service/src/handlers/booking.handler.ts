@@ -4,8 +4,8 @@ import { socketEmitter } from "../utils/socket.emitter";
 export const handleBookingEvent = async (routingKey: string, content: any) => {
   if (routingKey === "BOOKING_REGISTERED" || routingKey === "BOOKING_CANCELLED") {
     const msgText = routingKey === "BOOKING_REGISTERED"
-      ? `New booking for Dr. ${content.doctorName || "Doctor"} at ${content.hospitalName || "Hospital"} on ${content.booking_date || "the requested date"}`
-      : `Booking cancelled for Dr. ${content.doctorName || "Doctor"} at ${content.hospitalName || "Hospital"} on ${content.booking_date || "the requested date"} (ID: ${content.bookingId})`;
+      ? `New booking for  ${content.doctorName || "Doctor"} at ${content.hospitalName || "Hospital"} on ${content.booking_date || "the requested date"}`
+      : `Booking cancelled for  ${content.doctorName || "Doctor"} at ${content.hospitalName || "Hospital"} on ${content.booking_date || "the requested date"} (ID: ${content.bookingId})`;
 
     await Notification.create({
       userIds: content.userId ? [content.userId] : [],
