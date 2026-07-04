@@ -40,7 +40,8 @@ export const loginUser: any = asyncHandler(async (req: Request, res: Response) =
     const { token, refreshToken, user } = await userService.login(req.body);
     setRefreshTokenCookie(res, refreshToken);
     res.status(200).json({ success: true, message: "Login success", token, data: user });
-  } catch (error: any) {
+  } 
+  catch (error: any) {
     res.status(error.status || 500).json({ success: false, message: error.message || "Server Error" });
   }
 });
@@ -884,3 +885,5 @@ export const sendEnquiry = asyncHandler(
     return;
   }
 );
+
+
