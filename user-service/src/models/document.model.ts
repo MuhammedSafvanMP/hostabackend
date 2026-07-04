@@ -4,6 +4,7 @@ import sequelize from "../config/db";
 interface IDocument {
   id: number;
   patientId: number;
+  userId: number;
   name: string;
   date: Date;
   imageUrl: string;
@@ -19,6 +20,8 @@ class Document extends Model<IDocument, DocumentCreationAttributes> implements I
   public date!: Date;
   public imageUrl!: string;
   public isActive?: boolean;
+
+  public userId: number;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -36,6 +39,13 @@ Document.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+
+       userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+
+    
 
     name: {
       type: DataTypes.STRING(150),

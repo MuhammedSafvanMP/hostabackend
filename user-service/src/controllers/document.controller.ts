@@ -1,15 +1,21 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import Document from "../models/document.model";
+import { publishEvent } from "../events/publisher";
 
 export const createDocument: any = asyncHandler(async (req: Request, res: Response) => {
-  const { patientId, name, date } = req.body;
+  const { patientId, name, date, userId } = req.body;
 
   const document = await Document.create({
     patientId,
     name,
     date,
+    userId
   });
+
+     await publishEvent("document_events", "DOCUMENT_REGISTERED", {
+        userId: userId,
+      });
 
   res.status(201).json({
     success: true,
@@ -83,6 +89,10 @@ export const updateDocument: any = asyncHandler(async (req: Request, res: Respon
 
   await document.update(req.body);
 
+    await publishEvent("document_events", "DOCUMENT_UPDATED", {
+        userId: document.userId,
+      });
+
   res.status(200).json({
     success: true,
     message: "Document updated successfully",
@@ -91,6 +101,9 @@ export const updateDocument: any = asyncHandler(async (req: Request, res: Respon
 });
 
 export const deleteDocument = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  
+  const findDocument = await Document.findByPk(req.params.id);
+  
   const deletedCount = await Document.destroy({
     where: {
       id: req.params.id,
@@ -105,6 +118,10 @@ export const deleteDocument = asyncHandler(async (req: Request, res: Response): 
 
       return ;
   }
+
+    await publishEvent("document_events", "DOCUMENT_DELETED", {
+        userId: findDocument.userId,
+      });
 
 res.status(200).json({
     success: true,
