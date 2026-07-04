@@ -209,8 +209,6 @@ export const login: any = asyncHandler(
 
     const doctors = await Doctor.scope("withPassword").findAll({
       where: {
-        isDelete: false,
-
         [Op.and]: [
           {
             [Op.or]: [
@@ -223,6 +221,8 @@ export const login: any = asyncHandler(
         ],
       },
     });
+
+    
 
     if (!doctors.length) {
       res.status(401).json({
@@ -336,6 +336,17 @@ if (doctor.roleId) {
     authPermission = [];
   }
 }
+
+   if(safeDoctor.isDelete === true) {
+       res.status(401).json({
+      success: false,
+      message: "You'r account has been deactivated.",
+      data: null,
+      error: { code: "DOCTOR_BLACKLISTED", details: null },
+    });
+    return;
+    }
+
 
     res.status(200).json({
   success: true,
