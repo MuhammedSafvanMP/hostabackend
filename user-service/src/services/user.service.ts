@@ -130,10 +130,19 @@ export const userService = {
   },
 
   async login(data: any) {
-    const user = await User.findOne({ where: { email: data.email, isDelete: false } });
+    const user = await User.findOne({ where: { email: data.email } });
+
     if (!user) {
       throw { status: 404, message: "User not found" };
     }
+
+         if (user.isDelete === true) {
+  await user.update( {
+    isDelete: false,
+    isActive: true,
+    deleteDate: null,
+  });
+}
 
     const match = await bcrypt.compare(data.password, user.password || "");
     if (!match) {
@@ -170,6 +179,7 @@ export const userService = {
     isActive: true,
     deleteDate: null,
   });
+  
 
        await Patient.update(
     {

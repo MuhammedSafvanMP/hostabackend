@@ -162,15 +162,6 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     },
   });
 
-    if(hospital.isDelete === true) {
-       res.status(401).json({
-      success: false,
-      message: "Hospital account has been deactivated.",
-      data: null,
-      error: { code: "HOSPITAL_BLACKLISTED", details: null },
-    });
-    return;
-    }
 
 
   if (!hospital) {
@@ -182,6 +173,18 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     });
     return;
   }
+
+
+      if(hospital.isDelete === true) {
+       res.status(401).json({
+      success: false,
+      message: "Hospital account has been deactivated.",
+      data: null,
+      error: { code: "HOSPITAL_BLACKLISTED", details: null },
+    });
+    return;
+    }
+
 
   
   if (fcmToken) {
@@ -1097,30 +1100,20 @@ if (cookies) {
         });
         return;
       }
-    } catch (err: any) {
-  if (axios.isAxiosError(err) && err.response) {
-    const { status, data } = err.response;
-
-    // Try the next service only if this service says "not found"
-    if (status === 404) {
-      continue;
+    }  catch (err) {
+      // ignore and try next service
     }
-
-    // Return any other error to the frontend
-     res.status(status).json(data);
-     return;
   }
 
-  res.status(500).json({
+  res.status(404).json({
     success: false,
-    message: "Internal server error",
+    message: "User not found",
   });
-   return;
-}
-
-    
-  }
+  return;
 
 
 });
+
+
+
 
