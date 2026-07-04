@@ -180,10 +180,20 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
 
   const staff = await Staff.scope("withPassword").findOne({
     where: {
-      isDelete: false,
       [Op.or]: [{ email: email || null }, { phone: phone || null }],
     },
   });
+
+     if(staff.isDelete === true) {
+       res.status(401).json({
+      success: false,
+      message: "You'r account has been deactivated.",
+      data: null,
+      error: { code: "STAFF_BLACKLISTED", details: null },
+    });
+    return;
+    }
+
 
   if (!staff) {
     res.status(404).json({

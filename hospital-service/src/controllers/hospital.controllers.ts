@@ -155,7 +155,6 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
   // Find hospital by email OR phone
   const hospital = await Hospital.scope("withPassword").findOne({
     where: {
-      isDelete: false,
       [Op.or]: [
         email ? { email } : null,
         phone ? { phone } : null,
@@ -163,6 +162,15 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     },
   });
 
+    if(hospital.isDelete === true) {
+       res.status(401).json({
+      success: false,
+      message: "Hospital account has been deactivated.",
+      data: null,
+      error: { code: "HOSPITAL_BLACKLISTED", details: null },
+    });
+    return;
+    }
 
 
   if (!hospital) {
@@ -1089,15 +1097,30 @@ if (cookies) {
         });
         return;
       }
-    } catch (err) {
-      // ignore and try next service
+    } catch (err: any) {
+  if (axios.isAxiosError(err) && err.response) {
+    const { status, data } = err.response;
+
+    // Try the next service only if this service says "not found"
+    if (status === 404) {
+      continue;
     }
+
+    // Return any other error to the frontend
+     res.status(status).json(data);
+     return;
   }
 
-  res.status(404).json({
+  res.status(500).json({
     success: false,
-    message: "User not found",
+    message: "Internal server error",
   });
-  return;
+   return;
+}
+
+    
+  }
+
+
 });
 
