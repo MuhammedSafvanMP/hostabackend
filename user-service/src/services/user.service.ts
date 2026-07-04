@@ -257,11 +257,19 @@ export const userService = {
   },
 
 
+  // async getAllUsers() {
+  //   return await User.findAll({
+  //     where: {  }
+      
+  //   });
+  // },
+
   async getAllUsers() {
-    return await User.findAll({
-      where: { isDelete: false }
-    });
-  },
+  return await User.findAll({
+    where: {},
+    paranoid: false, // only if using Sequelize soft delete
+  });
+},
 
   async getBlacklistedUsers() {
     return await User.findAll({
