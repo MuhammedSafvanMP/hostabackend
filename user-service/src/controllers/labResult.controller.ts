@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import LabResult from "../models/labResult.model";
+import { publishEvent } from "../events/publisher";
 
 export const createLabResult: any = asyncHandler(async (req: Request, res: Response) => {
-  const { labId, hospitalId, patientId, doctorId, department, testName,  status } = req.body;
+  const { labId, hospitalId, patientId, doctorId, department, testName,  status, userId } = req.body;
 
   const labResult = await LabResult.create({
     labId,
@@ -13,7 +14,13 @@ export const createLabResult: any = asyncHandler(async (req: Request, res: Respo
     department,
     testName,
     status,
+    userId
   });
+
+
+      await publishEvent("labresult_events", "LABRESULT_REGISTERED", {
+      userId: userId,
+    });
 
   res.status(201).json({
     success: true,
@@ -85,6 +92,10 @@ export const updateLabResult: any = asyncHandler(async (req: Request, res: Respo
 
   await labResult.update(req.body);
 
+    await publishEvent("labresult_events", "LABRESULT_UPDATED", {
+      userId: labResult.userId,
+    });
+
   res.status(200).json({
     success: true,
     message: "Lab result updated successfully",
@@ -106,6 +117,10 @@ export const deleteLabResult: any = asyncHandler(async (req: Request, res: Respo
   }
 
   await labResult.update({ isActive: false });
+
+    await publishEvent("labresult_events", "LABRESULT_DELETED", {
+      userId: labResult.userId,
+    });
 
   res.status(200).json({
     success: true,

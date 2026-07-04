@@ -4,6 +4,7 @@ import sequelize from "../config/db";
 interface ILabResult {
   id: number;
   labId: number;
+  userId: number;
   hospitalId: number;
   patientId: number;
   doctorId: number;
@@ -30,6 +31,7 @@ class LabResult extends Model<ILabResult, LabResultCreationAttributes> implement
   public imageUrl?: string;
   public status!: "received" | "progress" | "pending";
   public isActive?: boolean;
+  public userId: number;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -49,6 +51,11 @@ LabResult.init(
     },
 
     hospitalId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+
+      userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
