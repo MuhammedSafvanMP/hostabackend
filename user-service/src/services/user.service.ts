@@ -285,9 +285,23 @@ export const userService = {
       deleteDate: new Date(),
     }); // Move to blacklist
     
+  await Patient.update(
+    {
+      isActive: false,
+    },
+    {
+      where: {
+        userId: user.id,
+      },
+    }
+  );
+
     // Broadcast to other services (like blood-service) so they can cleanup too
     await publishEvent('user_events', 'USER_DELETED', { userId: id });
+
   },
+
+
 
   async recoverUser(id: string) {
     const user = await User.findOne({ where: { id, isDelete: true } });
@@ -298,6 +312,17 @@ export const userService = {
       isDelete: false,
       deleteDate: null,
     });
+
+      await Patient.update(
+    {
+      isActive: true,
+    },
+    {
+      where: {
+        userId: user.id,
+      },
+    }
+  );
 
     await publishEvent('user_events', 'USER_RECOVERED', { userId: id });
 
