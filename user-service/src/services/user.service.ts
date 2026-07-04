@@ -171,6 +171,17 @@ export const userService = {
     deleteDate: null,
   });
 
+       await Patient.update(
+    {
+      isActive: true,
+    },
+    {
+      where: {
+        userId: user.id,
+      },
+    }
+  );
+
  
 }
 
