@@ -17,7 +17,7 @@ dotenv.config();
 /*                                  CONSTANTS                                 */
 /* -------------------------------------------------------------------------- */
 
-const VALID_ROLES = ["hospital", "user", "doctor", "staff", "ad", "documents", "labresults", "category"] as const;
+const VALID_ROLES = ["hospital", "user", "doctor", "staff", "ad", "documents", "labresults", "category", "speciality"] as const;
 
 const SERVICE_CONFIG: Record<
   string,
