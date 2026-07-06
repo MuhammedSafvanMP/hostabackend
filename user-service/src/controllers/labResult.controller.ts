@@ -2,9 +2,10 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import LabResult from "../models/labResult.model";
 import { publishEvent } from "../events/publisher";
+import { Op, Sequelize } from "sequelize";
 
 export const createLabResult: any = asyncHandler(async (req: Request, res: Response) => {
-  const { labId, hospitalId, patientId, doctorId, department, testName,  status, userId } = req.body;
+  const { labId, hospitalId, patientId, doctorId, department, testName,  status, userId, hospitalName, labName, patientName } = req.body;
 
   const labResult = await LabResult.create({
     labId,
@@ -14,7 +15,10 @@ export const createLabResult: any = asyncHandler(async (req: Request, res: Respo
     department,
     testName,
     status,
-    userId
+    userId,
+    hospitalName,
+    labName,
+    patientName
   });
 
 
@@ -36,26 +40,140 @@ export const getLabResults: any = asyncHandler(async (req: Request, res: Respons
     const normalizeQuery = (value: any) =>
       Array.isArray(value) ? value[0] : value;
 
-    let { patientId } = req.query;
+
+        let {
+      userId,
+      patientId,
+      hospitalId,
+      labId,
+      date,
+      search_query,
+      page = 1,
+      limit = 10,
+    }: any = req.query;
 
     patientId = normalizeQuery(patientId);
 
     const whereClause: any = {};
+        const andConditions: any[] = [];
+
+         const pageNum = Math.max(Number(page) || 1, 1);
+    const limitNum = Math.max(Number(limit) || 10, 1);
 
     if (patientId && !isNaN(Number(patientId))) {
       whereClause.patientId = Number(patientId);
     }
 
+      if (userId && !isNaN(Number(userId))) {
+      whereClause.userId = Number(userId);
+    }
 
-  const labResults = await LabResult.findAll({
+      if (hospitalId && !isNaN(Number(hospitalId))) {
+      whereClause.hospitalId = Number(hospitalId);
+    }
+
+        if (labId && !isNaN(Number(labId))) {
+      whereClause.labId = Number(labId);
+    }
+
+
+
+        if (date) whereClause.date = date;
+    
+          if (search_query?.trim()) {
+              andConditions.push({
+                [Op.or]: [
+                
+                    Sequelize.where(
+                    Sequelize.fn(
+                      "COALESCE",
+                      Sequelize.col("department"),
+                      ""
+                    ),
+                    {
+                      [Op.iLike]: `%${search_query.trim()}%`,
+                    }
+                  ),
+
+
+                    Sequelize.where(
+                    Sequelize.fn(
+                      "COALESCE",
+                      Sequelize.col("testName"),
+                      ""
+                    ),
+                    {
+                      [Op.iLike]: `%${search_query.trim()}%`,
+                    }
+                  ),
+
+
+                    Sequelize.where(
+                    Sequelize.fn(
+                      "COALESCE",
+                      Sequelize.col("hospitalName"),
+                      ""
+                    ),
+                    {
+                      [Op.iLike]: `%${search_query.trim()}%`,
+                    }
+                  ),
+
+
+
+                    Sequelize.where(
+                    Sequelize.fn(
+                      "COALESCE",
+                      Sequelize.col("labName"),
+                      ""
+                    ),
+                    {
+                      [Op.iLike]: `%${search_query.trim()}%`,
+                    }
+                  ),
+
+
+                     Sequelize.where(
+                    Sequelize.fn(
+                      "COALESCE",
+                      Sequelize.col("patientName"),
+                      ""
+                    ),
+                    {
+                      [Op.iLike]: `%${search_query.trim()}%`,
+                    }
+                  ),
+                   
+              
+                ],
+              });
+            }
+    
+
+
+  const labResults = await LabResult.findAndCountAll({
       where: whereClause,
+       limit: limitNum,
+      offset: (pageNum - 1) * limitNum,
     order: [["createdAt", "DESC"]],
   });
 
-  res.status(200).json({
-    success: true,
-    data: labResults,
-  });
+
+
+      res.status(200).json({
+      success: true,
+      data: labResults.rows,
+      pagination: {
+        totalItems: labResults.count,
+        totalPages: Math.ceil(labResults.count / limitNum),
+        currentPage: pageNum,
+        limit: limitNum,
+      },
+      error: null,
+    });
+
+
+
 });
 
 export const getLabResult: any = asyncHandler(async (req: Request, res: Response) => {

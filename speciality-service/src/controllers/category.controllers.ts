@@ -151,7 +151,7 @@ export const getCategorys = asyncHandler(async (req: Request, res: Response) : P
 
   const category = await Category.findAndCountAll({
     where: whereCondition,
-    order: [["createdAt", "DESC"]],
+    order: [["createdAt", "ASC"]],
   });
 
   if (category.count === 0) {

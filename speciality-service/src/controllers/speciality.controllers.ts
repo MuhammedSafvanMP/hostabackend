@@ -151,7 +151,7 @@ export const getSpecialitys = asyncHandler(async (req: Request, res: Response) :
 
   const speciality = await Speciality.findAndCountAll({
     where: whereCondition,
-    order: [["createdAt", "DESC"]],
+    order: [["createdAt", "ASC"]],
   });
 
   if (speciality.count === 0) {

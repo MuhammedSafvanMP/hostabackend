@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import Document from "../models/document.model";
 import { publishEvent } from "../events/publisher";
+import { Op, Sequelize } from "sequelize";
 
 export const createDocument: any = asyncHandler(async (req: Request, res: Response) => {
   const { patientId, name, date, userId } = req.body;
@@ -32,27 +33,87 @@ export const getDocuments = asyncHandler(
       Array.isArray(value) ? value[0] : value;
 
 
-    let { patientId } = req.query;
+    let {
+      userId,
+      patientId,
+      date,
+      search_query,
+      page = 1,
+      limit = 10,
+    }: any = req.query;
 
+    userId = normalizeQuery(userId);
     patientId = normalizeQuery(patientId);
+    date = normalizeQuery(date);
+    search_query = normalizeQuery(search_query);
+
 
     const whereClause: any = {};
+    const andConditions: any[] = [];
+
+     const pageNum = Math.max(Number(page) || 1, 1);
+    const limitNum = Math.max(Number(limit) || 10, 1);
 
     if (patientId && !isNaN(Number(patientId))) {
       whereClause.patientId = Number(patientId);
     }
 
-    const documents = await Document.findAll({
+
+    if (userId && !isNaN(Number(userId))) {
+      whereClause.userId = Number(userId);
+    }
+
+        if (date) whereClause.date = date;
+
+      if (search_query?.trim()) {
+          andConditions.push({
+            [Op.or]: [
+            
+                Sequelize.where(
+                Sequelize.fn(
+                  "COALESCE",
+                  Sequelize.col("name"),
+                  ""
+                ),
+                {
+                  [Op.iLike]: `%${search_query.trim()}%`,
+                }
+              ),
+               
+          
+            ],
+          });
+        }
+
+
+    if (andConditions.length) {
+      whereClause[Op.and] = andConditions;
+    }
+
+    const documents = await Document.findAndCountAll({
       where: whereClause,
+       limit: limitNum,
+      offset: (pageNum - 1) * limitNum,
       order: [["createdAt", "DESC"]],
     });
 
-     res.status(200).json({
+
+
+      res.status(200).json({
       success: true,
-      data: documents,
+      data: documents.rows,
+      pagination: {
+        totalItems: documents.count,
+        totalPages: Math.ceil(documents.count / limitNum),
+        currentPage: pageNum,
+        limit: limitNum,
+      },
+      error: null,
     });
+
     return;
   }
+
 );
 
 export const getDocument: any = asyncHandler(async (req: Request, res: Response) => {
