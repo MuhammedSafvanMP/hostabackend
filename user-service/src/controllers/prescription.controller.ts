@@ -240,6 +240,9 @@ export const getPrescription = asyncHandler(
     const pageNum = Math.max(Number(page) || 1, 1);
     const limitNum = Math.max(Number(limit) || 10, 1);
 
+
+
+
     if (hospitalId) whereClause.hospitalId = Number(hospitalId);
 
     if (bookingId) whereClause.bookingId = Number(bookingId);
@@ -265,9 +268,42 @@ export const getPrescription = asyncHandler(
               [Op.iLike]: `%${search_query.trim()}%`,
             }
           ),
+            Sequelize.where(
+            Sequelize.fn(
+              "COALESCE",
+              Sequelize.col("hospitalName"),
+              ""
+            ),
+            {
+              [Op.iLike]: `%${search_query.trim()}%`,
+            }
+          ),
+            Sequelize.where(
+            Sequelize.fn(
+              "COALESCE",
+              Sequelize.col("patientName"),
+              ""
+            ),
+            {
+              [Op.iLike]: `%${search_query.trim()}%`,
+            }
+          ),
+           
+            Sequelize.where(
+            Sequelize.fn(
+              "COALESCE",
+              Sequelize.col("complaint"),
+              ""
+            ),
+            {
+              [Op.iLike]: `%${search_query.trim()}%`,
+            }
+          ),
         ],
       });
     }
+
+
 
     if (andConditions.length) {
       whereClause[Op.and] = andConditions;
