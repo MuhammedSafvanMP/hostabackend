@@ -1,6 +1,14 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/db";
 
+
+
+interface FCMTOKEN {
+  deviceId: string;
+  fcmToken: string;
+  platform: "android" | "ios" | "web";
+}
+
 interface IUser {
   id: number;
   userId?: string; // Virtual ID
@@ -9,7 +17,7 @@ interface IUser {
   password?: string;
   phone?: string;
   imageUrl?: string;
-  fcmToken?: string;
+  fcmToken?: FCMTOKEN[];
    joinAccountId?:number;
    relationType?:string;
   otp?: string;
@@ -20,6 +28,9 @@ interface IUser {
   isDelete?: boolean;
 }
 
+
+
+
 class User extends Model<IUser> implements IUser {
   public id!: number;
   public readonly userId!: string;
@@ -29,7 +40,7 @@ class User extends Model<IUser> implements IUser {
   public password!: string;
   public phone!: string;
   public imageUrl!: string;
-  public fcmToken!: string;
+  public fcmToken!: FCMTOKEN[];
   public relationType!:string;
   public otp?: string;
   public otpExpiry?: Date;
@@ -109,7 +120,7 @@ User.init(
     },
 
     fcmToken: {
-      type: DataTypes.STRING,
+      type: DataTypes.JSONB,
     },
 
     otp: {

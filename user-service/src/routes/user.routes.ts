@@ -85,7 +85,7 @@ router.put("/users/auth/change-password", authenticate, checkPermission("users",
 
 // Refresh and Logout
 router.post("/users/refresh", refreshUserToken);
-router.post("/users/logout", authenticate, checkPermission("users", "create"), logout);
+router.post("/users/logout/:id", authenticate, checkPermission("users", "create"), logout);
 
 router.get("/users", authenticate, checkPermission("users", "view"),   getUsers);
 router.get("/users/blacklist", authenticate, checkPermission("users", "view"), getBlacklistedUsers);
