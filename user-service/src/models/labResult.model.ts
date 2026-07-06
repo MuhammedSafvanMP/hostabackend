@@ -13,6 +13,7 @@ interface ILabResult {
   imageUrl?: string;
   hospitalName?: string;
   patientName?: string;
+  doctorName?: string;
   labName?: string;
   status: "received" | "progress" | "pending";
   isActive?: boolean;
@@ -38,6 +39,7 @@ class LabResult extends Model<ILabResult, LabResultCreationAttributes> implement
   public hospitalName?: string;
   public labName?: string;
   public patientName?: string;
+  public doctorName?: string;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -88,6 +90,9 @@ LabResult.init(
       type: DataTypes.STRING,
     },
 
+      doctorName: {
+      type: DataTypes.STRING,
+    },
 
 
     department: {
