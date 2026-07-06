@@ -8,7 +8,7 @@ module.exports = {
 
     if (!tableDesc.fcmToken) {
       await queryInterface.addColumn(table, "fcmToken", {
-        type: Sequelize.STRING,
+        type: Sequelize.JSONB,
         allowNull: true,
       });
     }
