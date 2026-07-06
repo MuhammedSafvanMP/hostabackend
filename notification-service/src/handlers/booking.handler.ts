@@ -1,3 +1,6 @@
+
+
+
 import Notification from "../models/notification.model";
 import { socketEmitter } from "../utils/socket.emitter";
 
@@ -52,45 +55,38 @@ export const handleBookingEvent = async (routingKey: string, content: any) => {
     }
   }
 
+  // HOSPITAL-ONLY notifications for booking updates
   if (routingKey === "BOOKING_UPDATED" || routingKey === "BOOKING_ACCEPTED" || routingKey === "BOOKING_COMPLETED") {
     let msg = "";
     if (content.status === "accepted" || content.status === "declined") {
-      msg = `Your booking (ID: ${content.bookingId}) has been ${content.status} by the staff.`;
+      msg = `Booking (ID: ${content.bookingId}) has been ${content.status} by staff.`;
     } else if (content.status === "completed") {
-      msg = `Your booking (ID: ${content.bookingId}) has been marked as completed.`;
+      msg = `Booking (ID: ${content.bookingId}) has been marked as completed.`;
     } else {
-      msg = `Your booking (ID: ${content.bookingId}) status has been updated to ${content.status || "updated"}.`;
+      msg = `Booking (ID: ${content.bookingId}) status has been updated to ${content.status || "updated"}.`;
     }
 
+    // Save notification for hospitals only
     await Notification.create({
-      userIds: content.userId ? [content.userId] : [],
+      userIds: [], // No user notifications
       hospitalIds: content.hospitalId ? [content.hospitalId] : [],
       message: msg,
     }).catch((err) => console.error("Failed to save booking update notification", err));
 
-    if (content.userId) {
-      socketEmitter.to(`user_${content.userId}`).emit("booking_event", { event: routingKey, message: msg, data: content });
-    }
+    // Send socket notifications to hospitals only
     if (content.hospitalId) {
-      socketEmitter.to(`hospital_${content.hospitalId}`).emit("booking_event", { event: routingKey, message: msg, data: content });
-    }
-
-    // Additional targeted handlers
-    if (content.userId) {
-      let notifyMsg = "";
-      if (content.status === "accepted" || content.status === "declined") {
-        notifyMsg = `Your booking (ID: ${content.bookingId}) has been ${content.status}.`;
-      } else if (content.status === "completed") {
-        notifyMsg = `Your booking (ID: ${content.bookingId}) is completed.`;
-      } else {
-        notifyMsg = `Your booking (ID: ${content.bookingId}) status is ${content.status || "updated"}.`;
-      }
-
-      socketEmitter.to(`user_${content.userId}`).emit("booking_created", {
-        message: notifyMsg,
+      socketEmitter.to(`hospital_${content.hospitalId}`).emit("booking_event", { 
+        event: routingKey, 
+        message: msg, 
+        data: content 
+      });
+      
+      // Additional hospital-specific alert
+      socketEmitter.to(`hospital_${content.hospitalId}`).emit("booking_created", {
+        message: msg,
         bookingId: content.bookingId,
         status: content.status,
       });
     }
-  }
+  }  
 };
