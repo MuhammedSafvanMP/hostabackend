@@ -5,8 +5,8 @@ interface PushPayload {
   doctorToken?: string;
   userToken?: string;
 
-  patient_name: string;
-  doctorName: string;
+  patient_name?: string;
+  doctorName?: string;
 
   booking_date?: string;
 
@@ -36,36 +36,43 @@ export const sendBookingPushNotifications = async ({
 
   if (type === "BOOKING_REGISTERED") {
 
-    if (hospitalToken) {
+    if (hospitalToken?.length) {
+       for (const token of hospitalToken) {
       notifications.push(
         sendPushNotification({
-          token: hospitalToken,
+          token: token,
           title: "New Booking",
           body: `${patient_name} booked with Dr. ${doctorName}`,
         })
       );
     }
+  }
 
-    if (doctorToken) {
+
+    if (doctorToken?.length) {
+      for (const token of doctorToken) {
       notifications.push(
         sendPushNotification({
-          token: doctorToken,
+          token: token,
           title: "New Appointment",
           body: `New booking on ${booking_date}`,
         })
       );
     }
+  }
 
-    if (userToken) {
+    if (userToken?.length) {
+      for (const token of userToken) {
       notifications.push(
         sendPushNotification({
-          token: userToken,
+          token: token,
           title: "Booking Confirmed",
           body: `Appointment with Dr. ${doctorName} confirmed`,
         })
       );
     }
   }
+}
 
   // =========================
   // BOOKING UPDATED
@@ -73,16 +80,42 @@ export const sendBookingPushNotifications = async ({
 
   if (type === "BOOKING_UPDATED") {
 
-    if (userToken) {
+    if (userToken?.length) {
+       for (const token of userToken) {
       notifications.push(
         sendPushNotification({
-          token: userToken,
-          title: "Booking Updated",
-          body: `Your booking has been updated`,
+          token: token,
+          title: "Booking Rejected",
+          body: `Your booking has been rejected`,
         })
       );
     }
   }
+}
+
+
+  // =========================
+  // BOOKING COMPLETED
+  // =========================
+
+
+  if (type === "BOOKING_COMPLETED") {
+
+    if (userToken?.length) {
+       for (const token of userToken) {
+      notifications.push(
+        sendPushNotification({
+          token: token,
+          title: "Booking Updated",
+          body: `Your booking has been completed`,
+        })
+      );
+    }
+  }
+}
+
+
+
 
   // =========================
   // BOOKING CANCELLED
@@ -90,26 +123,20 @@ export const sendBookingPushNotifications = async ({
 
   if (type === "BOOKING_CANCELLED") {
 
-    if (userToken) {
-      notifications.push(
-        sendPushNotification({
-          token: userToken,
-          title: "Booking Cancelled",
-          body: `Your appointment has been cancelled`,
-        })
-      );
-    }
+  
 
-    if (doctorToken) {
+    if (doctorToken?.length) {
+       for (const token of doctorToken) {
       notifications.push(
         sendPushNotification({
-          token: doctorToken,
+          token: token,
           title: "Appointment Cancelled",
           body: `Patient cancelled appointment`,
         })
       );
     }
   }
+}
 
   await Promise.allSettled(notifications);
 

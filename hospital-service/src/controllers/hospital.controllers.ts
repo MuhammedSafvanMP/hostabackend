@@ -1044,6 +1044,26 @@ export const refreshHospitalToken: any = asyncHandler(async (req: Request, res: 
 
 // LOGOUT - POST /hospital/logout
 export const logout: any = asyncHandler(async (req: Request, res: Response) => {
+
+
+const { deviceId } = req.body;
+
+const hospital = await Hospital.findByPk(req.params.id);
+
+if (!hospital) {
+   res.status(404).json({
+    success: false,
+    message: "Hospital not found",
+  });
+  return;
+}
+
+hospital.fcmToken = hospital.fcmToken.filter(
+  (device: any) => device.deviceId !== deviceId
+);
+
+await hospital.save();
+
   // Redis Blacklist (REMOVED)
   res.clearCookie("refreshToken", {
     httpOnly: true,

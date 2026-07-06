@@ -34,6 +34,13 @@ interface IAddress {
   pincode: number;
 }
 
+
+interface FCMTOKEN {
+  deviceId: string;
+  fcmToken: string;
+  platform: "android" | "ios" | "web";
+}
+
 export interface IHospital {
   id: number;
   hospitalId?: string; // Virtual ID
@@ -59,7 +66,7 @@ export interface IHospital {
   otpExpiry?: Date;
   roleId: number;
   imageUrl?: string;
-  fcmToken?: string
+  fcmToken?: FCMTOKEN[]
 }
 
 /* =======================
@@ -115,7 +122,7 @@ class Hospital
   public otp!: string;
   public otpExpiry!: Date;
   public imageUrl: string;
-  public fcmToken?: string;
+  public fcmToken?: FCMTOKEN[];
 }
 
 /* =======================
@@ -250,7 +257,7 @@ Hospital.init(
       allowNull: true,
     },
      fcmToken: {
-      type: DataTypes.STRING,
+      type: DataTypes.JSONB,
     },
     
   },

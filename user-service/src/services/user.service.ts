@@ -1,6 +1,3 @@
-
-
-
 import bcrypt from "bcryptjs";
 import User from "../models/user.model";
 import  Patient  from "../models/patient.model";
@@ -243,7 +240,7 @@ export const userService = {
     };
   },
 
-  async verifyOtp(data: { phone: string; otp: string; fcmToken?: string }) {
+  async verifyOtp(data: { phone: string; otp: string; fcmToken?: [] }) {
     let numericPhone = data.phone.replace(/\D/g, "").slice(-10);
 
     const user = await User.findOne({ where: { phone: numericPhone, isDelete: false } });
@@ -493,7 +490,7 @@ async resetPasswordWithEmail(userId: string, data: any) {
     return { success: true, message: "Password changed successfully" };
   },
 
-  async saveExpoToken(id: string, token: string) {
+  async saveExpoToken(id: string, token: []) {
     const user = await User.findOne({ where: { id, isDelete: false } });
     if (!user) throw { status: 404, message: "User not found" };
 

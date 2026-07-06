@@ -49,7 +49,7 @@ router.post("/doctor/auth/verify-otp", validate(verifyOtpSchema), verifyDoctorOt
 router.post("/doctor/auth/reset-password",  validate(resetPasswordSchema), resetDoctorPassword);
 router.put("/doctor/auth/change-password", authenticate, validate(changePasswordSchema),checkPermission('doctor','edit'), changeDoctorPassword);
 router.post("/doctor/refresh", refreshDoctorToken);
-router.post("/doctor/logout",authenticate, checkPermission("doctor", "create"), logout);
+router.post("/doctor/logout/:id",authenticate, checkPermission("doctor", "create"), logout);
 
 // Legacy/Alternative (Keeping for compatibility but securing)
 // router.put("/doctor/change-password", authenticate, validate(changePasswordSchema), changeDoctorPassword);
