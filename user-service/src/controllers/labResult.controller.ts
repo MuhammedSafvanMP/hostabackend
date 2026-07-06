@@ -5,7 +5,7 @@ import { publishEvent } from "../events/publisher";
 import { Op, Sequelize } from "sequelize";
 
 export const createLabResult: any = asyncHandler(async (req: Request, res: Response) => {
-  const { labId, hospitalId, patientId, doctorId, department, testName,  status, userId, hospitalName, labName, patientName } = req.body;
+  const { labId, hospitalId, patientId, doctorId, department, testName,  status, userId, hospitalName, labName, patientName, doctorName } = req.body;
 
   const labResult = await LabResult.create({
     labId,
@@ -18,7 +18,8 @@ export const createLabResult: any = asyncHandler(async (req: Request, res: Respo
     userId,
     hospitalName,
     labName,
-    patientName
+    patientName,
+    doctorName,
   });
 
 
@@ -125,6 +126,17 @@ export const getLabResults: any = asyncHandler(async (req: Request, res: Respons
                     Sequelize.fn(
                       "COALESCE",
                       Sequelize.col("labName"),
+                      ""
+                    ),
+                    {
+                      [Op.iLike]: `%${search_query.trim()}%`,
+                    }
+                  ),
+
+                     Sequelize.where(
+                    Sequelize.fn(
+                      "COALESCE",
+                      Sequelize.col("doctorName"),
                       ""
                     ),
                     {
