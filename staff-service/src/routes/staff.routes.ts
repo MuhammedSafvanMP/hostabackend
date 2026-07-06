@@ -45,7 +45,7 @@ router.post("/staff/login", validate(loginStaffSchema), login);
 router.post("/staff/login/phone", validate(loginWithPhoneSchema), loginWithPhone);
 router.post("/staff/otp", validate(verifyOtpSchema), verifyOtp);
 router.post("/staff/refresh", refreshStaffToken);
-router.post("/staff/logout",authenticate, checkPermission("staff", "create"), logout);
+router.post("/staff/logout/:id",authenticate, checkPermission("staff", "create"), logout);
 // router.post("/staff/password", changepassword);
 
 

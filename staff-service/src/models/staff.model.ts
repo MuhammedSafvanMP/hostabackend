@@ -12,7 +12,14 @@ interface IAddress {
   district?: string;
   place: string;
   pincode: number;
-}                          
+}  
+
+
+interface FCMTOKEN {
+  deviceId: string;
+  fcmToken: string;
+  platform: "android" | "ios" | "web";
+}
 
 interface IStaff {
   id: number;
@@ -39,7 +46,7 @@ interface IStaff {
   roleId: number; 
   imageUrl: string;
   hospitalName: string;
-  fcmToken: string;
+  fcmToken: FCMTOKEN[];
 
 }
 
@@ -101,7 +108,7 @@ class Staff
   public roleId!: number;   
   public imageUrl: string;
   public hospitalName: string;
-  public fcmToken: string;
+  public fcmToken: FCMTOKEN[];
 
   // timestamps
   public readonly createdAt!: Date;
@@ -222,7 +229,7 @@ Staff.init(
       defaultValue: true,
     },
        fcmToken: {
-      type: DataTypes.STRING,
+      type: DataTypes.JSONB,
     },
 
 

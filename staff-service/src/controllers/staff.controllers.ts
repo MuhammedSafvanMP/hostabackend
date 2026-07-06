@@ -1007,6 +1007,26 @@ export const refreshStaffToken: any = asyncHandler(async (req: Request, res: Res
 // LOGOUT - POST /staff/logout
 export const logout: any = asyncHandler(async (req: Request, res: Response) => {
   // Redis Blacklist (REMOVED)
+
+
+const { deviceId } = req.body;
+
+const staff = await Staff.findByPk(req.params.id);
+
+if (!staff) {
+   res.status(404).json({
+    success: false,
+    message: "Staff not found",
+  });
+  return;
+}
+
+staff.fcmToken = staff.fcmToken.filter(
+  (device: any) => device.deviceId !== deviceId
+);
+
+await staff.save();
+
   res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

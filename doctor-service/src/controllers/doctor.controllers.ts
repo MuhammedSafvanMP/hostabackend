@@ -1070,6 +1070,26 @@ export const refreshDoctorToken: any = asyncHandler(
 
 // LOGOUT - POST /doctor/logout
 export const logout: any = asyncHandler(async (req: Request, res: Response) => {
+
+
+const { deviceId } = req.body;
+
+const doctor = await Doctor.findByPk(req.params.id);
+
+if (!doctor) {
+   res.status(404).json({
+    success: false,
+    message: "Doctor not found",
+  });
+  return;
+}
+
+doctor.fcmToken = doctor.fcmToken.filter(
+  (device: any) => device.deviceId !== deviceId
+);
+
+await doctor.save();
+
   // Redis Blacklist (REMOVED)
   res.clearCookie("refreshToken", {
     httpOnly: true,

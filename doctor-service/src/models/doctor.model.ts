@@ -40,6 +40,12 @@ interface IOutDoorConsulting {
   place: string;
 }
 
+interface FCMTOKEN {
+  deviceId: string;
+  fcmToken: string;
+  platform: "android" | "ios" | "web";
+}
+
 
 interface IDoctor {
   id: number;
@@ -70,7 +76,7 @@ interface IDoctor {
   deleteDate?: Date;
   otp?: string;
   otpExpiry?: Date;
-  fcmToken?: string;
+  fcmToken?: FCMTOKEN[];
   hospitalId?: number;
   imageUrl?: string; 
   experience?: string;
@@ -128,7 +134,7 @@ class Doctor
   public regNo?: string;
   public autoDecline?: number;
   public appointmentCount?: number;
-  public fcmToken: string;
+  public fcmToken: FCMTOKEN[];
 
 
 }
@@ -202,8 +208,8 @@ Doctor.init(
     },
 
     
-        fcmToken: {
-      type: DataTypes.STRING,
+      fcmToken: {
+      type: DataTypes.JSONB,
     },
 
 
@@ -301,9 +307,6 @@ Doctor.init(
     },
     
     
-
-
-
   },
   {
     sequelize,

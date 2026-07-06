@@ -174,8 +174,8 @@ export const Registeration: any = asyncHandler(
 
     try {
       // TOKENS
-      const hospitalToken = hospitalRes?.data?.data?.fcmToken;
-      const doctorToken = doctor?.data?.fcmToken;
+      const hospitalToken = hospitalRes?.data?.data?.fcmToken?.map((d: any) => d.fcmToken) ?? [];
+      const doctorToken = doctor?.data?.fcmToken?.map((d: any) => d.fcmToken) ?? [];
       // USER TOKEN
       let userToken;
       if (userId) {
@@ -187,7 +187,7 @@ export const Registeration: any = asyncHandler(
             },
           }
         );
-        userToken = userRes?.data?.data?.fcmToken;
+        userToken = userRes?.data?.data?.fcmToken?.map((d: any) => d.fcmToken) ?? [];
       }
 
       await sendBookingPushNotifications({
@@ -274,12 +274,34 @@ export const updateData: any = asyncHandler(
 
       let eventName: "BOOKING_UPDATED" | "BOOKING_CANCELLED" | "BOOKING_ACCEPTED" | "BOOKING_COMPLETED" = "BOOKING_UPDATED";
 
+
+       let userToken;
+      if (booking[1][0].userId) {
+        const userRes = await httpClient.get(
+          `${process.env.USER_SERVICE_URL}/users/${booking[1][0].userId}`,
+          {
+            headers: {
+              Authorization: req.headers.authorization,
+            },
+          }
+        );
+        userToken = userRes?.data?.data?.fcmToken?.map((d: any) => d.fcmToken) ?? [];
+      }
+
       if (updatedBooking.status === "cancel") {
         eventName = "BOOKING_CANCELLED";
       } else if (updatedBooking.status === "accepted") {
         eventName = "BOOKING_ACCEPTED";
+               await sendBookingPushNotifications({
+        userToken,
+        type: "BOOKING_ACCEPTED",
+      });
       } else if (updatedBooking.status === "completed") {
         eventName = "BOOKING_COMPLETED";
+               await sendBookingPushNotifications({
+        userToken,
+        type: "BOOKING_COMPLETED",
+      });
       }
       
 
@@ -294,7 +316,6 @@ export const updateData: any = asyncHandler(
         status: updatedBooking.status
       };
 
-      console.log(`📤 Publishing ${eventName} event with payload:`, JSON.stringify(eventPayload, null, 2));
       
       await publishEvent("booking_events", eventName, eventPayload);
 
@@ -346,7 +367,10 @@ export const updateData: any = asyncHandler(
             console.error("⚠️ Failed to send user status update notification:", notifError.message);
           }
         }
+
       }
+
+      
 
       res.status(200).json({
         success: true,

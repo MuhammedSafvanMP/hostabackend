@@ -682,7 +682,28 @@ export const refreshUserToken: any = asyncHandler(async (req: Request, res: Resp
 });
 
 // LOGOUT - POST /users/logout
-export const logout: any = asyncHandler(async (req: Request, res: Response) => {
+export const logout: any = asyncHandler(async (req: Request, res: Response) : Promise<void> => {
+
+const { deviceId } = req.body;
+
+const user = await User.findByPk(req.params.id);
+
+if (!user) {
+   res.status(404).json({
+    success: false,
+    message: "User not found",
+  });
+  return;
+}
+
+user.fcmToken = user.fcmToken.filter(
+  (device: any) => device.deviceId !== deviceId
+);
+
+await user.save();
+
+
+    
   res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
