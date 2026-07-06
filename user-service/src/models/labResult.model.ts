@@ -11,6 +11,9 @@ interface ILabResult {
   department: string;
   testName: string;
   imageUrl?: string;
+  hospitalName?: string;
+  patientName?: string;
+  labName?: string;
   status: "received" | "progress" | "pending";
   isActive?: boolean;
 }
@@ -32,6 +35,9 @@ class LabResult extends Model<ILabResult, LabResultCreationAttributes> implement
   public status!: "received" | "progress" | "pending";
   public isActive?: boolean;
   public userId: number;
+  public hospitalName?: string;
+  public labName?: string;
+  public patientName?: string;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -69,6 +75,20 @@ LabResult.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+
+     hospitalName: {
+      type: DataTypes.STRING,
+    },
+
+       labName: {
+      type: DataTypes.STRING,
+    },
+
+      patientName: {
+      type: DataTypes.STRING,
+    },
+
+
 
     department: {
       type: DataTypes.STRING(120),
