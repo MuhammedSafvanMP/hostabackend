@@ -8,6 +8,7 @@ import { httpClient } from "../utils/httpClient";
 import dotenv from "dotenv";
 import PatientVitals from "../models/patientVitals.model";
 import { Op, Sequelize } from "sequelize";
+import { fn, col, where } from "sequelize";
 dotenv.config();
 
 
@@ -256,7 +257,11 @@ export const getPrescription = asyncHandler(
 
     if (patientId) whereClause.patientId = Number(patientId);
 
-    if (date) whereClause.date = date;
+    if (date) {
+  whereClause[Op.and] = [
+    where(fn("DATE", col("createdAt")), date),
+  ];
+}
 
     if (search_query?.trim()) {
       andConditions.push({

@@ -718,6 +718,15 @@ export const getDoctors = asyncHandler(
             },
           ),
 
+            Sequelize.where(
+            Sequelize.fn("COALESCE", Sequelize.col("hospitalName"), ""),
+            {
+              [Op.iLike]: `%${search}%`,
+            },
+          ),
+
+
+
           Sequelize.where(
             Sequelize.fn("COALESCE", Sequelize.col("department"), ""),
             {

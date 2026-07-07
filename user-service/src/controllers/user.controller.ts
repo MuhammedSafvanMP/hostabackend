@@ -35,7 +35,7 @@ export const registerUser: any = asyncHandler(async (req: Request, res: Response
   }
 });
 
-export const loginUser: any = asyncHandler(async (req: Request, res: Response) => {
+export const  loginUser: any = asyncHandler(async (req: Request, res: Response) => {
   try {
     const { token, refreshToken, user } = await userService.login(req.body);
     setRefreshTokenCookie(res, refreshToken);
