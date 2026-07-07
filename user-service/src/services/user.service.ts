@@ -150,9 +150,41 @@ export const userService = {
       throw { status: 401, message: "Wrong password" };
     }
 
-    if (data.fcmToken) {
-      await user.update({ fcmToken: data.fcmToken });
-    }
+ 
+
+
+   interface FCMTOKEN {
+  deviceId: string;
+  fcmToken: string;
+  platform: "android" | "ios" | "web";
+}
+
+if (data.fcmToken) {
+  const user = await User.findOne({
+    where: { phone: data.phone },
+  });
+
+  if (user) {
+    const existingTokens: FCMTOKEN[] =
+      (user.fcmToken as FCMTOKEN[]) || [];
+
+    const newTokens: FCMTOKEN[] = data.fcmToken;
+
+    const updatedTokens = [
+      ...existingTokens.filter(
+        item =>
+          !newTokens.some(
+            newItem => newItem.deviceId === item.deviceId
+          )
+      ),
+      ...newTokens,
+    ];
+
+    await user.update({
+      fcmToken: updatedTokens,
+    });
+  }
+}
 
     const token = generateToken({ id: user.id, email: user.email, role: "user", roleId: user.roleId });
 

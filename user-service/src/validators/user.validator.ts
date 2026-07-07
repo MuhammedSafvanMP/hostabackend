@@ -11,7 +11,14 @@ export const registerSchema = z.object({
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
-  fcmToken: z.string().optional(),
+    fcmToken: z
+  .object({
+    deviceId: z.string(),
+    fcmToken: z.string(),
+    platform: z.enum(["android", "ios", "web"]),
+  })
+  .optional()
+  .nullable(),
 });
 
 export const idParamSchema = z.object({
