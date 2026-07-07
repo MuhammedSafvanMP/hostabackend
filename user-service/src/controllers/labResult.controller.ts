@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import LabResult from "../models/labResult.model";
 import { publishEvent } from "../events/publisher";
-import { Op, Sequelize } from "sequelize";
+import { col, fn, Op, Sequelize, where } from "sequelize";
 
 export const createLabResult: any = asyncHandler(async (req: Request, res: Response) => {
   const { labId, hospitalId, patientId, doctorId, department, testName,  status, userId, hospitalName, labName, patientName, doctorName } = req.body;
@@ -88,7 +88,11 @@ export const getLabResults: any = asyncHandler(async (req: Request, res: Respons
 
 
 
-        if (date) whereClause.date = date;
+         if (date) {
+          whereClause[Op.and] = [
+            where(fn("DATE", col("createdAt")), date),
+          ];
+        }
     
           if (search_query?.trim()) {
               andConditions.push({

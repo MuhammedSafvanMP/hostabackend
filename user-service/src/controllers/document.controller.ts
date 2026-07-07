@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import Document from "../models/document.model";
 import { publishEvent } from "../events/publisher";
-import { Op, Sequelize } from "sequelize";
+import { col, fn, Op, Sequelize, where } from "sequelize";
 
 export const createDocument: any = asyncHandler(async (req: Request, res: Response) => {
   const { patientId, name, date, userId } = req.body;
@@ -65,7 +65,12 @@ export const getDocuments = asyncHandler(
       whereClause.userId = Number(userId);
     }
 
-        if (date) whereClause.date = date;
+
+         if (date) {
+          whereClause[Op.and] = [
+            where(fn("DATE", col("createdAt")), date),
+          ];
+        }
 
       if (search_query?.trim()) {
           andConditions.push({
