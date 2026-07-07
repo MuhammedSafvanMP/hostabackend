@@ -36,7 +36,14 @@ export const registerDoctorSchema = z.object({
   address: addressSchema,
   consulting: consultingSchema.optional(),
   bookingOpen: z.boolean().default(true),
-  fcmToken: z.string().optional(),
+    fcmToken: z
+  .object({
+    deviceId: z.string(),
+    fcmToken: z.string(),
+    platform: z.enum(["android", "ios", "web"]),
+  })
+  .optional()
+  .nullable(),
 });
 
 export const updateDoctorSchema = registerDoctorSchema.partial();
@@ -45,7 +52,14 @@ export const loginDoctorSchema = z.object({
   email: z.string().email("Invalid email format").optional(),
   phone: z.string().regex(/^[0-9]{10}$/, "Invalid phone format").optional(),
   password: z.string().min(1, "Password is required"),
-  fcmToken: z.string().optional(),
+    fcmToken: z
+  .object({
+    deviceId: z.string(),
+    fcmToken: z.string(),
+    platform: z.enum(["android", "ios", "web"]),
+  })
+  .optional()
+  .nullable(),
 }).refine(data => data.email || data.phone, {
   message: "Either email or phone is required",
   path: ["email"],
@@ -63,7 +77,14 @@ export const verifyOtpSchema = z.object({
   phone: z.string().regex(/^[0-9]{10}$/, "Phone number must be 10 digits").optional(),
   email: z.string().email("Invalid email format").optional(),
   otp: z.string().length(6, "OTP must be 6 digits"),
-  fcmToken: z.string().optional(),
+    fcmToken: z
+  .object({
+    deviceId: z.string(),
+    fcmToken: z.string(),
+    platform: z.enum(["android", "ios", "web"]),
+  })
+  .optional()
+  .nullable(),
 }).refine(data => data.phone || data.email, {
   message: "Either phone or email is required",
   path: ["phone"],

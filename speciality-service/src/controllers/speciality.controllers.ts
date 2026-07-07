@@ -127,10 +127,23 @@ export const specialityDelete: any = asyncHandler(async (req: Request, res: Resp
 
 // GET ALL - GET /speciality
 export const getSpecialitys = asyncHandler(async (req: Request, res: Response) : Promise<void> => {
-  let { name, search_query }: any = req.query;
+  let { name, search_query,  page = 1, limit = 10 }: any = req.query;
 
-  if (Array.isArray(name)) name = name[0];
-  if (Array.isArray(search_query)) search_query = search_query[0];
+   const normalize = (val: any) =>
+      Array.isArray(val) ? val[0] : val;
+
+ 
+
+   name = normalize(name);
+   search_query = normalize(search_query);
+    page = normalize(page);
+    limit = normalize(limit);
+ 
+
+  
+
+      const pageNum = Math.max(Number(page) || 1, 1);
+    const limitNum = Math.max(Number(limit) || 10, 1);
 
   const whereCondition: any = {
     isDelete: false,
@@ -151,8 +164,12 @@ export const getSpecialitys = asyncHandler(async (req: Request, res: Response) :
 
   const speciality = await Speciality.findAndCountAll({
     where: whereCondition,
+    limit,
+    offset: (pageNum - 1) * limitNum,
     order: [["createdAt", "ASC"]],
   });
+
+
 
   if (speciality.count === 0) {
   res.status(404).json({
@@ -168,6 +185,12 @@ export const getSpecialitys = asyncHandler(async (req: Request, res: Response) :
     success: true,
     data: speciality.rows,
     count: speciality.count,
+      pagination: {
+        totalItems: speciality.count,
+        totalPages: Math.ceil(speciality.count / limit),
+        currentPage: pageNum,
+        limit: limitNum,
+      },
     error: null,
   });
 

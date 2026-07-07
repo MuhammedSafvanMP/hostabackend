@@ -332,7 +332,6 @@ export const createPatient: any = asyncHandler(async (req: Request, res: Respons
 export const getPatients = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   let {
     name,
-    phone,
     patientId,
     addressLine,
     hospitalId,
@@ -348,7 +347,6 @@ export const getPatients = asyncHandler(async (req: Request, res: Response): Pro
   const extract = (val: any) => (Array.isArray(val) ? val[0] : val);
 
   name = extract(name);
-  phone = extract(phone);
   patientId = extract(patientId);
   addressLine = extract(addressLine);
   hospitalId = extract(hospitalId);
@@ -384,11 +382,6 @@ export const getPatients = asyncHandler(async (req: Request, res: Response): Pro
     whereCondition.userId = Number(userId);
   }
 
-  if (phone) {
-    whereCondition.phone = {
-      [Op.iLike]: `%${phone}%`,
-    };
-  }
 
   if (patientId) {
     whereCondition.patientId = {

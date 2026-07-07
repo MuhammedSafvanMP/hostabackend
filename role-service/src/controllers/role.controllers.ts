@@ -268,7 +268,6 @@ export const getRole = asyncHandler(async (req: Request, res: Response): Promise
     search_query,
   }: any = req.query;
 
-  console.log(req.query, "qure");
   
 
   if (Array.isArray(hospitalId)) hospitalId = hospitalId[0];

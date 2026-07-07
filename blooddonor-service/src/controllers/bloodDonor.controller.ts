@@ -266,6 +266,8 @@ export const getDonors = asyncHandler(async (req: Request, res: Response): Promi
     district,
     name,
     search_query,
+    page = 1,
+    limit = 10,
   }: any = req.query;
 
  
@@ -278,9 +280,12 @@ export const getDonors = asyncHandler(async (req: Request, res: Response): Promi
                     if (Array.isArray(district)) district = district[0];
                         if (Array.isArray(name)) name = name[0];
                         if (Array.isArray(search_query)) search_query = search_query[0];
+                        if (Array.isArray(page)) page = page[0];
+                        if (Array.isArray(limit)) limit = limit[0];
 
 
-  
+                        const pageNum = Number(page);
+  const limitNum = Number(limit);
 
   const where: any = {};
 
@@ -352,12 +357,14 @@ export const getDonors = asyncHandler(async (req: Request, res: Response): Promi
     ];
   }
 
-  const donors = await BloodDonor.findAll({
+  const donors = await BloodDonor.findAndCountAll({
     where,
+    limit: limitNum,
+    offset: (pageNum - 1) * limitNum,
     order: [["createdAt", "DESC"]],
   });
 
-  if (!donors.length) {
+  if (donors.count === 0) {
     res.status(404).json({
       success: false,
       message: "No donors found",
@@ -366,10 +373,26 @@ export const getDonors = asyncHandler(async (req: Request, res: Response): Promi
     return;
   }
 
+    const totalPages = Math.ceil(donors.count / limitNum);
+
+
   res.status(200).json({
     success: true,
-    data: donors,
+    data: donors.rows,
+     pagination: {
+      totalItems: donors.count,
+      totalPages,
+      currentPage: pageNum,
+      limit: limitNum,
+      hasNextPage: pageNum < totalPages,
+      hasPreviousPage: pageNum > 1,
+    },
   });
+
+
+
+
+
 });
 
 

@@ -54,6 +54,15 @@ export const getLabResults: any = asyncHandler(async (req: Request, res: Respons
     }: any = req.query;
 
     patientId = normalizeQuery(patientId);
+    page = normalizeQuery(page);
+    limit = normalizeQuery(limit);
+    hospitalId = normalizeQuery(hospitalId);
+    labId = normalizeQuery(labId);
+    userId = normalizeQuery(userId);
+    search_query = normalizeQuery(search_query);
+    date = normalizeQuery(date);
+    
+
 
     const whereClause: any = {};
         const andConditions: any[] = [];
