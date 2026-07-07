@@ -47,6 +47,9 @@ const getTwilioClient = () => {
 
 // ✅ REGISTER DONOR - POST /donors/register (Authenticated users only)
 export const createDonor: any = asyncHandler(async (req: any, res: Response) => {
+
+  console.log(req.body, "hiiii");
+  
   const { phone, dateOfBirth, bloodGroup, address,name, userId: bodyUserId } = req.body;
   const tokenUserId = req.user.id;
   const authHeader = req.headers.authorization;
