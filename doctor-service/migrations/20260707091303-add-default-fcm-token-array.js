@@ -6,8 +6,9 @@ module.exports = {
 
     if (!table.fcmToken) {
       await queryInterface.addColumn("doctor", "fcmToken", {
-         type: Sequelize.JSONB,
+            type: Sequelize.ARRAY(Sequelize.JSONB),
         allowNull: true,
+          defaultValue: [],
       });
     }
   },

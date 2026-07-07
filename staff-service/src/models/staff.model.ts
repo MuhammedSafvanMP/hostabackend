@@ -229,7 +229,8 @@ Staff.init(
       defaultValue: true,
     },
        fcmToken: {
-      type: DataTypes.JSONB,
+      type: DataTypes.ARRAY(DataTypes.JSONB),
+        defaultValue: [],
     },
 
 

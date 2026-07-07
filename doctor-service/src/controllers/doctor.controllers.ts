@@ -11,6 +11,15 @@ import { sendEmail } from "../services/mail.service";
 import dotenv from "dotenv";
 dotenv.config();
 
+
+
+interface FCMTOKEN {
+  deviceId: string;
+  fcmToken: string;
+  platform: "android" | "ios" | "web";
+}
+
+
 // Helper to set refresh token cookie
 const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
   res.cookie("refreshToken", refreshToken, {
@@ -273,12 +282,49 @@ export const login: any = asyncHandler(
 
     const doctor = matchedDoctors[0];
 
-    if (fcmToken) {
-      await doctor.update({
-        fcmToken,
-      });
-    }
 
+
+
+
+if (fcmToken) {
+  const doctor = await Doctor.findOne({
+    where: { email },
+  });
+
+  if (doctor) {
+    const existingTokens: FCMTOKEN[] = Array.isArray(doctor.fcmToken)
+      ? doctor.fcmToken
+      : [];
+
+    // Convert single object to array
+    const newTokens: FCMTOKEN[] = Array.isArray(fcmToken)
+      ? fcmToken
+      : [fcmToken];
+
+    const updatedTokens = [
+      // Remove old token for same device
+      ...existingTokens.filter(
+        (oldToken) =>
+          !newTokens.some(
+            (newToken) =>
+              newToken.deviceId === oldToken.deviceId
+          )
+      ),
+
+      // Add new tokens
+      ...newTokens,
+    ];
+
+    await doctor.update({
+      fcmToken: updatedTokens,
+    });
+
+  }
+}
+      
+
+
+ 
     const jwtKey = process.env.JWT_SECRET!;
 
     const token = jwt.sign(
