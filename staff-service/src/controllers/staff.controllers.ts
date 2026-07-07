@@ -14,6 +14,15 @@ import dotenv from "dotenv";
 dotenv.config();
 
 
+
+interface FCMTOKEN {
+  deviceId: string;
+  fcmToken: string;
+  platform: "android" | "ios" | "web";
+}
+
+
+
 // Helper to set refresh token cookie
 const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
   res.cookie("refreshToken", refreshToken, {
@@ -205,16 +214,47 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     return;
   }
 
-    if (fcmToken) {
-  await Staff.update(
-    { fcmToken },
-    {
-      where: {
-        email,
-      },
-    }
-  );
+
+
+
+
+
+if (fcmToken) {
+  const staff = await Staff.findOne({
+    where: { email },
+  });
+
+  if (staff) {
+    const existingTokens: FCMTOKEN[] = Array.isArray(staff.fcmToken)
+      ? staff.fcmToken
+      : [];
+
+    // Convert single object to array
+    const newTokens: FCMTOKEN[] = Array.isArray(fcmToken)
+      ? fcmToken
+      : [fcmToken];
+
+    const updatedTokens = [
+      // Remove old token for same device
+      ...existingTokens.filter(
+        (oldToken) =>
+          !newTokens.some(
+            (newToken) =>
+              newToken.deviceId === oldToken.deviceId
+          )
+      ),
+
+      // Add new tokens
+      ...newTokens,
+    ];
+
+    await staff.update({
+      fcmToken: updatedTokens,
+    });
+
+  }
 }
+
 
   const checkPassword = await bcrypt.compare(password, staff.password || "");
   if (!checkPassword) {

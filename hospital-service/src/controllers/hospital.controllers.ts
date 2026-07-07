@@ -12,6 +12,13 @@ import axios from "axios";
 import dotenv from "dotenv";
 dotenv.config();
 
+
+interface FCMTOKEN {
+  deviceId: string;
+  fcmToken: string;
+  platform: "android" | "ios" | "web";
+}
+
 // Helper to set refresh token cookie
 const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
   res.cookie("refreshToken", refreshToken, {
@@ -186,18 +193,41 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     }
 
 
-  
-  if (fcmToken) {
-  await Hospital.update(
-    { fcmToken },
-    {
-      where: {
-        email,
-      },
-    }
-  );
-}
+if (fcmToken) {
+  const hospital = await Hospital.findOne({
+    where: { email },
+  });
 
+  if (hospital) {
+    const existingTokens: FCMTOKEN[] = Array.isArray(hospital.fcmToken)
+      ? hospital.fcmToken
+      : [];
+
+    // Convert single object to array
+    const newTokens: FCMTOKEN[] = Array.isArray(fcmToken)
+      ? fcmToken
+      : [fcmToken];
+
+    const updatedTokens = [
+      // Remove old token for same device
+      ...existingTokens.filter(
+        (oldToken) =>
+          !newTokens.some(
+            (newToken) =>
+              newToken.deviceId === oldToken.deviceId
+          )
+      ),
+
+      // Add new tokens
+      ...newTokens,
+    ];
+
+    await hospital.update({
+      fcmToken: updatedTokens,
+    });
+
+  }
+}
   const checkPassword = await bcrypt.compare(password, hospital.password || "");
   if (!checkPassword) {
     res.status(401).json({
@@ -209,9 +239,6 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     return;
   }
 
-  if (fcmToken) {
-    await hospital.update({ fcmToken });
-  }
 
   const jwtKey = process.env.JWT_SECRET || "supersecretjwtkey";
   const token = jwt.sign({ id: hospital.id, name: hospital.name, role: "hospital", roleId: hospital.roleId, isRefresh: false }, jwtKey, {
