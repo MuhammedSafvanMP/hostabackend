@@ -127,10 +127,20 @@ export const categoryDelete: any = asyncHandler(async (req: Request, res: Respon
 
 // GET ALL - GET /Category
 export const getCategorys = asyncHandler(async (req: Request, res: Response) : Promise<void> => {
-  let { name, search_query }: any = req.query;
+ 
+    let { name, search_query,  page = 1, limit = 10 }: any = req.query;
 
-  if (Array.isArray(name)) name = name[0];
-  if (Array.isArray(search_query)) search_query = search_query[0];
+      const normalize = (val: any) =>
+      Array.isArray(val) ? val[0] : val;
+
+   name = normalize(name);
+   search_query = normalize(search_query);
+    page = normalize(page);
+    limit = normalize(limit);
+
+      const pageNum = Math.max(Number(page) || 1, 1);
+    const limitNum = Math.max(Number(limit) || 10, 1);
+ 
 
   const whereCondition: any = {
     isDelete: false,
@@ -151,6 +161,8 @@ export const getCategorys = asyncHandler(async (req: Request, res: Response) : P
 
   const category = await Category.findAndCountAll({
     where: whereCondition,
+       limit,
+    offset: (pageNum - 1) * limitNum,
     order: [["createdAt", "ASC"]],
   });
 
@@ -168,6 +180,12 @@ export const getCategorys = asyncHandler(async (req: Request, res: Response) : P
     success: true,
     data: category.rows,
     count: category.count,
+       pagination: {
+        totalItems: category.count,
+        totalPages: Math.ceil(category.count / limit),
+        currentPage: pageNum,
+        limit: limitNum,
+      },
     error: null,
   });
 

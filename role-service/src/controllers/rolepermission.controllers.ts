@@ -203,13 +203,21 @@ export const rolepermissionDelete: any = asyncHandler(async (req: Request, res: 
 export const getRolepermission: any = asyncHandler(async (req: Request, res: Response) => {
 
 
-   let { hospitalId, labId, pharmacyId, roleId }: any = req.query;
+   let { hospitalId, labId, pharmacyId, roleId,  page = 1, limit = 10, }: any = req.query;
    
 
     if (Array.isArray(hospitalId)) hospitalId = hospitalId[0];
         if (Array.isArray(labId)) labId = labId[0];
     if (Array.isArray(pharmacyId)) pharmacyId = pharmacyId[0];
         if (Array.isArray(roleId)) roleId = roleId[0];
+                if (Array.isArray(page)) page = page[0];
+        if (Array.isArray(limit)) limit = limit[0];
+
+
+
+
+              const pageNum = Math.max(Number(page) || 1, 1);
+    const limitNum = Math.max(Number(limit) || 10, 1);
 
 
 
@@ -232,13 +240,16 @@ export const getRolepermission: any = asyncHandler(async (req: Request, res: Res
     whereClause.roleId = Number(roleId);
   }
 
-  const rolepermission = await Rolepermission.findAll({
+  const rolepermission = await Rolepermission.findAndCountAll({
     where: whereClause,
+      limit,
+    offset: (pageNum - 1) * limitNum,
+    order: [["createdAt", "ASC"]],
   });  
 
   
 
-  if (rolepermission.length === 0) {
+  if (rolepermission.count === 0) {
     res.status(404).json({
       success: false,
       message: "No data found",
@@ -251,7 +262,14 @@ export const getRolepermission: any = asyncHandler(async (req: Request, res: Res
   res.status(200).json({
     success: true,
     status: "Success",
-    data: rolepermission,
+    data: rolepermission.rows,
+    count: rolepermission.count,
+       pagination: {
+        totalItems: rolepermission.count,
+        totalPages: Math.ceil(rolepermission.count / limit),
+        currentPage: pageNum,
+        limit: limitNum,
+      },
     error: null,
   });
 });

@@ -233,6 +233,9 @@ export const getPrescription = asyncHandler(
     hospitalId = normalizeQuery(hospitalId);
     prescribedBy = normalizeQuery(prescribedBy);
     search_query = normalizeQuery(search_query);
+    page = normalizeQuery(page);
+    limit = normalizeQuery(limit);
+  
 
     const whereClause: any = {};
     const andConditions: any[] = [];

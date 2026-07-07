@@ -685,6 +685,9 @@ export const getHospital = asyncHandler(
     place = String(normalizeQuery(place) || "");
     pincode = String(normalizeQuery(pincode) || "");
     search_query = String(normalizeQuery(search_query) || "");
+        page = String(normalizeQuery(page) || "");
+    limit = String(normalizeQuery(limit) || "");
+
 
     /* -------------------------- PAGINATION -------------------------- */
 

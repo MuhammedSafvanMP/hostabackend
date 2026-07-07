@@ -46,6 +46,8 @@ export const getDocuments = asyncHandler(
     patientId = normalizeQuery(patientId);
     date = normalizeQuery(date);
     search_query = normalizeQuery(search_query);
+    page = normalizeQuery(page);
+    limit = normalizeQuery(limit);
 
 
     const whereClause: any = {};

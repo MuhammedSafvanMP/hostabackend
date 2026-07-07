@@ -5,6 +5,7 @@ import { publishEvent } from "../events/publisher";
 import axios from "axios";
 import RolePermission from "../models/rolepermission.model";
 import Role from "../models/role.model";
+import { Op } from "sequelize";
 
 
 // REGISTER - POST /Permission
@@ -142,9 +143,56 @@ export const permissionDelete: any = asyncHandler(async (req: Request, res: Resp
 
 // GET ALL - GET /Permission
 export const getPermission: any = asyncHandler(async (req: Request, res: Response) => {
-  const permission = await Permission.findAll();
 
-  if (permission.length === 0) {
+
+  let {
+
+      page = 1,
+      limit = 10,
+      search_query,
+    }: any = req.query;
+  
+    
+  
+   
+    if (Array.isArray(page)) page = page[0];
+    if (Array.isArray(limit)) limit = limit[0];
+    if (Array.isArray(search_query)) search_query = search_query[0];
+  
+    const pageNum = Number(page);
+    const limitNum = Number(limit);
+  
+    const whereClause: any = {};
+  
+  
+  
+    if (search_query) {
+      whereClause[Op.or] = [
+        {
+          module: {
+            [Op.iLike]: `%${search_query}%`,
+          },
+
+           action: {
+            [Op.iLike]: `%${search_query}%`,
+          },
+        },
+      ];
+    }
+
+
+      const permission = await Permission.findAndCountAll(
+        {
+             where: whereClause,
+    limit: limitNum,
+    offset: (pageNum - 1) * limitNum,
+    order: [["createdAt", "DESC"]],
+        }
+      );
+
+
+
+  if (permission.count === 0) {
     res.status(404).json({
       success: false,
       message: "No data found",
@@ -153,11 +201,23 @@ export const getPermission: any = asyncHandler(async (req: Request, res: Respons
     });
     return;
   }
+    const totalPages = Math.ceil(permission.count / limitNum);
+
 
   res.status(200).json({
     success: true,
     status: "Success",
-    data: permission,
+    data: permission.rows,
+  
+    pagination: {
+      totalItems: permission.count,
+      totalPages,
+      currentPage: pageNum,
+      limit: limitNum,
+      hasNextPage: pageNum < totalPages,
+      hasPreviousPage: pageNum > 1,
+    },
+
     error: null,
   });
 });
