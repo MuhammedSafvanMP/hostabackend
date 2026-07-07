@@ -8,6 +8,10 @@ import { publishEvent } from "../events/publisher";
 import { sendEmail } from "./mail.service";
 import { getBlacklistedUsers } from "../controllers/user.controller";
 
+
+
+
+
 let twilioClient: any = null;
 
 const getTwilioClient = () => {
@@ -229,7 +233,7 @@ export const userService = {
     };
   },
 
-  async verifyOtp(data: { phone: string; otp: string; fcmToken?: [] }) {
+  async verifyOtp(data: { phone: string; otp: string; fcmToken?: []}) {
     let numericPhone = data.phone.replace(/\D/g, "").slice(-10);
 
     const user = await User.findOne({ where: { phone: numericPhone, isDelete: false } });
@@ -243,9 +247,77 @@ export const userService = {
       throw { status: 400, message: "OTP has expired" };
     }
 
-    if (data.fcmToken) {
-      user.fcmToken = data.fcmToken;
-    }
+
+   interface FCMTOKEN {
+  deviceId: string;
+  fcmToken: string;
+  platform: "android" | "ios" | "web";
+}
+
+if (data.fcmToken) {
+  const user = await User.findOne({
+    where: { phone: data.phone },
+  });
+
+  if (user) {
+    const existingTokens: FCMTOKEN[] =
+      (user.fcmToken as FCMTOKEN[]) || [];
+
+    const newTokens: FCMTOKEN[] = data.fcmToken;
+
+    const updatedTokens = [
+      ...existingTokens.filter(
+        item =>
+          !newTokens.some(
+            newItem => newItem.deviceId === item.deviceId
+          )
+      ),
+      ...newTokens,
+    ];
+
+    await user.update({
+      fcmToken: updatedTokens,
+    });
+  }
+}
+
+
+
+if (data.fcmToken) {
+  const user = await User.findOne({
+    where: { phone: data.phone },
+  });
+
+  if (user) {
+    const existingTokens: FCMTOKEN[] = Array.isArray(user.fcmToken)
+      ? user.fcmToken
+      : [];
+
+    // Convert single object to array
+    const newTokens: FCMTOKEN[] = Array.isArray(data.fcmToken)
+      ? data.fcmToken
+      : [data.fcmToken];
+
+    const updatedTokens = [
+      // Remove old token for same device
+      ...existingTokens.filter(
+        (oldToken) =>
+          !newTokens.some(
+            (newToken) =>
+              newToken.deviceId === oldToken.deviceId
+          )
+      ),
+
+      // Add new tokens
+      ...newTokens,
+    ];
+
+    await user.update({
+      fcmToken: updatedTokens,
+    });
+
+  }
+}
 
     // Clear OTP after successful verification
     user.otp = undefined as any;

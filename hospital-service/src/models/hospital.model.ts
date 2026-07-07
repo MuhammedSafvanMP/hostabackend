@@ -257,7 +257,8 @@ Hospital.init(
       allowNull: true,
     },
      fcmToken: {
-      type: DataTypes.JSONB,
+      type: DataTypes.ARRAY(DataTypes.JSONB),
+        defaultValue: [],
     },
     
   },
