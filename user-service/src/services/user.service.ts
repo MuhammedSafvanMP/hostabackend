@@ -286,34 +286,6 @@ if (data.fcmToken) {
   platform: "android" | "ios" | "web";
 }
 
-if (data.fcmToken) {
-  const user = await User.findOne({
-    where: { phone: data.phone },
-  });
-
-  if (user) {
-    const existingTokens: FCMTOKEN[] =
-      (user.fcmToken as FCMTOKEN[]) || [];
-
-    const newTokens: FCMTOKEN[] = data.fcmToken;
-
-    const updatedTokens = [
-      ...existingTokens.filter(
-        item =>
-          !newTokens.some(
-            newItem => newItem.deviceId === item.deviceId
-          )
-      ),
-      ...newTokens,
-    ];
-
-    await user.update({
-      fcmToken: updatedTokens,
-    });
-  }
-}
-
-
 
 if (data.fcmToken) {
   const user = await User.findOne({
