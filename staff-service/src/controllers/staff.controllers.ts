@@ -560,6 +560,9 @@ export const getStaffs = asyncHandler(
     email = normalize(email);
     staffId = normalize(staffId);
     search_query = normalize(search_query);
+    page = normalize(page);
+    limit = normalize(limit);
+ 
 
     page = Number(page) || 1;
     limit = Number(limit) || 10;
