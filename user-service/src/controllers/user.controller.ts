@@ -411,7 +411,6 @@ export const getPatients = asyncHandler(async (req: Request, res: Response): Pro
   if (search_query) {
     whereCondition[Op.or] = [
       { name: { [Op.iLike]: `%${search_query}%` } },
-      { patientId: { [Op.iLike]: `%${search_query}%` } },
       { addressLine: { [Op.iLike]: `%${search_query}%` } },
       { email: { [Op.iLike]: `%${search_query}%` } },
       { guardianName: { [Op.iLike]: `%${search_query}%` } },
