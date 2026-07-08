@@ -158,23 +158,25 @@ export const userService = {
   fcmToken: string;
   platform: "android" | "ios" | "web";
 }
-
 if (data.fcmToken) {
   const user = await User.findOne({
-    where: { phone: data.phone },
+    where: { email: data.email },
   });
 
   if (user) {
     const existingTokens: FCMTOKEN[] =
-      (user.fcmToken as FCMTOKEN[]) || [];
+      (user.get("fcmToken") as FCMTOKEN[]) || [];
 
-    const newTokens: FCMTOKEN[] = data.fcmToken;
+    // Convert to array if a single object is received
+    const newTokens: FCMTOKEN[] = Array.isArray(data.fcmToken)
+      ? data.fcmToken
+      : [data.fcmToken];
 
     const updatedTokens = [
       ...existingTokens.filter(
-        item =>
+        existing =>
           !newTokens.some(
-            newItem => newItem.deviceId === item.deviceId
+            incoming => incoming.deviceId === existing.deviceId
           )
       ),
       ...newTokens,
