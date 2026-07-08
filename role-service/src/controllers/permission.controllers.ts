@@ -184,7 +184,7 @@ export const getPermission = asyncHandler(
       offset: (pageNum - 1) * limitNum,
 
       // Change this if your table has another sortable column
-      order: [["id", "DESC"]],
+      order: [["id", "ASC"]],
     });
 
     if (permission.count === 0) {
