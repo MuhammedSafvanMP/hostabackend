@@ -368,7 +368,7 @@ export const loginWithPhone: any = asyncHandler(async (req: Request, res: Respon
   res.status(200).json({
     success: true,
     status: 200,
-    // token,
+    token,
     otp,
     error: null,
     message: numericPhone === APPLE_TEST_NUMBER ? "OTP sent (TEST ACCOUNT)" : "OTP sent to your registered phone and email",
@@ -1165,5 +1165,58 @@ if (cookies) {
 });
 
 
+export const roleBaseLogout: any = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const { id, deviceId, role } = req.body;
+
+    if (!id || !deviceId || !role) {
+      res.status(400).json({
+        success: false,
+        message: "id, role and deviceId are required",
+      });
+      return;
+    }
+
+    let url: string;
+
+    switch (role.toLowerCase()) {
+      case "hospital":
+        url = `${process.env.HOSPITAL_SERVICE_URL}/hospital/logout/${id}`;
+        break;
+
+      case "doctor":
+        url = `${process.env.DOCTOR_SERVICE_URL}/doctor/logout/${id}`;
+        break;
+
+      case "staff":
+        url = `${process.env.STAFF_SERVICE_URL}/staff/logout/${id}`;
+        break;
+
+      case "user":
+        url = `${process.env.USER_SERVICE_URL}/users/logout/${id}`;
+        break;
+
+      default:
+        res.status(400).json({
+          success: false,
+          message: "Invalid role",
+        });
+        return;
+    }
+
+    try {
+      const response = await axios.post(url, {
+        deviceId,
+      });
+
+      res.status(response.status).json(response.data);
+    } catch (error: any) {
+      res.status(error.response?.status || 500).json({
+        success: false,
+        message: error.response?.data?.message || "Logout failed",
+      });
+    }
+  }
+);
 
 
