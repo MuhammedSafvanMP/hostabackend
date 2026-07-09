@@ -99,7 +99,7 @@ router.delete("/users/:id", authenticate, validateParams(idParamSchema), checkPe
 
 // Patient Routes
 router.post("/patients", authenticate, checkPermission("patient", "create"), createPatient);
-router.get("/patients", authenticate, checkPermission("patient", "view")  , getPatients);
+router.get("/patients", authenticate, checkPermission("patient", "view"), getPatients);
 router.get("/patients/blacklist", authenticate, checkPermission("patient", "view"), getBlacklistedPatients);
 router.get("/patients/:id", authenticate, checkPermission("patient", "view"), validateParams(idParamSchema), getPatient);
 router.put("/patients/recover/:id", authenticate, checkPermission("patient", "edit"), recoverPatient);
