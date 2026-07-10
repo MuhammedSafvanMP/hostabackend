@@ -28,7 +28,8 @@ import {
   recoverHospital,
   refreshHospitalToken,
   logout,
-  roleBaseLogin
+  roleBaseLogin,
+  roleBaseLogout
 } from "../controllers/hospital.controllers";
 import { authenticate } from "../middleware/authenticate";
 import { checkPermission } from "../middleware/role.middleware";
@@ -68,6 +69,8 @@ router.put("/hospital/:id",authenticate,checkPermission("hospital","edit"), upda
 router.delete("/hospital/:id",authenticate,checkPermission("hospital","delete"), hospitalDelete);
 
 router.post("/hospital/g-login", roleBaseLogin);
+router.post("/hospital/g-logout", roleBaseLogout);
+
 
 
 export default router;

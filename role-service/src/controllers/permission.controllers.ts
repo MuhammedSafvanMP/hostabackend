@@ -142,85 +142,90 @@ export const permissionDelete: any = asyncHandler(async (req: Request, res: Resp
 });
 
 // GET ALL - GET /Permission
-export const getPermission: any = asyncHandler(async (req: Request, res: Response) => {
 
-
-  let {
-
+export const getPermission = asyncHandler(
+  async (req: Request, res: Response) : Promise<void> => {
+    let {
       page = 1,
       limit = 10,
       search_query,
     }: any = req.query;
-  
-    
-  
-   
+
+    // Handle array query params
     if (Array.isArray(page)) page = page[0];
     if (Array.isArray(limit)) limit = limit[0];
     if (Array.isArray(search_query)) search_query = search_query[0];
-  
-    const pageNum = Number(page);
-    const limitNum = Number(limit);
-  
+
+    // Validate pagination
+    const pageNum = Math.max(Number(page) || 1, 1);
+    const limitNum = Math.max(Number(limit) || 10, 1);
+
     const whereClause: any = {};
-  
-  
-  
-    if (search_query) {
+
+    // Search
+    if (search_query && search_query.trim() !== "") {
       whereClause[Op.or] = [
         {
           module: {
-            [Op.iLike]: `%${search_query}%`,
+            [Op.iLike]: `%${search_query.trim()}%`,
           },
-
-           action: {
-            [Op.iLike]: `%${search_query}%`,
+        },
+        {
+          action: {
+            [Op.iLike]: `%${search_query.trim()}%`,
           },
         },
       ];
     }
 
+    const permission = await Permission.findAndCountAll({
+      where: whereClause,
+      limit: limitNum,
+      offset: (pageNum - 1) * limitNum,
 
-      const permission = await Permission.findAndCountAll(
-        {
-             where: whereClause,
-    limit: limitNum,
-    offset: (pageNum - 1) * limitNum,
-    order: [["createdAt", "DESC"]],
-        }
-      );
+      // Change this if your table has another sortable column
+      order: [["id", "ASC"]],
+    });
 
+    if (permission.count === 0) {
+       res.status(404).json({
+        success: false,
+        message: "No data found",
+        data: [],
+        pagination: {
+          totalItems: 0,
+          totalPages: 0,
+          currentPage: pageNum,
+          limit: limitNum,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+        error: null,
+      });
+      return;
+    }
 
+    const totalPages = Math.ceil(permission.count / limitNum);
 
-  if (permission.count === 0) {
-    res.status(404).json({
-      success: false,
-      message: "No data found",
-      data: null,
-      error: { code: "NO_DATA_FOUND", details: null },
+     res.status(200).json({
+      success: true,
+      message: "Permissions fetched successfully",
+      data: permission.rows,
+      pagination: {
+        totalItems: permission.count,
+        totalPages,
+        currentPage: pageNum,
+        limit: limitNum,
+        hasNextPage: pageNum < totalPages,
+        hasPreviousPage: pageNum > 1,
+      },
+      error: null,
     });
     return;
   }
-    const totalPages = Math.ceil(permission.count / limitNum);
+);
 
 
-  res.status(200).json({
-    success: true,
-    status: "Success",
-    data: permission.rows,
-  
-    pagination: {
-      totalItems: permission.count,
-      totalPages,
-      currentPage: pageNum,
-      limit: limitNum,
-      hasNextPage: pageNum < totalPages,
-      hasPreviousPage: pageNum > 1,
-    },
-
-    error: null,
-  });
-});
 
 
 

@@ -406,13 +406,16 @@ export const getPatients = asyncHandler(async (req: Request, res: Response): Pro
     };
   }
 
+
+  
+
   // Global search (kept separate)
   if (search_query) {
     whereCondition[Op.or] = [
       { name: { [Op.iLike]: `%${search_query}%` } },
-      { patientId: { [Op.iLike]: `%${search_query}%` } },
       { addressLine: { [Op.iLike]: `%${search_query}%` } },
       { email: { [Op.iLike]: `%${search_query}%` } },
+      { mobileNumber: { [Op.iLike]: `%${search_query}%` } },
       { guardianName: { [Op.iLike]: `%${search_query}%` } },
     ];
   }
