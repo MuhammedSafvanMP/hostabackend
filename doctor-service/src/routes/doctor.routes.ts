@@ -46,7 +46,7 @@ router.post("/doctor/otp", validate(verifyOtpSchema), verifyOtp);
 // Production Auth Pattern
 router.post("/doctor/auth/send-otp", validate(loginWithEmailSchema), sendDoctorOtp);
 router.post("/doctor/auth/verify-otp", validate(verifyOtpSchema), verifyDoctorOtp);
-router.post("/doctor/auth/reset-password",  validate(resetPasswordSchema), resetDoctorPassword);
+router.post("/doctor/auth/reset-password", authenticate, validate(resetPasswordSchema), resetDoctorPassword);
 router.put("/doctor/auth/change-password", authenticate, validate(changePasswordSchema),checkPermission('doctor','edit'), changeDoctorPassword);
 router.post("/doctor/refresh", refreshDoctorToken);
 router.post("/doctor/logout/:id",authenticate, checkPermission("doctor", "create"), logout);
