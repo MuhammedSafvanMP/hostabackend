@@ -469,9 +469,9 @@ export const verifyLoginOtp = verifyOtp;
 
 // RESET PASSWORD - POST /hospital/auth/reset-password
 export const resetPassword: any = asyncHandler(async (req: any, res: Response) => {
-  const { newPassword } = req.body;
+  const { email, newPassword } = req.body;
 
-  const hospital = await Hospital.scope("withPassword").findByPk(req.user.id);
+  const hospital = await Hospital.scope("withPassword").findOne({ where: { email } });
 
   if (!hospital) {
     res.status(404).json({ success: false, message: "Hospital not found" });
