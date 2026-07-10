@@ -9,7 +9,7 @@ export const handlePrescriptionEvent = async (routingKey: string, content: any) 
     } else if (routingKey === "PRESCRIPTION_UPDATED") {
       msg = `A prescription on your profile has been updated. (Prescription ID: ${content.prescriptionId})`;
     } else if (routingKey === "PRESCRIPTION_DELETED") {
-      msg = `A prescription on your profile has been deleted / blacklisted. (Prescription ID: ${content.prescriptionId})`;
+      msg = `A prescription on your profile has been blacklisted. (Prescription ID: ${content.prescriptionId})`;
     }
 
     const includeHospital = routingKey !== "PRESCRIPTION_CREATED";
