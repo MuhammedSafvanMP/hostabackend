@@ -288,6 +288,12 @@ Hospital.init(
         unique: true,
         fields: ["email"],
       },
+      {
+        fields: ["latitude"],
+      },
+      {
+        fields: ["longitude"],
+      },
     ],
   }
 );
