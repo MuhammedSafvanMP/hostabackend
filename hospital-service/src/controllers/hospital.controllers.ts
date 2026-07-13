@@ -2113,17 +2113,6 @@ export const getHospital = asyncHandler(
       });
     }
 
-    // Bounding Box filter (Performance Tip)
-    if (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)) {
-      const radiusKm = radius && radius > 0 ? radius : 10; // default 10 km
-      const latDelta = radiusKm / 111.32;
-      const lngDelta = radiusKm / (111.32 * Math.cos((lat * Math.PI) / 180));
-      andConditions.push({
-        latitude: { [Op.between]: [lat - latDelta, lat + latDelta] },
-        longitude: { [Op.between]: [lng - lngDelta, lng + lngDelta] },
-      });
-    }
-
     const whereClause =
       andConditions.length > 0
         ? { [Op.and]: andConditions }
