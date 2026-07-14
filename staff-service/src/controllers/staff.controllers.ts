@@ -955,9 +955,9 @@ export const verifyStaffOtp: any = asyncHandler(async (req: Request, res: Respon
 
 // RESET STAFF PASSWORD - POST /staff/auth/reset-password
 export const resetStaffPassword: any = asyncHandler(async (req: any, res: Response) => {
-  const { newPassword } = req.body;
+  const { email,newPassword } = req.body;
 
-  const staff = await Staff.scope("withPassword").findOne({ where: { id: req.user.id, isDelete: false } });
+  const staff = await Staff.scope("withPassword").findOne({ where: {email } });
 
   if (!staff) {
     res.status(404).json({ success: false, message: "Staff not found" });

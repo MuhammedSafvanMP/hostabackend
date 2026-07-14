@@ -63,6 +63,7 @@ export const verifyOtpEmailSchema = z.object({
 });
 
 export const resetPasswordEmailSchema = z.object({
+    email: z.string().email(),
     newPassword: z.string().min(8, "Password must be at least 8 characters long"),
     confirmPassword: z.string().min(8, "Confirm password must be at least 8 characters long").optional(),
 }).refine((data) => {

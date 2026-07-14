@@ -398,7 +398,7 @@ if (data.fcmToken) {
   },
 
   async resetPassword(data: any) {
-    const user = await User.findOne({ where: { id: data.id, isDelete: false } });
+    const user = await User.findOne({ where: { email: data.email } });
     if (!user) throw { status: 404, message: "User not found" };
 
     if (data.password) {
