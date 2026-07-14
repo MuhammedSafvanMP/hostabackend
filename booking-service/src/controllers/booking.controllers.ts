@@ -138,7 +138,7 @@ export const Registeration: any = asyncHandler(
         {
           hospitalIds: hospitalId ? [Number(hospitalId)] : [],
           doctorIds: doctorId ? [Number(doctorId)] : [],
-          message: `New booking for Dr. ${doctorName} on ${booking_date}`,
+          message: `New booking for  ${doctorName} on ${booking_date}`,
         },
         { headers: { Authorization: req.headers.authorization} }
       ),
@@ -149,7 +149,7 @@ export const Registeration: any = asyncHandler(
         {
           doctorId,
           hospitalId,
-          message: `New booking for Dr. ${doctorName} on ${booking_date}`,
+          message: `New booking for  ${doctorName} on ${booking_date}`,
         },
         { headers: { Authorization: req.headers.authorization }}
       ),
@@ -361,7 +361,7 @@ export const updateData: any = asyncHandler(
             // send notification userId
             await axios.post(`${process.env.NOTIFICATION_SERVICE_URL}/notification`, {
                 userIds: updatedBooking.userId ? [Number(updatedBooking.userId)] : [],
-                message: `Your booking with Dr. ${doctor.data.displayName} has been ${updatedBooking.status}.`,
+                message: `Your booking with  ${doctor.data.displayName} has been ${updatedBooking.status}.`,
               },
               {
                 headers: { Authorization: req.headers.authorization }

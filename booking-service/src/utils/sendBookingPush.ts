@@ -49,7 +49,7 @@ export const sendBookingPushNotifications = async ({
           hospitalId,
           token: token,
           title: "New Booking",
-          body: `${patient_name} booked with Dr. ${doctorName}`,
+          body: `${patient_name} booked with  ${doctorName}`,
         })
       );
     }
@@ -88,7 +88,7 @@ export const sendBookingPushNotifications = async ({
           userId,
           token: token,
           title: "Booking Confirmed",
-          body: `Appointment with Dr. ${doctorName} confirmed`,
+          body: `Appointment with  ${doctorName} confirmed`,
         })
       );
     }

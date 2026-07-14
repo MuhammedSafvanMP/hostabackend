@@ -216,17 +216,6 @@ if (data.fcmToken) {
   });
   
 
-       await Patient.update(
-    {
-      isActive: true,
-    },
-    {
-      where: {
-        userId: user.id,
-      },
-    }
-  );
-
  
 }
 
@@ -353,11 +342,19 @@ if (data.fcmToken) {
   },
 
 
+  // async getAllUsers() {
+  //   return await User.findAll({
+  //     where: {  }
+      
+  //   });
+  // },
+
   async getAllUsers() {
-    return await User.findAll({
-      where: { isDelete: false }
-    });
-  },
+  return await User.findAll({
+    where: {},
+    paranoid: false, // only if using Sequelize soft delete
+  });
+},
 
   async getBlacklistedUsers() {
     return await User.findAll({
@@ -381,23 +378,9 @@ if (data.fcmToken) {
       deleteDate: new Date(),
     }); // Move to blacklist
     
-  await Patient.update(
-    {
-      isActive: false,
-    },
-    {
-      where: {
-        userId: user.id,
-      },
-    }
-  );
-
     // Broadcast to other services (like blood-service) so they can cleanup too
     await publishEvent('user_events', 'USER_DELETED', { userId: id });
-
   },
-
-
 
   async recoverUser(id: string) {
     const user = await User.findOne({ where: { id, isDelete: true } });
@@ -408,17 +391,6 @@ if (data.fcmToken) {
       isDelete: false,
       deleteDate: null,
     });
-
-      await Patient.update(
-    {
-      isActive: true,
-    },
-    {
-      where: {
-        userId: user.id,
-      },
-    }
-  );
 
     await publishEvent('user_events', 'USER_RECOVERED', { userId: id });
 
@@ -594,4 +566,3 @@ async resetPasswordWithEmail(userId: string, data: any) {
     return updatedUser;
   }
 };
-
