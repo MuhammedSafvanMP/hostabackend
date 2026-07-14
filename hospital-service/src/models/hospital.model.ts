@@ -317,3 +317,4 @@ Hospital.beforeUpdate(async (hospital: Hospital) => {
 
 
 export default Hospital;
+

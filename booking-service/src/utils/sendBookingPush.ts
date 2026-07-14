@@ -10,6 +10,7 @@ interface PushPayload {
 
   booking_date?: string;
 
+
   type:
     | "BOOKING_REGISTERED"
     | "BOOKING_UPDATED"
@@ -61,7 +62,7 @@ export const sendBookingPushNotifications = async ({
     }
   }
 
-  
+
 }
 
 

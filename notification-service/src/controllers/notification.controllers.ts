@@ -82,7 +82,6 @@ export const createNotification: any = asyncHandler(
       pharmacyReadStatus: {},
       labReadStatus: {},
       superAdminReadStatus: {},
-
     });
 
     await publishEvent(
