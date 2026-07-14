@@ -90,7 +90,21 @@ export const verifyOtpSchema = z.object({
   path: ["phone"],
 });
 
+// export const resetPasswordSchema = z.object({
+//   newPassword: z.string().min(6, "New password must be at least 6 characters"),
+//   confirmPassword: z.string().min(6, "Confirm password must be at least 6 characters").optional(),
+// }).refine((data) => {
+//   if (data.confirmPassword !== undefined) {
+//     return data.newPassword === data.confirmPassword;
+//   }
+//   return true;
+// }, {
+//   message: "Passwords don't match",
+//   path: ["confirmPassword"],
+// });
+
 export const resetPasswordSchema = z.object({
+  email: z.string().email("Invalid email format"),   // add this
   newPassword: z.string().min(6, "New password must be at least 6 characters"),
   confirmPassword: z.string().min(6, "Confirm password must be at least 6 characters").optional(),
 }).refine((data) => {
@@ -102,6 +116,7 @@ export const resetPasswordSchema = z.object({
   message: "Passwords don't match",
   path: ["confirmPassword"],
 });
+
 
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),

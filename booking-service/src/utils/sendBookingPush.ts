@@ -10,6 +10,7 @@ interface PushPayload {
 
   booking_date?: string;
 
+
   type:
     | "BOOKING_REGISTERED"
     | "BOOKING_UPDATED"
@@ -61,7 +62,18 @@ export const sendBookingPushNotifications = async ({
     }
   }
 
-    if (userToken?.length) {
+   
+}
+
+
+
+  // =========================
+  // BOOKING_ACCEPTED
+  // =========================
+
+  if (type === "BOOKING_ACCEPTED") {
+
+     if (userToken?.length) {
       for (const token of userToken) {
       notifications.push(
         sendPushNotification({
@@ -72,6 +84,8 @@ export const sendBookingPushNotifications = async ({
       );
     }
   }
+
+  
 }
 
   // =========================

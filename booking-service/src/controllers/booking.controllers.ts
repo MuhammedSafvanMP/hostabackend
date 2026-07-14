@@ -198,6 +198,7 @@ export const Registeration: any = asyncHandler(
         doctorName,
         booking_date,
         type: "BOOKING_REGISTERED",
+        
       });
 
     } catch (error: any) {
@@ -567,7 +568,7 @@ export const getBookings = asyncHandler(async (req: Request, res: Response) : Pr
         [Op.iLike]: `%${search}%`,
       }
     ),
-
+    
     Sequelize.where(
       Sequelize.cast(Sequelize.col("patient_gender"), "TEXT"),
       {

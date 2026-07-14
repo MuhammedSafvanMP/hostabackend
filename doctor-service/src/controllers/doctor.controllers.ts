@@ -1005,10 +1005,10 @@ export const verifyDoctorOtp: any = asyncHandler(
 // RESET DOCTOR PASSWORD - POST /doctor/auth/reset-password
 export const resetDoctorPassword: any = asyncHandler(
   async (req: any, res: Response) => {
-    const { newPassword } = req.body;
+    const { email,newPassword } = req.body;
 
     const doctor = await Doctor.scope("withPassword").findOne({
-      where: { id: req.user.id, isDelete: false },
+      where: { email },
     });
 
     if (!doctor) {

@@ -4,12 +4,14 @@ interface SendNotificationParams {
   token: string;
   title: string;
   body: string;
+ 
 }
 
 export const sendPushNotification = async ({
   token,
   title,
   body,
+
 }: SendNotificationParams) => {
   try {
     const message: admin.messaging.Message = {
