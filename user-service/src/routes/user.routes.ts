@@ -8,7 +8,6 @@ import {
   getUser,
   updateUser,
   deleteUser,
-  resetPassword,
   sendOtpEmail,
   verifyOtpEmail,
   resetPasswordEmail,
