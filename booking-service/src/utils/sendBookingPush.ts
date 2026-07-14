@@ -4,6 +4,9 @@ interface PushPayload {
   hospitalToken?: string;
   doctorToken?: string;
   userToken?: string;
+  userId?: string | number;
+  doctorId?: string | number;
+  hospitalId?: string | number
 
   patient_name?: string;
   doctorName?: string;
@@ -19,6 +22,9 @@ interface PushPayload {
 }
 
 export const sendBookingPushNotifications = async ({
+  userId,
+  doctorId,
+  hospitalId,
   hospitalToken,
   doctorToken,
   userToken,
@@ -40,6 +46,7 @@ export const sendBookingPushNotifications = async ({
        for (const token of hospitalToken) {
       notifications.push(
         sendPushNotification({
+          hospitalId,
           token: token,
           title: "New Booking",
           body: `${patient_name} booked with Dr. ${doctorName}`,
@@ -53,6 +60,7 @@ export const sendBookingPushNotifications = async ({
       for (const token of doctorToken) {
       notifications.push(
         sendPushNotification({
+          doctorId,
           token: token,
           title: "New Appointment",
           body: `New booking on ${booking_date}`,
@@ -61,10 +69,23 @@ export const sendBookingPushNotifications = async ({
     }
   }
 
-    if (userToken?.length) {
+  
+}
+
+
+
+  // =========================
+  // BOOKING_ACCEPTED
+  // =========================
+
+  if (type === "BOOKING_ACCEPTED") {
+
+  
+      if (userToken?.length) {
       for (const token of userToken) {
       notifications.push(
         sendPushNotification({
+          userId,
           token: token,
           title: "Booking Confirmed",
           body: `Appointment with Dr. ${doctorName} confirmed`,
@@ -72,7 +93,11 @@ export const sendBookingPushNotifications = async ({
       );
     }
   }
+
+  
 }
+
+
 
   // =========================
   // BOOKING UPDATED
@@ -84,6 +109,7 @@ export const sendBookingPushNotifications = async ({
        for (const token of userToken) {
       notifications.push(
         sendPushNotification({
+          userId,
           token: token,
           title: "Booking Rejected",
           body: `Your booking has been rejected`,
@@ -105,6 +131,7 @@ export const sendBookingPushNotifications = async ({
        for (const token of userToken) {
       notifications.push(
         sendPushNotification({
+          userId,
           token: token,
           title: "Booking Updated",
           body: `Your booking has been completed`,
@@ -129,6 +156,7 @@ export const sendBookingPushNotifications = async ({
        for (const token of doctorToken) {
       notifications.push(
         sendPushNotification({
+          doctorId,
           token: token,
           title: "Appointment Cancelled",
           body: `Patient cancelled appointment`,

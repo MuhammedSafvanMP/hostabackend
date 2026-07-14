@@ -49,7 +49,7 @@ router.post("/hospital/otp",validate(verifyOtpSchema),verifyLoginOtp)
 // Production Auth Routes
 router.post("/hospital/auth/send-otp", validate(loginWithEmailSchema), sendOtp);
 router.post("/hospital/auth/verify-otp", validate(verifyOtpSchema), verifyOtp);
-router.post("/hospital/auth/reset-password",  validate(resetPasswordSchema), resetPassword);
+router.post("/hospital/auth/reset-password",   validate(resetPasswordSchema), resetPassword);
 router.put("/hospital/auth/change-password", authenticate, checkPermission("hospital", "edit"), validate(changePasswordSchema), changePassword);
 router.post("/hospital/refresh", refreshHospitalToken);
 router.post("/hospital/logout/:id", authenticate, checkPermission("hospital", "create"),  logout);
