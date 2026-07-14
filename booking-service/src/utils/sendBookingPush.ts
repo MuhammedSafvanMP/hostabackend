@@ -62,7 +62,7 @@ export const sendBookingPushNotifications = async ({
     }
   }
 
-   
+
 }
 
 
@@ -73,7 +73,8 @@ export const sendBookingPushNotifications = async ({
 
   if (type === "BOOKING_ACCEPTED") {
 
-     if (userToken?.length) {
+  
+      if (userToken?.length) {
       for (const token of userToken) {
       notifications.push(
         sendPushNotification({
@@ -87,6 +88,8 @@ export const sendBookingPushNotifications = async ({
 
   
 }
+
+
 
   // =========================
   // BOOKING UPDATED
