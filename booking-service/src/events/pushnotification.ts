@@ -4,6 +4,9 @@ interface SendNotificationParams {
   token: string;
   title: string;
   body: string;
+  userId?: number | string;
+  hospitalId?: number | string;
+  doctorId?: number | string;
 }
 
 export const sendPushNotification = async ({
