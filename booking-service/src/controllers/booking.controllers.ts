@@ -191,6 +191,8 @@ export const Registeration: any = asyncHandler(
       }
 
       await sendBookingPushNotifications({
+        doctorId,
+        hospitalId,
         hospitalToken,
         doctorToken,
         userToken,
@@ -293,12 +295,14 @@ export const updateData: any = asyncHandler(
       } else if (updatedBooking.status === "accepted") {
         eventName = "BOOKING_ACCEPTED";
                await sendBookingPushNotifications({
+                userId: updatedBooking.userId,
         userToken,
         type: "BOOKING_ACCEPTED",
       });
       } else if (updatedBooking.status === "completed") {
         eventName = "BOOKING_COMPLETED";
                await sendBookingPushNotifications({
+                 userId: updatedBooking.userId,
         userToken,
         type: "BOOKING_COMPLETED",
       });
