@@ -5,6 +5,7 @@ import asyncHandler from "express-async-handler";
 import Auth from "../models/auth.model";
 import { Op } from "sequelize";
 import twilio from "twilio";
+import axios from "axios";
 import { AuthRequest } from "../middleware/auth.middleware";
 
 const APPLE_TEST_NUMBER = "9999999999";
@@ -41,6 +42,84 @@ export const sendOtpEmail = async (email: string, otp: string, userName: string 
   console.log(`Sending Email OTP to ${email}: ${otp}`);
 };
 
+/**
+ * Fetch the related profile from the corresponding microservice based on role.
+ * e.g. role=hospital → GET hospital-service/hospital/:id
+ *      role=staff    → GET staff-service/staff/:id
+ *      role=doctor   → GET doctor-service/doctor/:id
+ */
+const fetchRelatedProfile = async (user: any): Promise<any> => {
+  let profileData = null;
+
+  try {
+    const role = user.role;
+    let serviceUrl = "";
+    let entityId: number | null = null;
+
+    switch (role) {
+      case "hospital":
+        serviceUrl = process.env.HOSPITAL_SERVICE_URL || "";
+        entityId = user.hospitalId;
+        if (serviceUrl && entityId) {
+          const res = await axios.get(`${serviceUrl}/hospital/${entityId}`);
+          profileData = res.data?.data || res.data;
+        }
+        break;
+
+      case "staff":
+        serviceUrl = process.env.STAFF_SERVICE_URL || "";
+        entityId = user.staffId;
+        if (serviceUrl && entityId) {
+          const res = await axios.get(`${serviceUrl}/staff/${entityId}`);
+          profileData = res.data?.data || res.data;
+        }
+        break;
+
+      case "doctor":
+        serviceUrl = process.env.DOCTOR_SERVICE_URL || "";
+        entityId = user.doctorId;
+        if (serviceUrl && entityId) {
+          const res = await axios.get(`${serviceUrl}/doctor/${entityId}`);
+          profileData = res.data?.data || res.data;
+        }
+        break;
+
+      case "superadmin":
+        // Superadmin profile lives in the auth table itself
+        profileData = null;
+        break;
+
+      default:
+        break;
+    }
+  } catch (err: any) {
+    console.error(`Failed to fetch ${user.role} profile:`, err.message);
+  }
+
+  return profileData;
+};
+
+/**
+ * Fetch role-based permissions from the role-service.
+ */
+const fetchRolePermissions = async (roleId: number | undefined): Promise<any> => {
+  if (!roleId) return null;
+
+  try {
+    const roleServiceUrl = process.env.ROLE_SERVICE_URL || "";
+    if (!roleServiceUrl) return null;
+
+    const res = await axios.get(`${roleServiceUrl}/rolepermission`, {
+      params: { roleId },
+    });
+    return res.data;
+  } catch (err: any) {
+    console.error("Failed to fetch role permissions:", err.message);
+    return null;
+  }
+};
+
+// ===================== LOGIN (Email/Password) =====================
 export const login: any = asyncHandler(async (req: Request, res: Response) => {
   const { email, phone, password, fcmToken } = req.body;
 
@@ -82,6 +161,7 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
     return;
   }
 
+  // Update FCM token
   if (fcmToken) {
     const fieldName = `${user.role}_fcmtoken` as keyof typeof user;
     const existingTokens: FCMTOKEN[] = Array.isArray(user[fieldName])
@@ -130,16 +210,26 @@ export const login: any = asyncHandler(async (req: Request, res: Response) => {
 
   setRefreshTokenCookie(res, refreshToken);
 
+  // Fetch related profile from other microservices (hospital/staff/doctor)
+  const profileData = await fetchRelatedProfile(user);
+
+  // Fetch role permissions from role-service
+  const authPermission = await fetchRolePermissions(profileData?.roleId);
+
   res.status(200).json({
     success: true,
     message: "Logged in successfully",
     status: 200,
     token,
     data: safeUser,
+    profile: profileData,
     error: null,
+    authDefaultPermission: 1,
+    authPermission,
   });
 });
 
+// ===================== LOGIN WITH PHONE (OTP) =====================
 export const loginWithPhone: any = asyncHandler(async (req: Request, res: Response) => {
   const { phone } = req.body;
 
@@ -223,6 +313,7 @@ export const loginWithPhone: any = asyncHandler(async (req: Request, res: Respon
   });
 });
 
+// ===================== SEND OTP (EMAIL) =====================
 export const sendOtp: any = asyncHandler(async (req: Request, res: Response) => {
   const { email } = req.body;
 
@@ -250,6 +341,7 @@ export const sendOtp: any = asyncHandler(async (req: Request, res: Response) => 
   }
 });
 
+// ===================== VERIFY OTP =====================
 export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) => {
   const { phone, email, otp, fcmToken } = req.body;
 
@@ -276,6 +368,7 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
     return;
   }
 
+  // Update FCM token
   if (fcmToken) {
     const fieldName = `${user.role}_fcmtoken` as keyof typeof user;
     const existingTokens: FCMTOKEN[] = Array.isArray(user[fieldName])
@@ -307,16 +400,26 @@ export const verifyOtp: any = asyncHandler(async (req: Request, res: Response) =
 
   setRefreshTokenCookie(res, refreshToken);
 
+  // Fetch related profile from other microservices
+  const profileData = await fetchRelatedProfile(user);
+
+  // Fetch role permissions from role-service
+  const authPermission = await fetchRolePermissions(profileData?.roleId);
+
   res.status(200).json({
     success: true,
     message: "OTP verified",
     token,
-    data: safeUser
+    data: safeUser,
+    profile: profileData,
+    authDefaultPermission: 1,
+    authPermission,
   });
 });
 
 export const verifyLoginOtp = verifyOtp;
 
+// ===================== RESET PASSWORD =====================
 export const resetPassword: any = asyncHandler(async (req: Request, res: Response) => {
   const { email, newPassword } = req.body;
 
@@ -336,6 +439,7 @@ export const resetPassword: any = asyncHandler(async (req: Request, res: Respons
   res.json({ success: true, message: "Password reset successful" });
 });
 
+// ===================== CHANGE PASSWORD =====================
 export const changePassword: any = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { currentPassword, newPassword } = req.body;
 
@@ -357,6 +461,7 @@ export const changePassword: any = asyncHandler(async (req: AuthRequest, res: Re
   res.json({ success: true, message: "Password changed successfully" });
 });
 
+// ===================== REFRESH TOKEN =====================
 export const refreshHospitalToken: any = asyncHandler(async (req: Request, res: Response) => {
   try {
     const rfToken = req.cookies.refreshToken;
@@ -389,6 +494,7 @@ export const refreshHospitalToken: any = asyncHandler(async (req: Request, res: 
   }
 });
 
+// ===================== LOGOUT =====================
 export const logout: any = asyncHandler(async (req: AuthRequest, res: Response) => {
   res.clearCookie("refreshToken");
   res.status(200).json({ message: "Logout successful" });
