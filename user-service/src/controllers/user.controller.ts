@@ -114,14 +114,14 @@ export const deleteUser: any = asyncHandler(async (req: Request, res: Response) 
   }
 });
 
-export const resetPassword: any = asyncHandler(async (req: Request, res: Response) => {
-  try {
-    await userService.resetPassword(req.body);
-    res.status(200).json({ success: true, message: "Password reset successful" });
-  } catch (error: any) {
-    res.status(error.status || 500).json({ success: false, message: error.message });
-  }
-});
+// export const resetPassword: any = asyncHandler(async (req: Request, res: Response) => {
+//   try {
+//     await userService.resetPassword(req.body);
+//     res.status(200).json({ success: true, message: "Password reset successful" });
+//   } catch (error: any) {
+//     res.status(error.status || 500).json({ success: false, message: error.message });
+//   }
+// });
 
 export const sendOtpEmail: any = asyncHandler(async (req: Request, res: Response) => {
   try {
@@ -152,12 +152,18 @@ export const verifyOtpEmail: any = asyncHandler(async (req: Request, res: Respon
 // });
 
 
-export const resetPasswordEmail: any = asyncHandler(async (req: any, res: Response) => {
-  const result = await userService.resetPasswordWithEmail(
-    req.user.id,
-    req.body
-  );
+// export const resetPasswordEmail: any = asyncHandler(async (req: any, res: Response) => {
+//   const result = await userService.resetPasswordWithEmail(
+//     req.user.id,
+//     req.body
+//   );
 
+//   res.json(result);
+// });
+// In user.controller.ts
+export const resetPasswordEmail: any = asyncHandler(async (req: Request, res: Response) => {
+  const { email, newPassword } = req.body;   // from validated body
+  const result = await userService.resetPasswordByEmail({ email, newPassword });
   res.json(result);
 });
 

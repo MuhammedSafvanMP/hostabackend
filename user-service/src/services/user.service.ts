@@ -397,18 +397,31 @@ if (data.fcmToken) {
     return user;
   },
 
-  async resetPassword(data: any) {
-    const user = await User.findOne({ where: { email: data.email } });
-    if (!user) throw { status: 404, message: "User not found" };
+  // async resetPassword(data: any) {
+  //   const user = await User.findOne({ where: { email: data.email } });
+  //   if (!user) throw { status: 404, message: "User not found" };
 
-    if (data.password) {
-      const match = await bcrypt.compare(data.password, user.password);
-      if (!match) throw { status: 401, message: "Incorrect current password" };
-    }
+  //   if (data.password) {
+  //     const match = await bcrypt.compare(data.password, user.password);
+  //     if (!match) throw { status: 401, message: "Incorrect current password" };
+  //   }
 
-    user.password = await bcrypt.hash(data.newPassword, 10);
-    await user.save();
-  },
+  //   user.password = await bcrypt.hash(data.newPassword, 10);
+  //   await user.save();
+  // },
+  // In user.service.ts
+async resetPasswordByEmail(data: { email: string; newPassword: string }) {
+  const { email, newPassword } = data;
+  const user = await User.findOne({ where: { email, isDelete: false } });
+  if (!user) throw { status: 404, message: "User not found" };
+
+  user.password = await bcrypt.hash(newPassword, 10);
+  user.otp = null as any;
+  user.otpExpiry = null as any;
+  await user.save();
+
+  return { success: true, message: "Password reset successful" };
+},
 
   async sendOtpByEmail(email: string) {
     const user = await User.findOne({ where: { email, isDelete: false } });
