@@ -158,9 +158,9 @@ export const handleBookingEvent = async (routingKey: string, content: any) => {
     if (content.status === "accepted" || content.status === "declined") {
       msg = `Booking (ID: ${formattedId}) has been ${content.status} by staff.`;
     } else if (content.status === "completed") {
-      msg = `Booking (ID: ${formattedId}) has been marked as completed.`;
+      msg = `Booking ${formattedId} has been marked as completed.`;
     } else {
-      msg = `Booking (ID: ${formattedId}) status has been updated to ${content.status || "updated"}.`;
+      msg = `Booking  ${formattedId} status has been updated to ${content.status || "updated"}.`;
     }
 
     // Save notification for hospitals only
