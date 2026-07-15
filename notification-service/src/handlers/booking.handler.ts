@@ -156,7 +156,7 @@ export const handleBookingEvent = async (routingKey: string, content: any) => {
     const formattedId = formatBookingId(content.bookingId);
     let msg = "";
     if (content.status === "accepted" || content.status === "declined") {
-      msg = `Booking (ID: ${formattedId}) has been ${content.status} by staff.`;
+      msg = `Booking ${formattedId} has been ${content.status} by staff.`;
     } else if (content.status === "completed") {
       msg = `Booking ${formattedId} has been marked as completed.`;
     } else {
