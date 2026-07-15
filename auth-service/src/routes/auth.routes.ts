@@ -33,8 +33,8 @@ router.post("/send-otp", validate(loginWithEmailSchema), sendOtp);
 router.post("/verify-otp", validate(verifyOtpSchema), verifyOtp);
 router.post("/reset-password", validate(resetPasswordSchema), resetPassword);
 
-router.put("/change-password", authenticate, checkPermission("hospital", "edit"), validate(changePasswordSchema), changePassword);
+router.put("/change-password", authenticate, validate(changePasswordSchema), changePassword);
 router.post("/refresh", refreshHospitalToken);
-router.post("/logout/:id", authenticate, checkPermission("hospital", "create"), logout);
+router.post("/logout/:id", authenticate, logout);
 
 export default router;
